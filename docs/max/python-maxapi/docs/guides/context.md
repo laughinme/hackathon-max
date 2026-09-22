@@ -1,0 +1,328 @@
+# Контекст и состояния
+
+## MemoryContext
+
+Встроенная система состояний для диалогов. Контекст автоматически передается в обработчики:
+
+```python
+from maxapi.context import MemoryContext, StatesGroup, State
+from maxapi.types import MessageCreated, Command
+
+
+class Form(StatesGroup):
+    name = State()
+    age = State()
+
+
+@dp.message_created(Command("start"))
+async def start_handler(event: MessageCreated, context: MemoryContext):
+    await context.set_state(Form.name)
+    await event.message.answer("Как вас зовут?")
+
+
+@dp.message_created(Form.name)
+async def name_handler(event: MessageCreated, context: MemoryContext):
+    await context.update_data(name=event.message.body.text)
+    await context.set_state(Form.age)
+    await event.message.answer("Сколько вам лет?")
+
+
+@dp.message_created(Form.age)
+async def age_handler(event: MessageCreated, context: MemoryContext):
+    data = await context.get_data()
+    await event.message.answer(
+        f"Приятно познакомиться, {data['name']}! "
+        f"Вам {event.message.body.text} лет."
+    )
+    await context.set_state(None)  # Сброс состояния
+```
+
+## Методы MemoryContext
+
+- `set_state(state)` — установить состояние (State или None для сброса)
+- `get_state()` — получить текущее состояние
+- `get_data()` — получить все данные контекста
+- `update_data(**kwargs)` — обновить данные и вернуть актуальный словарь
+- `set_data(data)` — полностью заменить данные
+- `clear()` — очистить контекст и сбросить состояние
+
+## Получение контекста вне хендлера
+
+```python
+context = dp.fsm.get_context(
+    chat_id=chat_id,
+    user_id=user_id,
+)
+```
+
+Для простых операций можно не получать объект контекста вручную:
+
+```python
+await dp.fsm.set_state(
+    chat_id=chat_id,
+    user_id=user_id,
+    state=Form.name,
+)
+await dp.fsm.update_data(
+    chat_id=chat_id,
+    user_id=user_id,
+    name="Макс",
+)
+await dp.fsm.update_data(
+    chat_id=chat_id,
+    user_id=user_id,
+    data={"chat_id": "значение в данных"},
+)
+data = await dp.fsm.get_data(chat_id=chat_id, user_id=user_id)
+await dp.fsm.clear(chat_id=chat_id, user_id=user_id)
+```
+
+Метод использует то же хранилище, TTL и LRU-кеш, что и обычная
+обработка событий. FSM manager доступен через `Dispatcher`: используйте
+`dp.fsm`, а не `router.fsm`.
+
+## TTL для контекста
+
+Для автоматической очистки неактивных контекстов можно передать `ttl`
+в секундах. TTL продлевается при каждом чтении или изменении контекста.
+Если время истекло, `state` и `data` будут лениво сброшены при следующем
+обращении.
+
+```python
+from maxapi import Dispatcher
+from maxapi.context import MemoryContext
+
+dp = Dispatcher(storage=MemoryContext, ttl=1800)
+```
+
+Тот же параметр можно использовать и для `RedisContext`:
+
+```python
+from maxapi.context import RedisContext
+
+dp = Dispatcher(
+    storage=RedisContext,
+    redis_client=redis_client,
+    key_prefix="my_bot",
+    ttl=1800,
+)
+```
+
+## StatesGroup
+
+Группа состояний для FSM:
+
+```python
+class Form(StatesGroup):
+    name = State()  # Автоматически получит имя 'Form:name'
+    age = State()  # Автоматически получит имя 'Form:age'
+```
+
+## Фильтрация по состояниям
+
+Вы можете ограничивать выполнение хендлеров определенными состояниями:
+
+```python
+# Только в состоянии Form.name
+@dp.message_created(Form.name)
+async def name_handler(event: MessageCreated, context: MemoryContext): ...
+
+
+# Только когда НЕТ активного состояния
+@dp.message_created(None)
+async def no_state_handler(event: MessageCreated): ...
+
+
+# В любом из перечисленных состояний
+@dp.message_created(Form.name, Form.age)
+async def multi_state_handler(event: MessageCreated): ...
+```
+
+## Хранение в Redis
+
+Для сохранения состояний и данных между перезапусками бота можно использовать Redis.
+
+### Установка зависимостей
+
+```bash
+pip install redis
+```
+
+### Пример использования
+
+```python
+import redis.asyncio as redis
+from maxapi import Dispatcher
+from maxapi.context import RedisContext
+
+# Инициализация клиента Redis
+redis_client = redis.Redis(host="localhost", port=6379, db=0)
+
+# Передача RedisContext в Диспетчер
+dp = Dispatcher(
+    storage=RedisContext,
+    redis_client=redis_client,
+    key_prefix="my_bot",
+)
+```
+
+`RedisContext` автоматически сериализует данные в JSON и поддерживает атомарные обновления через Lua-скрипты.
+
+### Маркер обновлений (`get_updates`)
+
+В MAX API у `get_updates` есть **маркер обновлений** — это внутренняя “позиция” в ленте событий (по сути, пагинация). Если запускать бота **без маркера**, API может начать отдавать **старые обновления** (с “начального” маркера), и бот будет повторно обрабатывать прошлые события.
+
+Решение простое: **сохраняйте маркер** и **передавайте его в бота при старте**.
+
+Ниже пример хранения маркера в Redis (асинхронный клиент), ровно как ключ `bot:marker`:
+
+```python
+import redis.asyncio as redis
+
+r = redis.Redis(host="localhost", port=6379, decode_responses=True)
+
+
+async def load_marker() -> str | None:
+    return await r.get("bot:marker")
+
+
+async def save_marker(marker: str) -> None:
+    await r.set("bot:marker", marker)
+```
+
+Пример простого **глобального middleware**, который сохраняет текущий маркер в Redis после обработки события:
+
+```python
+from maxapi.filters.middleware import BaseMiddleware
+from maxapi.types import UpdateUnion
+from typing import Any, Awaitable, Callable
+
+
+class SaveMarkerMiddleware(BaseMiddleware):
+    async def __call__(
+        self,
+        handler: Callable[[UpdateUnion, dict[str, Any]], Awaitable[Any]],
+        event_object: UpdateUnion,
+        data: dict[str, Any],
+    ) -> Any:
+        result = await handler(event_object, data)
+
+        marker: int | None = event_object.bot.marker_updates
+        if marker is not None:
+            await save_marker(str(marker))
+
+        return result
+```
+
+Использование (при старте загрузили маркер, установили через `set_marker_updates`, подключили middleware):
+
+- при запуске загрузить маркер и установить через `bot.set_marker_updates(...)`, например в `async main()`:
+
+```python
+import asyncio
+from maxapi import Bot, Dispatcher
+
+bot = Bot()
+dp = Dispatcher()
+dp.register_outer_middleware(SaveMarkerMiddleware())
+
+
+async def main() -> None:
+    marker = await load_marker()  # str | None
+
+    if marker is not None:
+        bot.set_marker_updates(int(marker))
+
+    await dp.start_polling(bot)
+
+
+asyncio.run(main())
+```
+
+- во время работы middleware будет обновлять сохранённый маркер на основании `event_object.bot.marker_updates`.
+
+!!! note "Какой именно маркер видит middleware"
+
+    `bot.marker_updates` сдвигается **после** того, как пачка событий
+    полностью разобрана и передана в обработчики. Middleware выполняется
+    во время обработки пачки, то есть видит маркер **предыдущей**,
+    уже зафиксированной пачки — не той, событие которой обрабатывает
+    прямо сейчас.
+
+    Это сделано намеренно: маркер, сохранённый до завершения пачки,
+    означал бы, что при падении посреди обработки её события уже
+    считаются доставленными и API больше их не отдаст. Поэтому
+    персистентность здесь — **at-least-once**: после перезапуска
+    незавершённая пачка приедет заново, и её события обработаются
+    повторно.
+
+    Практические следствия:
+
+    - обработчики должны быть идемпотентны — повторная обработка
+      события после перезапуска штатна, а не аварийна;
+    - маркер самой последней пачки в Redis не попадёт: после неё
+      уже не приходит событий, которые запустили бы middleware.
+      После перезапуска эта пачка будет обработана ещё раз.
+
+    Если повторная обработка недопустима, сохраняйте не маркер, а
+    признак обработки конкретного события (по его идентификатору) и
+    проверяйте его в начале обработчика.
+
+## Изоляция событий (защита от гонок FSM)
+
+При параллельной обработке событий (`Dispatcher(use_create_task=True)` или вебхук)
+два быстрых сообщения одного пользователя могут прочитать **один и тот же снимок
+FSM-состояния** до того, как первый хендлер успеет его сбросить. В результате
+одноразовый шаг FSM (например, «введите сумму перевода») выполнится дважды.
+
+Механизм изоляции сериализует обработку апдейтов одного пользователя: пока не
+завершился предыдущий `handle()` для ключа `(chat_id, user_id)`, следующий ждёт.
+События разных пользователей обрабатываются параллельно, как и раньше.
+
+По умолчанию изоляция **отключена** (как в aiogram). Включение:
+
+```python
+from maxapi import Dispatcher
+from maxapi.context import SimpleEventIsolation
+
+dp = Dispatcher(
+    use_create_task=True,
+    event_isolation=SimpleEventIsolation(),
+)
+```
+
+Ключ изоляции совпадает с ключом FSM-контекста — `(chat_id, user_id)` из
+`event.get_ids()`. События, у которых часть идентификаторов отсутствует
+(например, апдейты без `user_id` в групповых чатах), делят один контекст —
+и сериализуются вместе, ровно на той гранулярности, на которой они делят
+состояние.
+
+### Изоляция при нескольких процессах
+
+`SimpleEventIsolation` работает в пределах одного процесса. Если бот запущен в
+нескольких процессах или инстансах (например, вебхук за балансировщиком),
+используйте `RedisEventIsolation` в паре с `RedisContext`:
+
+```python
+import redis.asyncio as redis
+from maxapi import Dispatcher
+from maxapi.context import RedisContext, RedisEventIsolation
+
+redis_client = redis.Redis(host="localhost", port=6379, db=0)
+
+dp = Dispatcher(
+    storage=RedisContext,
+    redis_client=redis_client,
+    key_prefix="my_bot",
+    event_isolation=RedisEventIsolation(
+        redis_client,
+        key_prefix="my_bot",
+    ),
+)
+```
+
+!!! warning "Долгие хендлеры"
+    Блокировка удерживается на всё время обработки события. Если хендлер внутри
+    себя ожидает **следующее событие того же пользователя**, при включённой
+    изоляции это приведёт к взаимной блокировке до конца хендлера
+    (у `RedisEventIsolation` — до `lock_timeout`, по умолчанию 60 секунд).
