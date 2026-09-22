@@ -16,7 +16,7 @@ from __future__ import annotations
 import logging
 
 from maxapi import Bot
-from maxapi.context import MemoryContext
+from maxapi.context.base import BaseContext
 from maxapi.exceptions import MaxError
 from maxapi.types.attachments.buttons.attachment_button import (
     AttachmentButton,
@@ -33,7 +33,7 @@ SCREEN_KEY = "screen_message_id"
 
 async def render(
     event: BaseUpdate,
-    context: MemoryContext,
+    context: BaseContext,
     text: str,
     keyboard: AttachmentButton,
     *,
@@ -50,7 +50,7 @@ async def render(
 
 async def _render_callback(
     event: MessageCallback,
-    context: MemoryContext,
+    context: BaseContext,
     text: str,
     keyboard: AttachmentButton,
     notification: str | None,
@@ -74,7 +74,7 @@ async def _render_callback(
 
 async def _render_message(
     event: BaseUpdate,
-    context: MemoryContext,
+    context: BaseContext,
     text: str,
     keyboard: AttachmentButton,
 ) -> None:
@@ -101,7 +101,7 @@ async def _render_message(
 
 async def _send_new(
     event: BaseUpdate,
-    context: MemoryContext,
+    context: BaseContext,
     text: str,
     keyboard: AttachmentButton,
 ) -> None:
@@ -133,3 +133,12 @@ def user_message_text(event: MessageCreated) -> str:
     if event.message.body is None or not event.message.body.text:
         return ""
     return event.message.body.text.strip()
+
+
+def sender_id(event: BaseUpdate) -> int:
+    """MAX user id of whoever caused the event (every user event has one)."""
+
+    _, user_id = event.get_ids()  # type: ignore[attr-defined]
+    if user_id is None:
+        raise ValueError(f"{type(event).__name__} has no sender")
+    return int(user_id)

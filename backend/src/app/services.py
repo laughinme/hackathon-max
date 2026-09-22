@@ -1,7 +1,7 @@
 """Composition root: builds use cases and adapters once at startup.
 
 Handlers receive the `Services` container through `ServicesMiddleware`
-(see `bot/middleware.py`) instead of reaching for a global.
+(bot) or `request.app.state` (HTTP) instead of reaching for a global.
 """
 
 from __future__ import annotations
@@ -11,13 +11,21 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from app.config import Config
+from application.housing.bind_resident import BindResident
+from application.housing.demo import BecomeDemoDispatcher, ListDemoBuildings
+from application.housing.identity import IdentifyUser
 from application.ports.ai import AIService
 from application.ports.classifier import Classifier
 from application.ports.clock import Clock
-from application.ports.tickets import UnitOfWorkFactory
+from application.ports.ticket_queries import TicketQueries
+from application.ports.unit_of_work import UnitOfWorkFactory
 from application.tickets.change_status import ChangeTicketStatus
 from application.tickets.create_ticket import CreateTicket
-from application.tickets.queries import GetReporterTicket, ListReporterTickets
+from application.tickets.queries import (
+    GetTicketForUser,
+    ListDispatcherQueue,
+    ListReporterTickets,
+)
 from application.tickets.triage_complaint import TriageComplaint
 from domain.tickets.sla import SlaPolicy
 from infrastructure.ai.stub import StubAIService
@@ -28,15 +36,21 @@ logger = logging.getLogger(__name__)
 
 @dataclass(frozen=True)
 class Services:
-    """Everything handlers need; built once per process."""
+    """Everything adapters need; built once per process."""
 
     config: Config
+    clock: Clock
     ai: AIService
     triage: TriageComplaint
     create_ticket: CreateTicket
     change_status: ChangeTicketStatus
     list_tickets: ListReporterTickets
-    get_ticket: GetReporterTicket
+    get_ticket: GetTicketForUser
+    list_queue: ListDispatcherQueue
+    identify: IdentifyUser
+    bind_resident: BindResident
+    become_demo_dispatcher: BecomeDemoDispatcher
+    list_demo_buildings: ListDemoBuildings
     closeables: list[Any] = field(default_factory=list)
 
     async def close(self) -> None:
@@ -80,6 +94,7 @@ def build_services(
     config: Config,
     *,
     uow_factory: UnitOfWorkFactory,
+    queries: TicketQueries,
     clock: Clock,
     classifier: Classifier | None = None,
     ai: AIService | None = None,
@@ -99,11 +114,17 @@ def build_services(
     sla = SlaPolicy()
     return Services(
         config=config,
+        clock=clock,
         ai=ai,
         triage=TriageComplaint(classifier, sla, clock, config.ml_confidence_threshold),
-        create_ticket=CreateTicket(uow_factory, sla, clock),
-        change_status=ChangeTicketStatus(uow_factory, clock),
-        list_tickets=ListReporterTickets(uow_factory, clock),
-        get_ticket=GetReporterTicket(uow_factory, clock),
+        create_ticket=CreateTicket(uow_factory, queries, sla, clock),
+        change_status=ChangeTicketStatus(uow_factory, queries, clock),
+        list_tickets=ListReporterTickets(queries, clock),
+        get_ticket=GetTicketForUser(uow_factory, queries, clock),
+        list_queue=ListDispatcherQueue(uow_factory, queries, clock),
+        identify=IdentifyUser(uow_factory),
+        bind_resident=BindResident(uow_factory, clock),
+        become_demo_dispatcher=BecomeDemoDispatcher(uow_factory, clock),
+        list_demo_buildings=ListDemoBuildings(uow_factory),
         closeables=closeables,
     )

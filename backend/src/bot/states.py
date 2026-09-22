@@ -14,3 +14,10 @@ class CreateRequest(StatesGroup):
     confirming_emergency = State()
     #: Показан черновик обращения, пользователь может его править текстом.
     editing_draft = State()
+
+
+class DispatcherFlow(StatesGroup):
+    """Dispatcher changes a status and may add a comment for the resident."""
+
+    #: Waiting for an optional comment before applying the status change.
+    commenting = State()

@@ -2,7 +2,7 @@
 
 **Проект одной фразой:** чат-бот + мини-приложение в MAX для трека «Умный город» хакатона MAX: заявка из домового чата с нормативным сроком, диспетчерская для УО, эскалация при просрочке. Дедлайн MVP — **30.09.2026 12:00 МСК**.
 
-**Текущая фаза:** Create. Шаг 1 дорожной карты (ядро заявки: домен, Postgres, вебхук) — сделан; план и следующий шаг — [docs/STATUS.md](docs/STATUS.md). LLM — только хостинговая по API, без дообучения ([D-007](docs/DECISIONS.md)).
+**Текущая фаза:** Create. Шаги 1–2 дорожной карты сделаны (ядро заявки; дома, роли, REST, уведомления), тестовый деплой — `https://domovoy-test.fly.dev`; план и следующий шаг — [docs/STATUS.md](docs/STATUS.md). LLM — только хостинговая по API, без дообучения ([D-007](docs/DECISIONS.md)).
 
 ## Что читать и в каком порядке
 
@@ -27,6 +27,7 @@
 | `docs/max/` | снимок документации MAX Bot API и мини-приложений, OpenAPI-схема, `maxapi` | обновлять скриптом из [docs/max/README.md](docs/max/README.md) |
 | `backend/` | бэкенд: `src/app` (FastAPI, сборка), `src/bot` (хендлеры MAX), `src/domain`, `src/application`, `src/infrastructure` (Postgres, ML, LLM); `tests/`; `scripts/simulate_flow.py`; `uv` | структура и команды — [backend/README.md](backend/README.md), правила слоёв — ARCHITECTURE.md §2, состояние — §7 |
 | `ml/` | отдельный сервис классификации жалоб (категория + аварийность), свой `pyproject.toml`/Docker/`uv`, порт 8100; каркас LoRA от 22.09 удалён и не связан с этим кодом ([DECISIONS.md D-005, D-006](docs/DECISIONS.md)) | структура и HTTP-контракт — [ml/README.md](ml/README.md), [docs/CONTRACTS.md §4](docs/CONTRACTS.md); модели (`*.cbm`) — в `ml/models/`, в `.gitignore`, не коммитить |
+| `infra/fly/` | конфиги временного тестового деплоя на fly.io (`domovoy-test`, `domovoy-test-db`) | прод — Yandex Cloud ([D-009](docs/DECISIONS.md)) |
 | `compose.yaml`, `infra/caddy/` | запуск одной командой (`docker compose up --build`: Postgres, бот, ML); профиль `prod` добавляет Caddy с HTTPS для вебхука | требование кейса |
 | `frontend/` | мини-приложение (Vite + React + TS) | структура — ARCHITECTURE.md §4 |
 | `template/` | старый проект команды для переиспользования | в `.gitignore`; копировать файлы осознанно, там есть секреты в `backend/secrets/` |

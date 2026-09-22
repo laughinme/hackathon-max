@@ -134,17 +134,25 @@ frontend/src/
 - Транзакционный outbox вместо прямых HTTP-вызовов из сервисов (в шаблоне есть `outbox_dispatcher.py` для ML — идея верная, обобщаем).
 - `import-linter` и `pyright` в CI, чтобы правила слоёв держались не на дисциплине.
 
-## 7. Текущее состояние кода (23.09, после шага 1)
+## 7. Текущее состояние кода (23.09, после шага 2)
 
-Сделано ([D-008](DECISIONS.md)): домен заявки (`domain/tickets/`: `entities.py`, `state_machine.py`, `sla.py`, `calendar.py`, `responsibility.py`), use case'ы (`application/tickets/`: `triage_complaint.py`, `create_ticket.py`, `change_status.py`, `queries.py`), порты `tickets.py` и `clock.py`, Postgres (`infrastructure/db/`: модели, мапперы, репозиторий, UoW, миграции Alembic), in-memory адаптеры для тестов, FastAPI-процесс с вебхуком или polling (`app/main.py`), DI через middleware (`bot/middleware.py`), представление статусов и сроков в `bot/presenters.py`.
+Сделано ([D-008](DECISIONS.md), [D-010](DECISIONS.md)):
 
-| Ещё не сделано | Цель | Шаг дорожной карты ([STATUS.md](STATUS.md)) |
-|---|---|---|
-| нет домов, жителей и ролей | `Building`, `Membership`, роль диспетчера УО | 2 |
-| нет REST и авторизации мини-приложения | `api/http/v1` по [CONTRACTS.md](CONTRACTS.md), проверка `initData` | 2 |
-| смена статуса не рассылает уведомления | outbox + порт `MaxGateway` с лимитом 2 сообщения/с на чат | 2 |
-| состояние диалога в `MemoryContext` (теряется при перезапуске) | своя реализация `BaseContext` на Postgres | 2 |
-| бот работает только в личном диалоге | реестр чатов, подсказка в групповом чате, «Я тоже» | 3 |
-| нет контроля просрочек | планировщик просрочек, эскалация в ГЖИ | 5 |
+| Слой | Что есть |
+|---|---|
+| `domain/` | `tickets/` (агрегат, переходы по ролям, SLA, календарь, ответственность), `housing/` (УО, дом, житель, диспетчер), `notifications/` |
+| `application/` | порты `unit_of_work`, `tickets`, `housing`, `outbox`, `ticket_queries`, `clock`, `classifier`, `ai`; use case'ы `tickets/` (triage, create, change_status, queries с правами), `housing/` (identity, bind_resident, demo), `notifications/deliver` |
+| `infrastructure/` | `db/` (ORM, мапперы, репозитории, UoW, SQL-запросы, outbox с арендой, состояние диалога, миграции 0001–0002), `memory/` (те же порты для тестов), `max/init_data.py`, `seed/` (демо-данные), `ml/`, `llm/`, `ai/` |
+| `api/` | `http/` (REST `/api/v1`, авторизация `tma`, ошибки RFC 7807), `webhooks/max.py` (200 сразу, обработка в фоне) |
+| `bot/` | хендлеры `start`, `create`, `my_requests`, `dispatcher`, `fallback`; `views.py`, тексты и клавиатуры по ролям, `notifications.py` (отправка из outbox), `errors.py` |
+| `app/` | `main.py` (FastAPI, вебхук или polling, relay уведомлений), `services.py` (сборка), `relay.py`, `config.py` |
 
-Решение по транспорту: `maxapi` остаётся (Q-06). Команды бота ставятся через `bot.set_commands()` (`PATCH /me/commands`): старый `set_my_commands()` ходит в `PATCH /me`, который MAX больше не поддерживает.
+| Ещё не сделано | Шаг ([STATUS.md](STATUS.md)) |
+|---|---|
+| групповые чаты: реестр, подсказка, карточка, «Я тоже» | 3 |
+| мини-приложение (фронтенд) поверх готового REST | 4 |
+| планировщик просрочек, эскалация в ГЖИ | 5 |
+| дедупликация повторных событий вебхука (inbox) | 3 |
+| LLM-классификатор и сравнение классификаторов | Q-18 |
+
+Решения по транспорту: `maxapi` остаётся для разбора событий и роутинга (Q-06); маршрут вебхука свой (`api/webhooks/max.py`), команды бота ставятся через `bot.set_commands()`.

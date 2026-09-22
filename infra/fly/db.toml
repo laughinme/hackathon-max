@@ -1,0 +1,21 @@
+# Temporary test database on fly.io (webhook check before the move to Yandex
+# Cloud). Private network only: reachable as domovoy-test-db.internal:5432.
+app = "domovoy-test-db"
+primary_region = "ams"
+
+[build]
+  image = "postgres:17-alpine"
+
+[env]
+  POSTGRES_USER = "domovoy"
+  POSTGRES_DB = "domovoy"
+  PGDATA = "/var/lib/postgresql/data/pgdata"
+
+[mounts]
+  source = "pgdata"
+  destination = "/var/lib/postgresql/data"
+
+[[vm]]
+  memory = "512mb"
+  cpu_kind = "shared"
+  cpus = 1

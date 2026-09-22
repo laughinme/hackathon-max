@@ -25,6 +25,17 @@ PYTHONPATH=src uv run python -m app.main
 
 Продакшен (вебхук, HTTPS 443): в `backend/.env` задать `BOT_MODE=webhook`, `WEBHOOK_URL=https://<домен>/webhooks/max`, `WEBHOOK_SECRET`; на сервере `DOMAIN=<домен> docker compose --profile prod up -d --build`. Caddy сам получает сертификат Let's Encrypt. Бот переподписывается на вебхук при каждом старте.
 
+Тестовый деплой на fly.io (из корня, D-009):
+
+```bash
+R=$(pwd); fly deploy "$R/backend" -c "$R/infra/fly/backend.toml" --dockerfile "$R/backend/Dockerfile" --ha=false --remote-only
+fly logs -a domovoy-test
+```
+
+Пока там активен вебхук, локальный `polling` событий не получает (в логе будет ошибка с адресом вебхука).
+
+REST для мини-приложения: `/api/v1/*`, Swagger — `/api/docs`, контракт — [`../docs/CONTRACTS.md`](../docs/CONTRACTS.md) §3.
+
 Остановка: `docker compose down` (данные Postgres остаются в томе `pgdata`; `down -v` удаляет их).
 
 ## Переменные окружения
@@ -39,6 +50,9 @@ PYTHONPATH=src uv run python -m app.main
 | `WEBHOOK_URL`, `WEBHOOK_SECRET` | для `webhook` | адрес вебхука и секрет для заголовка `X-Max-Bot-Api-Secret` |
 | `ML_SERVICE_URL`, `ML_CONFIDENCE_THRESHOLD` | нет | сервис классификации (`ml/`) и порог уверенности; без сервиса — правила |
 | `LLM_ENABLED`, `LLM_BASE_URL`, `LLM_MODEL`, `LLM_API_KEY` | нет | хостинговая LLM (D-007), по умолчанию выключена |
+| `DEMO_MODE`, `SEED_DEMO` | нет | кнопка «войти как диспетчер» и загрузка демо-данных при старте (по умолчанию включены) |
+| `POLLING_TAKEOVER` | нет | `true` — локальный polling снимает чужую подписку на вебхук (по умолчанию нет) |
+| `DEV_AUTH_ENABLED` | нет | REST принимает `Authorization: dev <id>` для фронтенда вне MAX; никогда в проде |
 
 ## Структура
 
@@ -60,9 +74,10 @@ tests/                     unit (домен, use case'ы, HTTP), integration (Po
 
 ```bash
 cd backend
-uv run pytest                                            # unit
+uv run pytest                                            # unit (домен, use case'ы, REST, initData)
 TEST_DATABASE_URL=postgresql+asyncpg://… uv run pytest   # + integration на реальном Postgres (БД очищается)
-PYTHONPATH=src uv run python -m scripts.simulate_flow   # 5 сценариев бота
+PYTHONPATH=src uv run python -m scripts.simulate_flow   # 5 сценариев бота, включая диспетчера и уведомления
+DATABASE_URL=… PYTHONPATH=src uv run python -m scripts.seed_demo   # демо-данные вручную
 uv run ruff check src tests scripts && uv run pyright src
 ```
 
@@ -79,7 +94,7 @@ uv run ruff check src tests scripts && uv run pyright src
 
 ## Известные ограничения
 
-- Состояние диалога (шаг сценария, черновик) хранится в памяти процесса и сбрасывается при перезапуске; заявки не теряются.
-- Диспетчер пока не имеет интерфейса: статусы меняются use case'ом (см. сценарий 5 симулятора); уведомления жителю — шаг 2.
+- Повторно присланное MAX событие обрабатывается повторно (дедупликации пока нет).
+- Диспетчер работает в чате бота и через REST; мини-приложение ещё не готово.
 - Бот работает только в личном диалоге; групповые чаты — шаг 3.
 - Производственный календарь учитывает праздники ст. 112 ТК РФ без переносов выходных.

@@ -1,8 +1,8 @@
-"""Process entry point: FastAPI app that receives MAX updates.
+"""Process entry point: one FastAPI app for MAX updates, REST and health.
 
-One process serves health checks and bot updates. In `webhook` mode updates
-arrive at `POST /webhooks/max` (production: HTTPS 443 behind Caddy). In
-`polling` mode, for local development, a background task pulls updates.
+`webhook` mode: updates arrive at `POST /webhooks/max` (HTTPS 443 in front).
+`polling` mode (local development): a background task pulls updates. A
+background relay delivers outbox notifications in both modes.
 """
 
 from __future__ import annotations
@@ -11,23 +11,32 @@ import asyncio
 import contextlib
 import logging
 from collections.abc import AsyncIterator
+from typing import Any
 
 import uvicorn
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
-from maxapi import Bot, Dispatcher
+from maxapi import Bot, Dispatcher, ExceptionTypeFilter
 from maxapi.enums.parse_mode import ParseMode
 from maxapi.enums.update import UpdateType
 from maxapi.exceptions.max import MaxApiError
 from maxapi.types.command import BotCommand
-from maxapi.webhook.fastapi import FastAPIMaxWebhook
 
+from api.http.app import mount_api
+from api.webhooks.max import WebhookReceiver
 from app.config import Config, load_config
+from app.relay import run_relay
 from app.services import Services, build_services
-from bot.handlers import create, fallback, my_requests, start
+from application.notifications.deliver import DeliverNotifications
+from bot.errors import on_error
+from bot.handlers import create, dispatcher, fallback, my_requests, start
 from bot.middleware import ServicesMiddleware
+from bot.notifications import MaxNotificationSender
 from infrastructure.clock import SystemClock
+from infrastructure.db.dialog_context import PostgresDialogContext
 from infrastructure.db.engine import make_engine, make_session_factory, ping
+from infrastructure.db.outbox import SqlOutboxReader
+from infrastructure.db.ticket_queries import SqlTicketQueries
 from infrastructure.db.uow import SqlUnitOfWork
 
 logger = logging.getLogger(__name__)
@@ -46,31 +55,31 @@ BOT_COMMANDS = (
 )
 
 
-def build_dispatcher(services: Services) -> Dispatcher:
-    """Routers order matters: `fallback` catches any free text, so it goes last."""
+def build_dispatcher(
+    services: Services,
+    storage: type | None = None,
+    storage_kwargs: dict[str, Any] | None = None,
+) -> Dispatcher:
+    """Routers order matters: `fallback` catches any free text, so it goes last.
 
-    dispatcher = Dispatcher()
-    dispatcher.register_outer_middleware(ServicesMiddleware(services))
-    dispatcher.include_routers(
-        start.router, create.router, my_requests.router, fallback.router
+    `storage` is the maxapi conversation-state class (in-memory by default).
+    """
+
+    dp = (
+        Dispatcher(storage=storage, **(storage_kwargs or {}))
+        if storage
+        else Dispatcher()
     )
-    return dispatcher
-
-
-async def ensure_webhook(bot: Bot, config: Config) -> None:
-    """Subscribe on every start: MAX drops a subscription after 8 h of failures."""
-
-    assert config.webhook_url is not None
-    current = await bot.get_subscriptions()
-    if any(sub.url == config.webhook_url for sub in current.subscriptions):
-        logger.info("Webhook subscription is already active")
-        return
-    await bot.subscribe_webhook(
-        url=config.webhook_url,
-        update_types=UPDATE_TYPES,
-        secret=config.webhook_secret,
+    dp.errors(ExceptionTypeFilter(Exception))(on_error)
+    dp.register_outer_middleware(ServicesMiddleware(services))
+    dp.include_routers(
+        start.router,
+        create.router,
+        my_requests.router,
+        dispatcher.router,
+        fallback.router,
     )
-    logger.info("Subscribed webhook %s", config.webhook_url)
+    return dp
 
 
 async def set_commands(bot: Bot) -> None:
@@ -82,45 +91,98 @@ async def set_commands(bot: Bot) -> None:
         logger.warning("Could not set bot commands", exc_info=True)
 
 
+async def ensure_webhook(bot: Bot, config: Config) -> None:
+    """Subscribe on every start: MAX drops a subscription after 8 h of failures."""
+
+    assert config.webhook_url is not None
+    current = await bot.get_subscriptions()
+    if any(sub.url == config.webhook_url for sub in current.subscriptions):
+        logger.info("Webhook subscription is already active")
+        return
+    await bot.subscribe_webhook(
+        url=config.webhook_url, update_types=UPDATE_TYPES, secret=config.webhook_secret
+    )
+    logger.info("Subscribed webhook %s", config.webhook_url)
+
+
+async def prepare_polling(bot: Bot, config: Config) -> None:
+    """Polling gets nothing while a webhook is active; never break it silently."""
+
+    current = await bot.get_subscriptions()
+    urls = [sub.url for sub in current.subscriptions]
+    if not urls:
+        return
+    if config.polling_takeover:
+        logger.warning("POLLING_TAKEOVER: removing webhook subscriptions %s", urls)
+        await bot.delete_webhook()
+        return
+    logger.error(
+        "Webhook is active (%s): polling will receive no updates. The deployed "
+        "bot keeps working. Set POLLING_TAKEOVER=true to take the bot over.",
+        urls,
+    )
+
+
 def create_app(config: Config) -> FastAPI:
     engine = make_engine(config.database_url)
     session_factory = make_session_factory(engine)
+    clock = SystemClock()
     services = build_services(
         config,
         uow_factory=lambda: SqlUnitOfWork(session_factory),
-        clock=SystemClock(),
+        queries=SqlTicketQueries(session_factory),
+        clock=clock,
     )
     bot = Bot(token=config.bot_token, format=ParseMode.HTML)
-    dispatcher = build_dispatcher(services)
-    webhook = FastAPIMaxWebhook(dp=dispatcher, bot=bot, secret=config.webhook_secret)
+    dp = build_dispatcher(
+        services,
+        storage=PostgresDialogContext,
+        storage_kwargs={"session_factory": session_factory},
+    )
+    receiver = WebhookReceiver(dp, bot, config.webhook_secret or "")
+    deliver = DeliverNotifications(
+        SqlOutboxReader(session_factory), MaxNotificationSender(bot), clock
+    )
 
     @contextlib.asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-        polling: asyncio.Task[None] | None = None
         await set_commands(bot)
-        if config.bot_mode == "webhook":
-            await ensure_webhook(bot, config)
-            async with webhook.lifespan(app):
+        relay = asyncio.create_task(run_relay(deliver))
+        polling: asyncio.Task[None] | None = None
+        try:
+            if config.bot_mode == "webhook":
+                await dp.startup(bot)
+                await ensure_webhook(bot, config)
                 yield
-        else:
-            await bot.delete_webhook()
-            polling = asyncio.create_task(dispatcher.start_polling(bot))
-            yield
-        if polling is not None:
-            await dispatcher.stop_polling()
-        await services.close()
-        await bot.close_session()
-        await engine.dispose()
+                await receiver.drain()
+            else:
+                await prepare_polling(bot, config)
+                polling = asyncio.create_task(dp.start_polling(bot))
+                yield
+        finally:
+            relay.cancel()
+            if polling is not None:
+                await dp.stop_polling()
+            await services.close()
+            await bot.close_session()
+            await engine.dispose()
 
-    app = FastAPI(title="Domovoy backend", lifespan=lifespan, docs_url=None)
+    app = FastAPI(
+        title="Domovoy API",
+        lifespan=lifespan,
+        docs_url="/api/docs",
+        redoc_url=None,
+        openapi_url="/api/openapi.json",
+    )
+    mount_api(app, services)
     if config.bot_mode == "webhook":
-        webhook.setup(app, path=WEBHOOK_PATH)
+        receiver.mount(app, WEBHOOK_PATH)
 
-    @app.get("/health")
+    @app.get("/health", tags=["ops"])
     async def health() -> dict[str, str]:
         return {"status": "ok", "bot_mode": config.bot_mode}
 
-    @app.get("/ready")
+    @app.get("/ready", tags=["ops"])
     async def ready() -> JSONResponse:
         try:
             await ping(engine)
@@ -129,6 +191,8 @@ def create_app(config: Config) -> FastAPI:
             return JSONResponse({"database": "unavailable"}, status_code=503)
         return JSONResponse({"database": "ok"})
 
+    if config.dev_auth_enabled:
+        logger.warning("DEV_AUTH_ENABLED: REST accepts 'Authorization: dev <id>'")
     return app
 
 

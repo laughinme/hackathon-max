@@ -66,9 +66,7 @@ class HttpClassifier:
             async with session.post(url, json={"text": text}) as response:
                 if response.status != 200:
                     body = await response.text()
-                    raise MLServiceUnavailableError(
-                        f"{response.status}: {body[:200]}"
-                    )
+                    raise MLServiceUnavailableError(f"{response.status}: {body[:200]}")
                 data = await response.json()
         except (TimeoutError, aiohttp.ClientError) as exc:
             raise MLServiceUnavailableError(str(exc)) from exc

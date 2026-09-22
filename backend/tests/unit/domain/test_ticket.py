@@ -1,4 +1,5 @@
 from datetime import UTC, datetime, timedelta
+from uuid import uuid4
 
 import pytest
 
@@ -15,6 +16,8 @@ REPORTER = 42
 def make_ticket() -> Ticket:
     return Ticket.register(
         sequence=42,
+        building_id=uuid4(),
+        company_id=uuid4(),
         reporter_id=REPORTER,
         chat_id=1000,
         category_code="lift",

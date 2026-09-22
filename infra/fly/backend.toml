@@ -1,0 +1,35 @@
+# Temporary test deployment on fly.io to verify the MAX webhook end to end.
+# Production target is Yandex Cloud (DECISIONS D-009). Deploy from repo root:
+#   fly deploy backend -c infra/fly/backend.toml --dockerfile backend/Dockerfile --ha=false
+app = "domovoy-test"
+primary_region = "ams"
+
+[env]
+  BOT_MODE = "webhook"
+  WEBHOOK_URL = "https://domovoy-test.fly.dev/webhooks/max"
+  DEMO_MODE = "true"
+  SEED_DEMO = "true"
+  LOG_LEVEL = "INFO"
+  # The ML service is not deployed here: the bot falls back to keyword rules.
+  ML_SERVICE_URL = "http://127.0.0.1:1"
+  ML_SERVICE_TIMEOUT_SEC = "1"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  # MAX needs the webhook up at all times; never scale to zero.
+  auto_stop_machines = "off"
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [[http_service.checks]]
+    grace_period = "20s"
+    interval = "15s"
+    method = "GET"
+    path = "/ready"
+    timeout = "3s"
+
+[[vm]]
+  memory = "512mb"
+  cpu_kind = "shared"
+  cpus = 1

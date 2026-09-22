@@ -6,6 +6,7 @@ from datetime import datetime
 from uuid import UUID
 
 from sqlalchemy import (
+    JSON,
     BigInteger,
     Boolean,
     DateTime,
@@ -40,6 +41,10 @@ class TicketRow(Base):
 
     id: Mapped[UUID] = mapped_column(primary_key=True)
     number: Mapped[str] = mapped_column(String(32), unique=True)
+    building_id: Mapped[UUID] = mapped_column(ForeignKey("buildings.id"), index=True)
+    company_id: Mapped[UUID] = mapped_column(
+        ForeignKey("management_companies.id"), index=True
+    )
     reporter_id: Mapped[int] = mapped_column(BigInteger, index=True)
     chat_id: Mapped[int | None] = mapped_column(BigInteger)
     category_code: Mapped[str] = mapped_column(String(32))
@@ -78,3 +83,76 @@ class TicketEventRow(Base):
     comment: Mapped[str | None] = mapped_column(Text)
 
     ticket: Mapped[TicketRow] = relationship(back_populates="events")
+
+
+class ManagementCompanyRow(Base):
+    __tablename__ = "management_companies"
+
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String(200))
+    phone: Mapped[str] = mapped_column(String(32))
+    region: Mapped[str] = mapped_column(String(100))
+    is_demo: Mapped[bool] = mapped_column(Boolean, default=False)
+
+
+class BuildingRow(Base):
+    __tablename__ = "buildings"
+
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    code: Mapped[str] = mapped_column(String(32), unique=True)
+    address: Mapped[str] = mapped_column(String(300))
+    company_id: Mapped[UUID] = mapped_column(
+        ForeignKey("management_companies.id"), index=True
+    )
+    is_demo: Mapped[bool] = mapped_column(Boolean, default=False)
+
+
+class ResidentRow(Base):
+    __tablename__ = "residents"
+
+    max_user_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    building_id: Mapped[UUID] = mapped_column(ForeignKey("buildings.id"), index=True)
+    kind: Mapped[str] = mapped_column(String(16))
+    apartment: Mapped[str | None] = mapped_column(String(16))
+    joined_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
+class DispatcherRow(Base):
+    __tablename__ = "dispatchers"
+
+    max_user_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    company_id: Mapped[UUID] = mapped_column(
+        ForeignKey("management_companies.id"), index=True
+    )
+    joined_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
+class OutboxRow(Base):
+    """Pending notifications. `sent_at` set = delivered; `next_attempt_at` null
+    and `sent_at` null = gave up after the last retry."""
+
+    __tablename__ = "outbox"
+
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    kind: Mapped[str] = mapped_column(String(64))
+    recipient_user_id: Mapped[int] = mapped_column(BigInteger)
+    payload: Mapped[dict] = mapped_column(JSON)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    next_attempt_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), index=True
+    )
+    attempts: Mapped[int] = mapped_column(Integer, default=0)
+    sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    last_error: Mapped[str | None] = mapped_column(Text)
+
+
+class DialogStateRow(Base):
+    """Bot conversation state (scenario step and draft) per chat and user."""
+
+    __tablename__ = "dialog_states"
+
+    chat_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    user_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    state: Mapped[str | None] = mapped_column(String(128))
+    data: Mapped[dict] = mapped_column(JSON, default=dict)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))

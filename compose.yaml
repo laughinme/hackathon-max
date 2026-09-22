@@ -31,6 +31,7 @@ services:
       # Service names inside the compose network override localhost from .env.
       DATABASE_URL: postgresql+asyncpg://domovoy:${POSTGRES_PASSWORD:-domovoy}@db:5432/domovoy
       ML_SERVICE_URL: http://ml:8100
+      SEED_DEMO: ${SEED_DEMO:-true}
     ports:
       - "127.0.0.1:8080:8080"
     depends_on:

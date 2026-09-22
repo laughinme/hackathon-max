@@ -26,33 +26,28 @@ Payload callback-кнопок (≤ 1024 символов, ASCII): `<ns>:<action>
 - `form:<flow>:<step>:<value>` — шаги пошаговой формы;
 - `demo:role:<resident|dispatcher>` — переключение роли в демо.
 
-Реализовано в боте сейчас (формат `<действие>:<аргумент>`, `bot/callbacks.py`): `menu`, `new`, `cat:<категория>`, `emg:yes|no` (подтверждение аварийности), `draft_done`, `draft_restart`, `my`, `item:<uuid заявки>`. Переход на схему `ns:action:args` выше — вместе с групповым чатом (шаг 3).
+Реализовано в боте сейчас (формат `<действие>:<аргумент>`, `bot/callbacks.py`): `menu`, `new`, `cat:<категория>`, `emg:yes|no` (подтверждение аварийности), `draft_done`, `draft_restart`, `my`, `item:<uuid>`, `bld:<код дома>`, `home`, `demo_disp`, `dq` (очередь), `dt:<uuid>` (карточка диспетчера), `ds:<uuid>:<статус>`, `dsc` (без комментария), `ok:<uuid>` / `reopen:<uuid>` (ответ жителя из уведомления). Диплинк дома: `?start=h_<код>` (например `h_psk001`). Переход на схему `ns:action:args` выше — вместе с групповым чатом (шаг 3).
 
 Диплинки: `?start=h_<building_code>` (дом), `?start=t_<ticket_number>` (заявка), `?startapp=house_<code>`, `?startapp=ticket_<id>`, `?startapp=dispatcher`. Без персональных данных.
 
-## 3. REST для мини-приложения (v1, черновик)
+## 3. REST для мини-приложения (v1)
 
-Авторизация: заголовок `Authorization: tma <WebApp.initData>`; бэкенд проверяет HMAC и `auth_date` (≤ 1 ч), определяет `CurrentUser {max_user_id, memberships[], role}`. Ошибки — RFC 7807 `application/problem+json` с `error_code`.
+**Реализовано (шаг 2).** Живая схема: `GET /api/openapi.json`, Swagger — `/api/docs` (на тесте: `https://domovoy-test.fly.dev/api/docs`). Код — `backend/src/api/http/v1/`, тесты — `backend/tests/unit/app/test_http.py`.
 
-| Метод | Путь | Кто | Назначение |
+Авторизация: `Authorization: tma <WebApp.initData>`; подпись HMAC по токену бота, `auth_date` не старше 1 часа, пользователь — `user.id`. Для работы фронтенда вне MAX: `Authorization: dev <max_user_id>`, только при `DEV_AUTH_ENABLED=true` на бэкенде. Ошибки — `application/problem+json` с `error_code`: `invalid_init_data` 401, `not_a_dispatcher` / `action_not_allowed` / `not_ticket_reporter` 403, `ticket_not_found` / `building_not_found` 404, `illegal_transition` / `resident_not_bound` 409.
+
+| Метод | Путь | Кто | Ответ |
 |---|---|---|---|
-| GET | `/api/v1/me` | все | профиль, роли, дома, демо-флаг |
-| GET | `/api/v1/buildings/{id}` | житель дома, диспетчер УО | карточка дома, УО, чат, статистика |
-| GET | `/api/v1/buildings/{id}/pulse?period=week` | те же | «пульс дома» |
-| GET | `/api/v1/tickets?building_id=&status=&mine=true&cursor=` | житель (свой дом), диспетчер (свои дома) | список с курсорной пагинацией |
-| POST | `/api/v1/tickets` | житель | создать заявку `{building_id, category, subcategory?, description, is_emergency?, entrance?, photos[]?}` → `201 Ticket` с `react_by`, `resolve_by`, `legal_basis` |
-| GET | `/api/v1/tickets/{id}` | участники дома, диспетчер | карточка + таймлайн |
-| POST | `/api/v1/tickets/{id}/support` | житель | «Я тоже» (идемпотентно) |
-| POST | `/api/v1/tickets/{id}/status` | диспетчер | `{status: acknowledged|in_progress|done|rejected, comment?, eta?}` |
-| POST | `/api/v1/tickets/{id}/confirm` | автор или поддержавший | `{confirmed: bool, comment?}` |
-| POST | `/api/v1/tickets/{id}/escalation` | автор/поддержавший, если просрочена | создать пакет → `{document_url}` |
-| GET | `/api/v1/dispatcher/queue?company_id=&sort=sla&status=` | диспетчер | очередь по домам с SLA |
-| GET | `/api/v1/reference/responsibility` | все | матрица «кто отвечает» |
-| GET | `/api/v1/reference/sla` | все | справочник сроков с основаниями |
-| POST | `/api/v1/uploads/photos` | житель | загрузка фото (лимит 5 МБ, jpeg/png) |
-| GET | `/health`, `/ready` | инфраструктура | состояние БД, вебхука, outbox |
+| GET | `/api/v1/me` | все | `{max_user_id, residency: {building_id, building_code, address, company_name, company_phone} \| null, dispatcher: {company_id, company_name} \| null, demo_mode}` |
+| GET | `/api/v1/tickets` | житель | мои заявки, новые сверху, `TicketOut[]` |
+| GET | `/api/v1/tickets/{id}` | автор или диспетчер УО дома | `TicketOut` |
+| GET | `/api/v1/dispatcher/queue?include_closed=false` | диспетчер | заявки УО: открытые первыми, по сроку `resolve_by`, до 50 |
+| POST | `/api/v1/tickets/{id}/status` | диспетчер УО дома | тело `{status: acknowledged\|in_progress\|done\|rejected, comment?}`; жителю уходит уведомление |
+| POST | `/api/v1/tickets/{id}/confirmation` | автор | тело `{resolved: bool, comment?}`: `true` → `confirmed`, `false` → `in_progress` |
 
-Правила: денежных и персональных полей нет; все времена — ISO 8601 с зоной; пагинация курсорная; `PATCH` не используем, статусы меняются только через явные действия.
+`TicketOut`: `id, number, building_id, building_address, category_code, is_emergency, description, responsible_party, responsibility_basis, status, resolve_by, react_by, deadline_basis, is_overdue, created_at, updated_at, events[{status, actor_role, at, comment}], available_statuses[]` — последнее поле говорит фронтенду, какие кнопки показать текущему пользователю.
+
+**Планируется:** создание заявки из мини-приложения с фото, карточка дома и «пульс дома», справочники `reference/sla` и `reference/responsibility`.
 
 ## 4. Внутренний ML-сервис (классификация жалоб)
 

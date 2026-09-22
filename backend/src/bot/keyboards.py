@@ -19,26 +19,6 @@ from bot.presenters import STATUS_EMOJI, short_description
 from domain.tickets.catalog import CATEGORIES, OTHER
 
 
-def main_menu() -> AttachmentButton:
-    """Главное меню."""
-
-    builder = InlineKeyboardBuilder()
-    builder.row(
-        CallbackButton(
-            text="📝 Сообщить о проблеме",
-            payload=callbacks.pack(callbacks.NEW),
-            intent=Intent.POSITIVE,
-        )
-    )
-    builder.row(
-        CallbackButton(
-            text="📂 Мои заявки",
-            payload=callbacks.pack(callbacks.MY_LIST),
-        )
-    )
-    return builder.as_markup()
-
-
 def categories_menu() -> AttachmentButton:
     """Быстрые сценарии + возврат в меню."""
 
@@ -178,6 +158,14 @@ def request_card() -> AttachmentButton:
             payload=callbacks.pack(callbacks.MY_LIST),
         )
     )
+    builder.row(_back_to_menu())
+    return builder.as_markup()
+
+
+def menu_only() -> AttachmentButton:
+    """Single "main menu" button: a safe way out of any error screen."""
+
+    builder = InlineKeyboardBuilder()
     builder.row(_back_to_menu())
     return builder.as_markup()
 

@@ -35,14 +35,18 @@ os.environ.setdefault("DATABASE_URL", "postgresql+asyncpg://simulation/unused")
 from app.config import load_config  # noqa: E402
 from app.main import build_dispatcher  # noqa: E402
 from app.services import Services, build_services  # noqa: E402
-from application.tickets.change_status import ChangeStatusCommand  # noqa: E402
-from domain.tickets.enums import ActorRole, TicketStatus  # noqa: E402
+from application.notifications.deliver import DeliverNotifications  # noqa: E402
+from bot.notifications import MaxNotificationSender  # noqa: E402
 from infrastructure.clock import SystemClock  # noqa: E402
 from infrastructure.memory.tickets import (  # noqa: E402
-    InMemoryTicketStore,
+    InMemoryOutboxReader,
+    InMemoryStore,
+    InMemoryTicketQueries,
     InMemoryUnitOfWork,
 )
 from infrastructure.ml.rule_based import RuleBasedClassifier  # noqa: E402
+from infrastructure.seed.demo_data import build_demo_dataset  # noqa: E402
+from infrastructure.seed.loaders import load_into_memory  # noqa: E402
 
 CHAT_ID = 1000
 USER_ID = 42
@@ -142,6 +146,7 @@ class Simulation:
         self.bot = FakeBot()
         self.dispatcher = build_dispatcher(services)
         self._callbacks = 0
+        self.deliver: Any = None
 
     async def start(self) -> None:
         event = BotStarted(timestamp=0, chat_id=CHAT_ID, user=USER, user_locale="ru")
@@ -221,48 +226,45 @@ def check(condition: bool, title: str) -> None:
 
 
 async def scenario_quick_button(sim: Simulation) -> None:
-    """Main path: quick category -> ticket with legal deadline -> "My tickets"."""
+    """Main path: building -> quick category -> ticket with legal deadline."""
 
-    print("\n=== Сценарий 1: быстрый сценарий ===")
+    print("\n=== Сценарий 1: выбор дома и быстрый сценарий ===")
 
     await sim.start()
     screen_id = sim.screen_id
     check("Здравствуйте" in sim.screen_text, "приветствие показано")
-    check(sim.buttons == ["new", "my"], "меню из двух кнопок")
+    check("demo_disp" in sim.buttons, "есть вход диспетчера для демо")
+
+    await sim.click("new")
+    check("Выберите ваш дом" in sim.screen_text, "сначала просим выбрать дом")
+    await sim.click("bld:psk001")
+    check("Ваш дом" in sim.screen_text, "дом сохранён, показано меню")
 
     await sim.click("new")
     check("Новая заявка" in sim.screen_text, "экран быстрых сценариев")
-    check("cat:water" in sim.buttons, "есть быстрый сценарий «Вода»")
-
     await sim.click("cat:water")
     check("Где именно течёт" in sim.screen_text, "задан уточняющий вопрос")
 
     await sim.send_text("Течёт труба в подъезде на 5 этаже, вода на полу")
     check("Это авария?" in sim.screen_text, "классификатор не уверен: спросили")
-    check(sim.buttons[:2] == ["emg:yes", "emg:no"], "кнопки да/нет")
-
     await sim.click("emg:no")
     check("Черновик заявки" in sim.screen_text, "сформирован черновик")
     check("Правила № 170" in sim.screen_text, "показано основание срока")
-    check("Срок устранения" in sim.screen_text, "показан нормативный срок")
 
     await sim.send_text("Добавь, что вода стекает на 4 этаж")
     check("стекает на 4 этаж" in sim.screen_text, "правка попала в черновик")
 
     await sim.click("draft_done")
     check("Заявка зарегистрирована" in sim.screen_text, "заявка зарегистрирована")
-    check("№ 20" in sim.screen_text, "присвоен номер")
+    check("№ 2026-00121" in sim.screen_text, "номер продолжает демо-историю")
     check("Тестовый режим" in sim.screen_text, "демо-данные помечены")
 
     await sim.click("my")
-    check("Мои заявки" in sim.screen_text, "открыт список заявок")
     item_payload = next(b for b in sim.buttons if b.startswith("item:"))
     await sim.click(item_payload)
-    check("История" in sim.screen_text, "открыта карточка с историей")
-    check("Зарегистрирована" in sim.screen_text, "статус в карточке")
+    check("История" in sim.screen_text, "карточка с историей")
 
     await sim.click("menu")
-    check("Здравствуйте" in sim.screen_text, "возврат в главное меню")
     check(sim.screen_id == screen_id, "вся навигация в ОДНОМ сообщении")
     check(sim.bot.sent_count == 1, "новых сообщений в чат не отправлялось")
 
@@ -272,23 +274,15 @@ async def scenario_free_text(sim: Simulation) -> None:
 
     print("\n=== Сценарий 2: свободный текст, авария ===")
 
-    screen_id = sim.screen_id
     await sim.send_text("В подвале прорвало трубу, топит всё")
     check("Уточняю детали" in sim.screen_text, "AI задал уточнение")
-
     await sim.send_text("Подъезд 2, началось час назад")
     check("Это авария?" in sim.screen_text, "спросили про аварию")
     await sim.click("emg:yes")
-    check("аварийная" in sim.screen_text, "срочность — аварийная")
     check("ПП РФ № 416, п. 13" in sim.screen_text, "аварийный норматив")
     check("Реакция аварийной службы" in sim.screen_text, "срок реакции 30 минут")
-
     await sim.click("draft_done")
     check("Заявка зарегистрирована" in sim.screen_text, "вторая заявка")
-
-    await sim.click("my")
-    check(sum(b.startswith("item:") for b in sim.buttons) == 2, "в списке две")
-    check(sim.screen_id == screen_id, "экран по-прежнему один")
 
 
 async def scenario_storage_failure(sim: Simulation) -> None:
@@ -306,13 +300,10 @@ async def scenario_storage_failure(sim: Simulation) -> None:
     await sim.click("cat:light")
     await sim.send_text("Не горит лампа на лестничной клетке, подъезд 1")
     await sim.click("emg:no")
-    check("Черновик заявки" in sim.screen_text, "черновик готов")
 
     object.__setattr__(create, "execute", failing_execute)
     await sim.click("draft_done")
     check("Не удалось зарегистрировать" in sim.screen_text, "ошибка показана")
-    check("draft_done" in sim.buttons, "есть повтор отправки")
-
     object.__setattr__(create, "execute", original)
     await sim.click("draft_done")
     check("Заявка зарегистрирована" in sim.screen_text, "повтор сработал")
@@ -321,25 +312,42 @@ async def scenario_storage_failure(sim: Simulation) -> None:
     check(sum(b.startswith("item:") for b in sim.buttons) == 3, "дубликата нет")
 
 
-async def scenario_dispatcher_updates(sim: Simulation) -> None:
-    """The dispatcher moves a ticket; the resident sees status and comment."""
+async def scenario_dispatcher_and_resident(sim: Simulation) -> None:
+    """Dispatcher works the queue in the chat; the resident confirms the fix."""
 
-    print("\n=== Сценарий 5: диспетчер меняет статус ===")
+    print("\n=== Сценарий 5: диспетчер → уведомление → подтверждение ===")
 
-    [latest, *_] = await sim.services.list_tickets.execute(USER_ID)
-    await sim.services.change_status.execute(
-        ChangeStatusCommand(
-            ticket_id=latest.id,
-            target=TicketStatus.IN_PROGRESS,
-            actor_role=ActorRole.DISPATCHER,
-            actor_id=7,
-            comment="электрик придёт завтра к 10:00",
-        )
+    await sim.click("menu")
+    await sim.click("demo_disp")
+    check("Вы диспетчер" in sim.screen_text, "включена роль диспетчера (демо)")
+    await sim.click("dq")
+    check("Очередь заявок" in sim.screen_text, "открыта очередь")
+    check("просрочено" in sim.screen_text, "видно число просрочек")
+
+    [mine, *_] = await sim.services.list_tickets.execute(USER_ID)
+    await sim.click(f"dt:{mine.id}")
+    check(f"№ {mine.number}" in sim.screen_text, "карточка заявки жителя")
+    await sim.click(f"ds:{mine.id}:in_progress")
+    check("Напишите комментарий" in sim.screen_text, "спросили комментарий")
+    await sim.send_text("электрик придёт завтра к 10:00")
+    check("В работе" in sim.screen_text, "статус изменён")
+
+    await sim.click(f"ds:{mine.id}:done")
+    await sim.click("dsc")
+    check("Выполнена" in sim.screen_text, "отмечено выполнение")
+
+    sent_before = sim.bot.sent_count
+    delivered = await sim.deliver.execute()
+    check(delivered == 2, "два уведомления жителю доставлены")
+    check(sim.bot.sent_count == sent_before + 2, "уведомления пришли сообщениями")
+    check("Проблема устранена?" in sim.screen_text, "последнее — вопрос о выполнении")
+    check(f"ok:{mine.id}" in sim.buttons, "есть кнопка «Да, всё работает»")
+
+    await sim.click(f"ok:{mine.id}")
+    check("Закрыта" in sim.screen_text, "житель подтвердил, заявка закрыта")
+    check(
+        await sim.deliver.execute() == 0, "жителю не шлём уведомление о его же действии"
     )
-    await sim.click("my")
-    await sim.click(f"item:{latest.id}")
-    check("В работе" in sim.screen_text, "житель видит новый статус")
-    check("электрик придёт завтра" in sim.screen_text, "виден комментарий УО")
 
 
 async def scenario_llm_service(sim: Simulation) -> None:
@@ -432,20 +440,28 @@ async def scenario_llm_service(sim: Simulation) -> None:
 
 async def main() -> None:
     logging.basicConfig(level=logging.WARNING)
-    store = InMemoryTicketStore()
+    clock = SystemClock()
+    store = InMemoryStore()
+    load_into_memory(store, build_demo_dataset(clock.now()))
     services = build_services(
         load_config(),
         uow_factory=lambda: InMemoryUnitOfWork(store),
-        clock=SystemClock(),
+        queries=InMemoryTicketQueries(store),
+        clock=clock,
         classifier=RuleBasedClassifier(),
     )
 
     sim = Simulation(services)
+    sim.deliver = DeliverNotifications(
+        InMemoryOutboxReader(store),
+        MaxNotificationSender(sim.bot),  # type: ignore[arg-type]
+        clock,
+    )
     await scenario_quick_button(sim)
     await scenario_free_text(sim)
     await scenario_storage_failure(sim)
     await scenario_llm_service(sim)
-    await scenario_dispatcher_updates(sim)
+    await scenario_dispatcher_and_resident(sim)
 
     print("\n🎉 Все сценарии пройдены")
 

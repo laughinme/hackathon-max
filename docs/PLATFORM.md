@@ -97,6 +97,6 @@
 ## 9. Особенности `maxapi` 1.2.2 (проверено 23.09 на реальном токене)
 
 - `bot.set_my_commands()` ходит в `PATCH /me`, MAX отвечает `404 method.not.found`. Использовать `bot.set_commands()` (`PATCH /me/commands`).
-- `FastAPIMaxWebhook` сам проверяет `X-Max-Bot-Api-Secret` (403 при неверном) и обрабатывает событие внутри HTTP-запроса; при `Dispatcher(use_create_task=True)` — в фоне.
+- `FastAPIMaxWebhook` разбирает событие внутри HTTP-запроса, а разбор (`process_update_webhook`) синхронно зовёт MAX API (`GET /chats/{id}`). Любая ошибка там превращается в 500 даже при `use_create_task=True` (проверено на fly 23.09). Поэтому у нас свой маршрут `api/webhooks/max.py`: секрет, 200 сразу, разбор и обработка в фоне.
 - Хранилище состояния диалога подменяемое: `Dispatcher(storage=<класс BaseContext>)`; по умолчанию `MemoryContext`.
 - Данные, которые middleware кладёт в `data`, приходят в хендлер аргументом с тем же именем (так передаётся `services`).

@@ -22,7 +22,10 @@ class TicketEventView:
 class TicketView:
     id: UUID
     number: str
+    building_id: UUID
+    building_address: str
     reporter_id: int
+    company_id: UUID
     category_code: str
     is_emergency: bool
     description: str
@@ -38,11 +41,14 @@ class TicketView:
     events: tuple[TicketEventView, ...]
 
 
-def to_view(ticket: Ticket, now: datetime) -> TicketView:
+def to_view(ticket: Ticket, now: datetime, building_address: str) -> TicketView:
     return TicketView(
         id=ticket.id,
         number=ticket.number,
+        building_id=ticket.building_id,
+        building_address=building_address,
         reporter_id=ticket.reporter_id,
+        company_id=ticket.company_id,
         category_code=ticket.category_code,
         is_emergency=ticket.is_emergency,
         description=ticket.description,

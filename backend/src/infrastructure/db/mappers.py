@@ -12,6 +12,8 @@ def ticket_to_domain(row: TicketRow) -> Ticket:
     return Ticket(
         id=row.id,
         number=row.number,
+        building_id=row.building_id,
+        company_id=row.company_id,
         reporter_id=row.reporter_id,
         chat_id=row.chat_id,
         category_code=row.category_code,
@@ -50,6 +52,8 @@ def ticket_to_row(ticket: Ticket) -> TicketRow:
 def apply_ticket(row: TicketRow, ticket: Ticket) -> None:
     """Copy mutable aggregate state onto a row; append events not yet stored."""
 
+    row.building_id = ticket.building_id
+    row.company_id = ticket.company_id
     row.reporter_id = ticket.reporter_id
     row.chat_id = ticket.chat_id
     row.category_code = ticket.category_code

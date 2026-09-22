@@ -36,6 +36,8 @@ class Ticket:
 
     id: UUID
     number: str
+    building_id: UUID
+    company_id: UUID
     reporter_id: int
     chat_id: int | None
     category_code: str
@@ -54,6 +56,8 @@ class Ticket:
         cls,
         *,
         sequence: int,
+        building_id: UUID,
+        company_id: UUID,
         reporter_id: int,
         chat_id: int | None,
         category_code: str,
@@ -66,6 +70,8 @@ class Ticket:
         ticket = cls(
             id=uuid4(),
             number=format_ticket_number(now.year, sequence),
+            building_id=building_id,
+            company_id=company_id,
             reporter_id=reporter_id,
             chat_id=chat_id,
             category_code=category_code,
@@ -96,22 +102,22 @@ class Ticket:
         actor_id: int | None,
         now: datetime,
         comment: str | None = None,
-    ) -> None:
+    ) -> TicketEvent:
         ensure_transition(self.status, target, actor_role)
         if actor_role is ActorRole.RESIDENT and actor_id != self.reporter_id:
             raise NotTicketReporterError()
 
+        event = TicketEvent(
+            status=target,
+            actor_role=actor_role,
+            actor_id=actor_id,
+            at=now,
+            comment=comment.strip() if comment else None,
+        )
         self.status = target
         self.updated_at = now
-        self.events.append(
-            TicketEvent(
-                status=target,
-                actor_role=actor_role,
-                actor_id=actor_id,
-                at=now,
-                comment=comment.strip() if comment else None,
-            )
-        )
+        self.events.append(event)
+        return event
 
     @property
     def is_open(self) -> bool:

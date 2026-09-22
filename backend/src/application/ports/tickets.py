@@ -1,10 +1,8 @@
-"""Persistence ports for the ticket aggregate."""
+"""Write-side persistence port for the ticket aggregate."""
 
 from __future__ import annotations
 
-from collections.abc import Callable
-from types import TracebackType
-from typing import Protocol, Self
+from typing import Protocol
 from uuid import UUID
 
 from domain.tickets.entities import Ticket
@@ -20,26 +18,3 @@ class TicketRepository(Protocol):
     async def get(self, ticket_id: UUID) -> Ticket | None: ...
 
     async def save(self, ticket: Ticket) -> None: ...
-
-    async def list_by_reporter(self, reporter_id: int) -> list[Ticket]: ...
-
-
-class UnitOfWork(Protocol):
-    """One business transaction. Rolls back unless `commit()` was called."""
-
-    @property
-    def tickets(self) -> TicketRepository: ...
-
-    async def __aenter__(self) -> Self: ...
-
-    async def __aexit__(
-        self,
-        exc_type: type[BaseException] | None,
-        exc: BaseException | None,
-        tb: TracebackType | None,
-    ) -> None: ...
-
-    async def commit(self) -> None: ...
-
-
-UnitOfWorkFactory = Callable[[], UnitOfWork]

@@ -42,6 +42,17 @@ class Config:
     webhook_secret: str | None
     http_host: str
     http_port: int
+    # Polling removes an active webhook subscription only when explicitly asked:
+    # the bot token is shared, a teammate's local polling must not silently
+    # break the deployed webhook.
+    polling_takeover: bool
+
+    # Hackathon demo: synthetic data and a "become a dispatcher" button so
+    # checkers can walk both sides with one MAX account.
+    demo_mode: bool
+    # Accept `Authorization: dev <max_user_id>` in the REST API (frontend work
+    # outside MAX). Never in production.
+    dev_auth_enabled: bool
 
     # Hosted LLM behind an OpenAI-compatible API (DECISIONS D-007). When off,
     # the bot works on the rule-based StubAIService.
@@ -88,6 +99,9 @@ def load_config() -> Config:
         webhook_secret=webhook_secret,
         http_host=_env_str("HTTP_HOST", "0.0.0.0"),
         http_port=int(_env_str("HTTP_PORT", "8080")),
+        polling_takeover=_env_bool("POLLING_TAKEOVER", False),
+        demo_mode=_env_bool("DEMO_MODE", True),
+        dev_auth_enabled=_env_bool("DEV_AUTH_ENABLED", False),
         llm_enabled=_env_bool("LLM_ENABLED", False),
         llm_base_url=_env_str("LLM_BASE_URL", "https://ai.api.cloud.yandex.net/v1"),
         llm_model=_env_str("LLM_MODEL"),

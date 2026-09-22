@@ -4,7 +4,6 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from domain.tickets.entities import Ticket
@@ -33,11 +32,3 @@ class SqlTicketRepository:
         if row is None:
             raise LookupError(f"Ticket {ticket.id} is not persisted")
         apply_ticket(row, ticket)
-
-    async def list_by_reporter(self, reporter_id: int) -> list[Ticket]:
-        rows = await self._session.scalars(
-            select(TicketRow)
-            .where(TicketRow.reporter_id == reporter_id)
-            .order_by(TicketRow.created_at.desc())
-        )
-        return [ticket_to_domain(row) for row in rows]
