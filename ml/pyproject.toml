@@ -1,0 +1,35 @@
+[project]
+name = "domovoy-ml"
+version = "0.1.0"
+description = "Classification service (category + is_emergency) for the Smart City track (hackathon MAX 2026)"
+requires-python = ">=3.13,<3.14"
+dependencies = [
+    "fastapi>=0.115,<1.0",
+    "uvicorn[standard]>=0.30,<1.0",
+    "pydantic>=2.9,<3.0",
+    "catboost>=1.2,<2.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+    "pytest-asyncio>=1.1",
+    "httpx>=0.27",
+    "ruff>=0.14",
+]
+
+[tool.uv]
+package = false
+
+[tool.ruff]
+line-length = 88
+target-version = "py313"
+src = ["src"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+pythonpath = ["src"]
+testpaths = ["tests"]
