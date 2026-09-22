@@ -26,7 +26,7 @@
 | `docs/` | наши документы (см. список выше) | по темам, без дублирования: ссылаться, а не копировать |
 | `docs/max/` | снимок документации MAX Bot API и мини-приложений, OpenAPI-схема, `maxapi` | обновлять скриптом из [docs/max/README.md](docs/max/README.md) |
 | `backend/` | бэкенд: `src/app` (сборка), `src/bot` (хендлеры MAX), `src/domain`, `src/application`, `src/infrastructure`; `scripts/simulate_flow.py` — оффлайн-прогон; `uv` | структура — ARCHITECTURE.md §2, текущее состояние — §7. Запуск: `cd backend && uv sync && PYTHONPATH=src uv run python -m app.main` |
-| `ml/` | исследовательский каркас дообучения LoRA (не запускался, вне P0–P2) | не подключать к рантайму без решения Q-17 |
+| `ml/` | удалён 22.09 (каркас LoRA не понадобился, см. [DECISIONS.md D-005](docs/DECISIONS.md#d-005-ml-классификация-жалоб-категория-и-аварийность-через-catboost-llm-для-фото-и-уточнений-ml-lora-удалён-2209-ml-инженер-команды)); классификация жалоб — CatBoost, появится заново под конкретный код | тренировочный код CatBoost — офлайн, не в рантайме `backend/` |
 | `compose.yaml` | запуск одной командой (`docker compose up --build`) | требование кейса |
 | `frontend/` | мини-приложение (Vite + React + TS) | структура — ARCHITECTURE.md §4 |
 | `template/` | старый проект команды для переиспользования | в `.gitignore`; копировать файлы осознанно, там есть секреты в `backend/secrets/` |

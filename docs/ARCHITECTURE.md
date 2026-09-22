@@ -39,11 +39,15 @@ backend/src/
     shared/   value_objects.py (TicketNumber, Address), events.py (доменные события), clock.py (Protocol)
   application/         use cases и порты
     tickets/  create_ticket.py, support_ticket.py, change_status.py, escalate_ticket.py, queries.py
-    ports/    repositories.py (Protocol), max_gateway.py (Protocol), unit_of_work.py, notifier.py, clock.py
+    ports/    repositories.py (Protocol), max_gateway.py (Protocol), unit_of_work.py, notifier.py, clock.py,
+              classifier.py (Protocol: classify → category/subcategory + is_emergency, оба с confidence — вход в SlaPolicy),
+              ai.py (Protocol: описание по фото, уточняющий диалог при низкой уверенности — DECISIONS D-005)
     dto.py    входные/выходные DTO use case'ов (dataclasses или pydantic, но не ORM)
   infrastructure/      адаптеры
     db/  engine.py, uow.py, models/<aggregate>.py (ORM), repositories/<aggregate>.py, mappers/<aggregate>.py, migrations/
     max/ client.py (httpx + CA Минцифры + retry), gateway.py (реализация порта), schemas.py (типы Update из OpenAPI)
+    ml/  classifier CatBoost (категория + аварийность) — офлайн-обученный артефакт, порт `classifier.py`
+    llm/ клиент хостингового провайдера (GigaChat/YandexGPT) — описание по фото и fallback-диалог, порт `ai.py`
     outbox/ publisher.py (worker), rate_limiter.py (2 msg/s на чат)
     scheduler/ sla_watchdog.py, digest.py
     docs/  seed.py (синтетические данные, маркированные)
@@ -138,7 +142,7 @@ frontend/src/
 | `Request.set_status()` без проверки переходов; эмодзи и подписи в домене | `state_machine.py`, рендер статусов в `bot/render/` | `domain/tickets/` |
 | `UKClient` (mock HTTP в «систему УК») и демо-таймер статусов | роль диспетчера, use case `change_status`; статусы меняет человек | `application/tickets/`, `api/http/v1/` |
 | хендлеры вызывают глобальный `get_services()` | зависимости через middleware диспетчера или контейнер | `app/services.py`, `bot/` |
-| `AIService.analyze/refine` — вопросы и текст обращения | классификатор категории + слоты (`location`, `severity`) → создание заявки; текст обращения опционален | `application/ports/ai.py` |
+| `AIService.analyze/refine` — вопросы и текст обращения для каждой заявки | `classifier.py` (CatBoost: категория + аварийность → вход `SlaPolicy`) на каждой заявке; `ai.py` (хостинговая LLM) — только фото-описание и fallback-диалог при низкой уверенности (D-005) | `application/ports/classifier.py`, `application/ports/ai.py` |
 | нет мини-приложения и REST | `api/http/v1` по [CONTRACTS.md](CONTRACTS.md), проверка `initData` | `api/` |
 | `scripts/simulate_flow.py` с `FakeBot` | pytest с фейковыми портами + тесты домена | `tests/` |
 

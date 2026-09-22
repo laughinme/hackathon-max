@@ -11,7 +11,7 @@
 | `ChatBinding` | chat_id (MAX), building_id, bot_is_admin, can_read_all, bound_at, status | Реестр чатов ведём сами (`GET /chats` в MAX удалён) |
 | `Resident` | id, max_user_id, display_name (из профиля MAX), created_at | Никаких ФИО и телефонов сверх того, что отдаёт MAX |
 | `Membership` | resident_id, building_id, role (`owner` / `tenant` / `chair` / `dispatcher`), apartment (опционально, вводит сам), source (`chat` / `qr` / `seed`) | Роль `dispatcher` привязана к УО, не к дому |
-| `Ticket` (заявка) | id, number (`<год>-<seq>` или `<код дома>-<seq>`), building_id, reporter_id, category, subcategory, responsible_party, is_emergency, description, photos[], status, created_at, react_by, resolve_by, legal_basis, closed_at, chat_message_mid (сообщение-карточка в чате), source (`chat` / `dialog` / `miniapp`) | Агрегат; переходы только через `state_machine` |
+| `Ticket` (заявка) | id, number (`<год>-<seq>` или `<код дома>-<seq>`), building_id, reporter_id, category, subcategory, responsible_party, is_emergency, description, description_source (`resident` / `llm_dialog`), ai_photo_summary, classification_confidence, photos[], status, created_at, react_by, resolve_by, legal_basis, closed_at, chat_message_mid (сообщение-карточка в чате), source (`chat` / `dialog` / `miniapp`) | Агрегат; переходы только через `state_machine`. `is_emergency` — выход ML-классификатора, не ручной ввод; ML-поля — см. §7 |
 | `TicketSupport` | ticket_id, resident_id, created_at | «Я тоже»; уникальность (ticket, resident) |
 | `TicketEvent` | ticket_id, type, actor (resident / dispatcher / system), payload, created_at | Таймлайн: created, acknowledged, in_progress, comment, done, confirmed, reopened, overdue, escalated |
 | `Escalation` | ticket_id, target (`gzhi`), document_url, created_at, created_by | PDF с историей заявки |
@@ -78,3 +78,13 @@
 ## 6. Источники данных для масштабирования (описать в слайде, не интегрировать)
 
 ГИС ЖКХ (дом → УО, лицензии), ГАР/ФИАС (адреса), реестр региональных операторов капремонта, контакты ГЖИ регионов, производственный календарь. Формат импорта — CSV в `infrastructure/seed/`, чтобы регион подключался конфигом.
+
+## 7. ML-классификация жалоб
+
+Решение — [DECISIONS.md D-005](DECISIONS.md#d-005-ml-классификация-жалоб-категория-и-аварийность-через-catboost-llm-для-фото-и-уточнений-ml-lora-удалён-2209-ml-инженер-команды). Конвейер на создании заявки:
+
+1. Текст → **CatBoost**-классификатор → `category`/`subcategory` **и** `is_emergency`, оба с `classification_confidence`. `is_emergency` — не ручной ввод и не статическая константа категории (как сейчас в `catalog.py`), это то, что различает, например, «лифт не работает» (не авария) от «лифт застрял, внутри человек» (авария) — см. справочник §2. Оба выхода — прямой вход в `SlaPolicy(category, is_emergency, ...)`, который и считает `resolve_by`/`legal_basis`. Отдельной модели «приоритета для сортировки» не нужно: очередь диспетчера сортируется по остатку времени до `resolve_by` (`sort=sla`), это уже даёт правильный порядок, если `category`/`is_emergency` определены верно.
+2. Если есть фото и уверенность в норме → LLM через API по фото + тексту генерирует `ai_photo_summary` (доп. описание для диспетчера, исходный `description` не меняется).
+3. Если `classification_confidence` (по категории или по `is_emergency`) ниже порога (значение — открытый вопрос, Q-09) → LLM-диалог задаёт уточняющие вопросы / просит фото → итоговый текст заменяет `description`, `description_source = llm_dialog`. Fail-safe: при низкой уверенности именно в `is_emergency` заявка по умолчанию регистрируется как аварийная, пока диалог не уточнит обратное.
+
+Для обучения CatBoost нужен размеченный корпус **текстов** жалоб по категориям и признакам аварийности — синтетика из §4 сейчас задаёт только распределение по категориям, не сами формулировки; корпус предстоит собрать или сгенерировать отдельно.
