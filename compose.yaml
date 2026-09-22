@@ -6,6 +6,25 @@ services:
     restart: unless-stopped
     env_file:
       - ./backend/.env
+    environment:
+      # Имя сервиса в сети compose, не localhost — переопределяет .env.
+      ML_SERVICE_URL: http://ml:8100
+    depends_on:
+      - ml
     stop_grace_period: 10s
     # Прототип работает по long polling; целевая схема — webhook за Caddy
     # (см. docs/ARCHITECTURE.md), тогда здесь появятся caddy и postgres.
+
+  ml:
+    build: ./ml
+    image: domovoy-ml:latest
+    container_name: domovoy-ml
+    restart: unless-stopped
+    env_file:
+      - ./ml/.env
+    volumes:
+      # Обученные модели кладутся сюда руками — без пересборки образа
+      # (DECISIONS D-006); пока файлов нет, сервис отвечает 503, бот
+      # откатывается на правила (см. ML_SERVICE_URL у bot).
+      - ./ml/models:/app/models:ro
+    stop_grace_period: 10s

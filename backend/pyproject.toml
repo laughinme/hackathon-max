@@ -16,12 +16,6 @@ dev = [
     "ruff>=0.14",
     "pyright>=1.1.400",
 ]
-# Нужна только для загрузки обученных моделей (DECISIONS D-005).
-# Без этой группы бот работает на RuleBasedClassifier: `uv sync --group ml`
-# ставит catboost, когда появятся файлы моделей.
-ml = [
-    "catboost>=1.2",
-]
 
 [tool.uv]
 package = false

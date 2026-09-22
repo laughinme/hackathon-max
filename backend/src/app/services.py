@@ -14,7 +14,7 @@ from application.ports.ai import AIService
 from application.ports.classifier import Classifier
 from infrastructure.ai.stub import StubAIService, get_ai_service
 from infrastructure.memory.requests import RequestRepository, repository
-from infrastructure.ml.catboost_classifier import CatBoostClassifier
+from infrastructure.ml.http_classifier import HttpClassifier
 from infrastructure.uk.client import UKClient
 
 logger = logging.getLogger(__name__)
@@ -68,17 +68,18 @@ def build_ai(config: Config) -> tuple[AIService, object | None]:
 
 
 def build_classifier(config: Config) -> Classifier:
-    """Классификатор категории и аварийности жалобы (DECISIONS D-005).
+    """Классификатор категории и аварийности жалобы (DECISIONS D-005, D-006).
 
-    Модели CatBoost ещё не обучены — `CatBoostClassifier` сам проверяет
-    файлы по путям из конфига при первом обращении и откатывается на
-    правила, если их нет. Подключение готовой модели не требует
-    изменений здесь: положить файлы и перезапустить бота.
+    Отдельный ML-сервис (`ml/`, свой контейнер) — `HttpClassifier` ходит
+    туда по HTTP и сам откатывается на правила, если сервис недоступен
+    или модели ещё не обучены (503). Подключение готовых моделей не
+    требует изменений здесь: положить файлы в `ml/models/` и
+    перезапустить сервис `ml`, бот трогать не нужно.
     """
 
-    return CatBoostClassifier(
-        category_model_path=config.ml_category_model_path,
-        emergency_model_path=config.ml_emergency_model_path,
+    return HttpClassifier(
+        base_url=config.ml_service_url,
+        timeout_sec=config.ml_service_timeout_sec,
     )
 
 
@@ -102,12 +103,13 @@ def setup_services(config: Config) -> Services:
 async def shutdown_services() -> None:
     """Закрывает сетевые ресурсы зависимостей."""
 
-    if _services is None or _services.llm_client is None:
+    if _services is None:
         return
 
-    close = getattr(_services.llm_client, "close", None)
-    if close is not None:
-        await close()
+    for resource in (_services.llm_client, _services.classifier):
+        close = getattr(resource, "close", None)
+        if close is not None:
+            await close()
 
 
 def get_services() -> Services:

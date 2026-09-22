@@ -9,14 +9,17 @@ MAX (мобайл/веб) ──webhook HTTPS 443──▶ Caddy (TLS) ──▶
       ▲  ▲                                   │              ├─ /webhooks/max   (приём событий, 200 сразу)
       │  └──── мини-приложение (React) ───────┴──▶ /api/v1  ├─ /api/v1/*      (REST для мини-приложения)
       │                                                     ├─ worker (outbox → MAX API, SLA-таймеры, дайджесты)
-      └──────── сообщения бота ◀── MAX Bot API ◀────────────┘
-                                                            └─ PostgreSQL
+      └──────── сообщения бота ◀── MAX Bot API ◀────────────┤
+                                                             ├─ PostgreSQL
+                                                             └─ HTTP ──▶ ml (FastAPI, свой контейнер)
+                                                                          POST /classify → категория + аварийность
 ```
 
 - **Один процесс backend** (API + вебхук + фоновые воркеры как asyncio-задачи) — достаточно для MVP и проверки. Разделить на два контейнера (`api`, `worker`) можно флагом, если понадобится.
 - **PostgreSQL** — единственное хранилище: сущности, outbox исходящих сообщений, состояния диалогов, дедупликация событий, задания планировщика. Redis в P0 не нужен; лимитер на чат и очередь живут в Postgres (`SELECT … FOR UPDATE SKIP LOCKED`).
 - **Caddy** — TLS (Let's Encrypt), статика мини-приложения, прокси `/api` и `/webhooks`.
 - **Frontend** — Vite + React + TypeScript, собирается в статику и раздаётся Caddy с того же домена (нет CORS, один сертификат).
+- **ml** — отдельный сервис классификации жалоб (`ml/`, свой Docker-контейнер, свои зависимости; не за Caddy, только для backend внутри сети compose) — DECISIONS D-006. Backend ходит туда по HTTP и сам откатывается на правила при недоступности, поэтому падение `ml` не роняет бота — только ухудшает качество классификации до восстановления.
 
 ## 2. Слои backend (hexagonal-lite)
 
@@ -46,7 +49,7 @@ backend/src/
   infrastructure/      адаптеры
     db/  engine.py, uow.py, models/<aggregate>.py (ORM), repositories/<aggregate>.py, mappers/<aggregate>.py, migrations/
     max/ client.py (httpx + CA Минцифры + retry), gateway.py (реализация порта), schemas.py (типы Update из OpenAPI)
-    ml/  classifier CatBoost (категория + аварийность) — офлайн-обученный артефакт, порт `classifier.py`
+    ml/  http_classifier.py (HTTP-клиент сервиса ml/, порт `classifier.py`), rule_based.py (fallback без ML)
     llm/ клиент хостингового провайдера (GigaChat/YandexGPT) — описание по фото и fallback-диалог, порт `ai.py`
     outbox/ publisher.py (worker), rate_limiter.py (2 msg/s на чат)
     scheduler/ sla_watchdog.py, digest.py
@@ -121,7 +124,7 @@ frontend/src/
 - Сервисы-«боги» (`ml_facade.py` 1095 строк, `feed/service.py` 813, `user_service.py` 538): заменяются use case'ами по одному на файл.
 - Утечка ORM: `auth_user` возвращает ORM `User` в роутеры, сервисы принимают ORM и сериализуют в pydantic руками (`serialize_user`). У нас: `CurrentUser` — value object; репозитории возвращают домен; мапперы отдельно.
 - `database/*_interface.py` как репозитории с бизнес-запросами (`admin_list_users`, `registrations_by_days`) — у нас репозитории только для агрегатов, аналитика в query-объектах.
-- Redis, MinIO, Centrifugo, Qdrant, ML-сервис, APScheduler-обвязка ML, JWT/cookies/CSRF, RBAC-кэш — не нужны для MVP; при необходимости добавляем по одному.
+- Redis, MinIO, Centrifugo, Qdrant, ML-сервис шаблона (dating-рекомендации), APScheduler-обвязка ML, JWT/cookies/CSRF, RBAC-кэш — не нужны для MVP; при необходимости добавляем по одному. Свой ML-сервис для классификации жалоб мы всё же заводим — другой домен, другая причина (DECISIONS D-006), из шаблона не переиспользуется ничего.
 - `poetry` → `uv`; `dating`-домен, миграции и сиды — не переносятся.
 - `template/backend/secrets/` содержит приватный ключ JWT и `db.txt` — в наш репозиторий не попадает (`template/` в `.gitignore`), но при копировании файлов из шаблона следить, чтобы не утащить.
 
@@ -142,7 +145,7 @@ frontend/src/
 | `Request.set_status()` без проверки переходов; эмодзи и подписи в домене | `state_machine.py`, рендер статусов в `bot/render/` | `domain/tickets/` |
 | `UKClient` (mock HTTP в «систему УК») и демо-таймер статусов | роль диспетчера, use case `change_status`; статусы меняет человек | `application/tickets/`, `api/http/v1/` |
 | хендлеры вызывают глобальный `get_services()` | зависимости через middleware диспетчера или контейнер | `app/services.py`, `bot/` |
-| `AIService.analyze/refine` — вопросы и текст обращения для каждой заявки | `classifier.py` (CatBoost: категория + аварийность → вход `SlaPolicy`) на каждой заявке; `ai.py` (хостинговая LLM) — только фото-описание и fallback-диалог при низкой уверенности (D-005) | `application/ports/classifier.py`, `application/ports/ai.py` |
+| `AIService.analyze/refine` — вопросы и текст обращения для каждой заявки | `classifier.py` (HTTP до сервиса `ml/`: категория + аварийность → вход `SlaPolicy`, откат на правила при недоступности) на каждой заявке; `ai.py` (хостинговая LLM) — только фото-описание и fallback-диалог при низкой уверенности (D-005, D-006) | `application/ports/classifier.py`, `application/ports/ai.py` |
 | нет мини-приложения и REST | `api/http/v1` по [CONTRACTS.md](CONTRACTS.md), проверка `initData` | `api/` |
 | `scripts/simulate_flow.py` с `FakeBot` | pytest с фейковыми портами + тесты домена | `tests/` |
 
