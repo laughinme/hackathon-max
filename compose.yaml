@@ -1,0 +1,12 @@
+services:
+  bot:
+    build: .
+    image: smart-city-max-bot:latest
+    container_name: smart-city-max-bot
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      # Бот работает по long polling: входящие порты не нужны.
+      PYTHONPATH: /app
+    stop_grace_period: 10s
