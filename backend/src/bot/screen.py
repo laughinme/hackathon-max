@@ -21,8 +21,9 @@ from maxapi.exceptions import MaxError
 from maxapi.types.attachments.buttons.attachment_button import (
     AttachmentButton,
 )
-from maxapi.types.updates import MessageCallback, MessageCreated
 from maxapi.types.updates.base_update import BaseUpdate
+from maxapi.types.updates.message_callback import MessageCallback
+from maxapi.types.updates.message_created import MessageCreated
 
 logger = logging.getLogger(__name__)
 

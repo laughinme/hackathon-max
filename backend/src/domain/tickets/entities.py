@@ -1,97 +1,121 @@
-"""Доменные модели: обращение жителя и его жизненный цикл."""
+"""Ticket aggregate: a registered problem with a legal deadline and a timeline."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from enum import Enum
+from uuid import UUID, uuid4
+
+from domain.tickets.enums import ActorRole, ResponsibleParty, TicketStatus
+from domain.tickets.exceptions import NotTicketReporterError
+from domain.tickets.responsibility import Responsibility
+from domain.tickets.sla import Deadlines
+from domain.tickets.state_machine import OPEN, ensure_transition
 
 
-class RequestStatus(str, Enum):
-    """Статусы обращения."""
+def format_ticket_number(year: int, sequence: int) -> str:
+    """Human-readable number shown to residents: `2026-00042`."""
 
-    DRAFT = "draft"
-    SENT = "sent"
-    ACCEPTED = "accepted"
-    IN_PROGRESS = "in_progress"
-    DONE = "done"
-    REJECTED = "rejected"
-
-    @property
-    def title(self) -> str:
-        return STATUS_TITLES[self]
-
-    @property
-    def emoji(self) -> str:
-        return STATUS_EMOJI[self]
-
-    @property
-    def label(self) -> str:
-        return f"{self.emoji} {self.title}"
+    return f"{year}-{sequence:05d}"
 
 
-STATUS_TITLES: dict[RequestStatus, str] = {
-    RequestStatus.DRAFT: "Черновик",
-    RequestStatus.SENT: "Отправлено в УК",
-    RequestStatus.ACCEPTED: "Принято в работу",
-    RequestStatus.IN_PROGRESS: "Выполняется",
-    RequestStatus.DONE: "Выполнено",
-    RequestStatus.REJECTED: "Отклонено",
-}
+@dataclass(frozen=True, slots=True)
+class TicketEvent:
+    """One entry of the ticket timeline."""
 
-STATUS_EMOJI: dict[RequestStatus, str] = {
-    RequestStatus.DRAFT: "📝",
-    RequestStatus.SENT: "📤",
-    RequestStatus.ACCEPTED: "✅",
-    RequestStatus.IN_PROGRESS: "🔧",
-    RequestStatus.DONE: "🏁",
-    RequestStatus.REJECTED: "⛔️",
-}
-
-
-@dataclass
-class StatusEvent:
-    """Одно изменение статуса — для истории обращения."""
-
-    status: RequestStatus
+    status: TicketStatus
+    actor_role: ActorRole
+    actor_id: int | None
     at: datetime
     comment: str | None = None
 
 
-@dataclass
-class Request:
-    """Обращение в управляющую организацию."""
+@dataclass(slots=True)
+class Ticket:
+    """A resident's problem registered with a deadline and a responsible party."""
 
-    id: int
+    id: UUID
     number: str
-    user_id: int
+    reporter_id: int
     chat_id: int | None
-    title: str
-    category: str
-    text: str
-    status: RequestStatus = RequestStatus.DRAFT
-    created_at: datetime = field(default_factory=datetime.now)
-    updated_at: datetime = field(default_factory=datetime.now)
-    responsible: str = "Управляющая организация"
-    urgency: str = "обычная"
-    external_id: str | None = None
-    is_mock_integration: bool = True
-    history: list[StatusEvent] = field(default_factory=list)
+    category_code: str
+    is_emergency: bool
+    description: str
+    responsible_party: ResponsibleParty
+    responsibility_basis: str
+    deadlines: Deadlines
+    status: TicketStatus
+    created_at: datetime
+    updated_at: datetime
+    events: list[TicketEvent] = field(default_factory=list)
 
-    def set_status(self, status: RequestStatus, comment: str | None = None) -> None:
-        """Меняет статус и пишет запись в историю."""
+    @classmethod
+    def register(
+        cls,
+        *,
+        sequence: int,
+        reporter_id: int,
+        chat_id: int | None,
+        category_code: str,
+        is_emergency: bool,
+        description: str,
+        responsibility: Responsibility,
+        deadlines: Deadlines,
+        now: datetime,
+    ) -> Ticket:
+        ticket = cls(
+            id=uuid4(),
+            number=format_ticket_number(now.year, sequence),
+            reporter_id=reporter_id,
+            chat_id=chat_id,
+            category_code=category_code,
+            is_emergency=is_emergency,
+            description=description.strip(),
+            responsible_party=responsibility.party,
+            responsibility_basis=responsibility.legal_basis,
+            deadlines=deadlines,
+            status=TicketStatus.REGISTERED,
+            created_at=now,
+            updated_at=now,
+        )
+        ticket.events.append(
+            TicketEvent(
+                status=TicketStatus.REGISTERED,
+                actor_role=ActorRole.RESIDENT,
+                actor_id=reporter_id,
+                at=now,
+            )
+        )
+        return ticket
 
-        self.status = status
-        self.updated_at = datetime.now()
-        self.history.append(
-            StatusEvent(status=status, at=self.updated_at, comment=comment)
+    def change_status(
+        self,
+        target: TicketStatus,
+        *,
+        actor_role: ActorRole,
+        actor_id: int | None,
+        now: datetime,
+        comment: str | None = None,
+    ) -> None:
+        ensure_transition(self.status, target, actor_role)
+        if actor_role is ActorRole.RESIDENT and actor_id != self.reporter_id:
+            raise NotTicketReporterError()
+
+        self.status = target
+        self.updated_at = now
+        self.events.append(
+            TicketEvent(
+                status=target,
+                actor_role=actor_role,
+                actor_id=actor_id,
+                at=now,
+                comment=comment.strip() if comment else None,
+            )
         )
 
     @property
-    def short_title(self) -> str:
-        """Короткая подпись для кнопки в списке «Мои обращения»."""
+    def is_open(self) -> bool:
+        return self.status in OPEN
 
-        title = self.title.strip().replace("\n", " ")
-        if len(title) > 28:
-            title = title[:27].rstrip() + "…"
-        return title
+    def is_overdue(self, now: datetime) -> bool:
+        return self.is_open and now > self.deadlines.resolve_by

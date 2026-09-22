@@ -7,6 +7,11 @@ dependencies = [
     "maxapi==1.2.2",
     "aiohttp==3.14.3",
     "pydantic==2.13.5",
+    "fastapi>=0.118,<1",
+    "uvicorn[standard]>=0.37,<1",
+    "sqlalchemy[asyncio]>=2.0.43,<2.1",
+    "asyncpg>=0.30,<1",
+    "alembic>=1.16,<2",
 ]
 
 [dependency-groups]
@@ -15,6 +20,7 @@ dev = [
     "pytest-asyncio>=1.1",
     "ruff>=0.14",
     "pyright>=1.1.400",
+    "httpx>=0.28",
 ]
 
 [tool.uv]
@@ -28,6 +34,13 @@ src = ["src", "scripts"]
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP"]
 
+[tool.ruff.lint.isort]
+known-first-party = ["app", "application", "bot", "domain", "infrastructure", "scripts", "tests"]
+
+[tool.ruff.lint.per-file-ignores]
+# The JSON response schema inside the system prompt is kept on one line.
+"src/infrastructure/llm/prompts.py" = ["E501"]
+
 [tool.pyright]
 include = ["src"]
 pythonVersion = "3.13"
@@ -35,5 +48,8 @@ extraPaths = ["src"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
-pythonpath = ["src"]
+pythonpath = ["src", "."]
 testpaths = ["tests"]
+markers = [
+    "integration: needs a PostgreSQL database in TEST_DATABASE_URL",
+]

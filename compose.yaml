@@ -1,4 +1,25 @@
+# One command for the checkers: `docker compose up --build` (polling mode).
+# Production on the VPS: `docker compose --profile prod up -d --build`
+# with BOT_MODE=webhook, WEBHOOK_URL, WEBHOOK_SECRET in backend/.env and
+# DOMAIN in the shell or a root .env file.
+
 services:
+  db:
+    image: postgres:17-alpine
+    container_name: domovoy-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: domovoy
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-domovoy}
+      POSTGRES_DB: domovoy
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U domovoy -d domovoy"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
   bot:
     build: ./backend
     image: domovoy-backend:latest
@@ -7,13 +28,17 @@ services:
     env_file:
       - ./backend/.env
     environment:
-      # Имя сервиса в сети compose, не localhost — переопределяет .env.
+      # Service names inside the compose network override localhost from .env.
+      DATABASE_URL: postgresql+asyncpg://domovoy:${POSTGRES_PASSWORD:-domovoy}@db:5432/domovoy
       ML_SERVICE_URL: http://ml:8100
+    ports:
+      - "127.0.0.1:8080:8080"
     depends_on:
-      - ml
+      db:
+        condition: service_healthy
+      ml:
+        condition: service_started
     stop_grace_period: 10s
-    # Прототип работает по long polling; целевая схема — webhook за Caddy
-    # (см. docs/ARCHITECTURE.md), тогда здесь появятся caddy и postgres.
 
   ml:
     build: ./ml
@@ -21,10 +46,33 @@ services:
     container_name: domovoy-ml
     restart: unless-stopped
     env_file:
-      - ./ml/.env
+      - path: ./ml/.env
+        required: false
     volumes:
-      # Обученные модели кладутся сюда руками — без пересборки образа
-      # (DECISIONS D-006); пока файлов нет, сервис отвечает 503, бот
-      # откатывается на правила (см. ML_SERVICE_URL у bot).
+      # Trained models are dropped here without rebuilding the image
+      # (DECISIONS D-006); until then /classify answers 503 and the bot
+      # falls back to keyword rules.
       - ./ml/models:/app/models:ro
     stop_grace_period: 10s
+
+  caddy:
+    image: caddy:2.10-alpine
+    container_name: domovoy-caddy
+    profiles: ["prod"]
+    restart: unless-stopped
+    environment:
+      DOMAIN: ${DOMAIN:-}  # required for the prod profile
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./infra/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - bot
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:

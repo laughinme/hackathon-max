@@ -1,0 +1,17 @@
+# Public HTTPS entry point (production profile). Caddy obtains a Let's Encrypt
+# certificate for $DOMAIN automatically; MAX requires HTTPS on port 443.
+{$DOMAIN} {
+	encode zstd gzip
+
+	handle /webhooks/* {
+		reverse_proxy bot:8080
+	}
+
+	handle /health {
+		reverse_proxy bot:8080
+	}
+
+	handle {
+		respond "Not found" 404
+	}
+}

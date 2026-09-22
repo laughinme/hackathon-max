@@ -1,7 +1,7 @@
 """Payload'ы inline-кнопок.
 
 Формат: `<действие>` или `<действие>:<аргумент>`.
-Payload в MAX ограничен 256 символами, поэтому держим его коротким
+Payload callback-кнопки в MAX ограничен 1024 символами, поэтому держим его коротким
 и никогда не кладём туда пользовательский текст.
 """
 
@@ -17,6 +17,7 @@ DRAFT_DONE = "draft_done"
 DRAFT_RESTART = "draft_restart"
 MY_LIST = "my"
 MY_ITEM = "item"
+EMERGENCY = "emg"
 NOOP = "noop"
 
 SEPARATOR = ":"

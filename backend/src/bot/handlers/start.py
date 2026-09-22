@@ -5,7 +5,9 @@ from __future__ import annotations
 from maxapi import Router
 from maxapi.context import MemoryContext
 from maxapi.filters.command import Command
-from maxapi.types.updates import BotStarted, MessageCallback, MessageCreated
+from maxapi.types.updates.bot_started import BotStarted
+from maxapi.types.updates.message_callback import MessageCallback
+from maxapi.types.updates.message_created import MessageCreated
 
 from bot import callbacks, keyboards, texts
 from bot.screen import SCREEN_KEY, render

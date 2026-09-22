@@ -11,13 +11,13 @@ import logging
 from maxapi import ExceptionTypeFilter, Router
 from maxapi.context import MemoryContext
 from maxapi.types import ErrorEvent
-from maxapi.types.updates import MessageCreated
+from maxapi.types.updates.message_created import MessageCreated
 
+from app.services import Services
 from bot import keyboards, texts
-from bot.handlers.create import CATEGORY, TURNS, _analyze_and_render
+from bot.handlers.create import TURNS, analyze_and_render, reset_scenario
 from bot.screen import render, user_message_text
 from bot.states import CreateRequest
-from domain.tickets.catalog import guess_category
 
 logger = logging.getLogger(__name__)
 router = Router(router_id="fallback")
@@ -27,7 +27,9 @@ MIN_PROBLEM_LENGTH = 8
 
 
 @router.message_created()
-async def on_free_text(event: MessageCreated, context: MemoryContext) -> None:
+async def on_free_text(
+    event: MessageCreated, context: MemoryContext, services: Services
+) -> None:
     """Пользователь описал проблему своими словами вне сценария."""
 
     text = user_message_text(event)
@@ -38,15 +40,11 @@ async def on_free_text(event: MessageCreated, context: MemoryContext) -> None:
         await render(event, context, texts.unknown_message(), keyboards.main_menu())
         return
 
-    category = guess_category(text)
-    await context.update_data(
-        **{
-            CATEGORY: category.code,
-            TURNS: [{"role": "user", "text": text}],
-        }
-    )
+    # Free text: no category hint, the classifier decides (DECISIONS D-005).
+    await reset_scenario(context)
+    await context.update_data(**{TURNS: [{"role": "user", "text": text}]})
     await context.set_state(CreateRequest.collecting)
-    await _analyze_and_render(event, context)
+    await analyze_and_render(event, context, services)
 
 
 @router.errors(ExceptionTypeFilter(Exception))

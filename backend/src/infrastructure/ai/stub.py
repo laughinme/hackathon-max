@@ -2,15 +2,14 @@
 
 ⚠️ Это ЗАГЛУШКА (`StubAIService`) — детерминированная логика
 на правилах. Она полностью повторяет контракт будущей LLM-реализации,
-поэтому подключение модели сведётся к добавлению нового класса с теми
-же методами и подмене объекта в `get_ai_service()`.
+поэтому LLM подключается через тот же порт в `app/services.py`.
 """
 
 from __future__ import annotations
 
 import logging
 
-from application.ports.ai import AIService, Analysis, DialogTurn
+from application.ports.ai import Analysis, DialogTurn
 from domain.tickets.catalog import Category, get_category, guess_category
 
 logger = logging.getLogger(__name__)
@@ -93,20 +92,3 @@ class StubAIService:
             "устранения и уведомить о результате.",
         ]
         return "\n".join(lines)
-
-
-_service: AIService = StubAIService()
-
-
-def get_ai_service() -> AIService:
-    """Точка подмены реализации AI."""
-
-    return _service
-
-
-def set_ai_service(service: AIService) -> None:
-    """Подставить другую реализацию (например, LLM) — используется в тестах."""
-
-    global _service
-    _service = service
-    logger.info("AI-сервис заменён на %s", type(service).__name__)

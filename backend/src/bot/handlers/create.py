@@ -1,56 +1,54 @@
-"""Сценарий «проблема → обращение в УК».
+"""Scenario "problem -> registered ticket with a legal deadline".
 
-Путь пользователя:
-быстрый сценарий или свободный текст → уточнения от AI →
-черновик обращения → правка текстом → «Готово» → заявка со статусом.
+Quick category or free text -> AI clarifying question -> triage (category,
+emergency, deadline) -> emergency confirmation if the classifier is unsure ->
+draft -> edits by message -> "Send" -> ticket with number and deadline.
 """
 
 from __future__ import annotations
 
 import logging
+from uuid import UUID
 
 from maxapi import Router
 from maxapi.context import MemoryContext
-from maxapi.types.updates import MessageCallback, MessageCreated
+from maxapi.types.updates.message_callback import MessageCallback
+from maxapi.types.updates.message_created import MessageCreated
 
-from app.services import get_services
+from app.services import Services
 from application.ports.ai import Analysis, DialogTurn
+from application.tickets.create_ticket import CreateTicketCommand
+from application.tickets.dto import TicketView
+from application.tickets.triage_complaint import TriageResult
 from bot import callbacks, keyboards, texts
-from bot.notifier import schedule_demo_status_flow
 from bot.screen import render, user_message_text
 from bot.states import CreateRequest
 from domain.tickets.catalog import get_category
-from domain.tickets.entities import Request, RequestStatus
 
 logger = logging.getLogger(__name__)
 router = Router(router_id="create")
 
-# Ключи FSM-контекста сценария.
+# FSM context keys of the scenario.
 TURNS = "turns"
 CATEGORY = "category"
 DRAFT = "draft"
-RESPONSIBLE = "responsible"
-URGENCY = "urgency"
-TITLE = "title"
-REQUEST_ID = "request_id"
+IS_EMERGENCY = "is_emergency"
+TICKET_ID = "ticket_id"
+SCENARIO_KEYS = (TURNS, CATEGORY, DRAFT, IS_EMERGENCY, TICKET_ID)
 
 
 @router.message_callback(callbacks.is_action(callbacks.NEW))
 async def on_new_request(event: MessageCallback, context: MemoryContext) -> None:
-    """Экран быстрых сценариев."""
-
-    await _reset_scenario(context)
+    await reset_scenario(context)
     await render(event, context, texts.choose_category(), keyboards.categories_menu())
 
 
 @router.message_callback(callbacks.has_action(callbacks.CATEGORY))
 async def on_category(event: MessageCallback, context: MemoryContext) -> None:
-    """Выбран быстрый сценарий — переходим к уточнениям."""
-
     _, code = callbacks.unpack(event.callback.payload)
     category = get_category(code)
 
-    await _reset_scenario(context)
+    await reset_scenario(context)
     await context.update_data(
         **{
             CATEGORY: category.code,
@@ -58,7 +56,6 @@ async def on_category(event: MessageCallback, context: MemoryContext) -> None:
         }
     )
     await context.set_state(CreateRequest.collecting)
-
     await render(
         event,
         context,
@@ -68,49 +65,51 @@ async def on_category(event: MessageCallback, context: MemoryContext) -> None:
 
 
 @router.message_created(CreateRequest.collecting)
-async def on_collecting_message(event: MessageCreated, context: MemoryContext) -> None:
-    """Ответ пользователя на уточняющий вопрос."""
-
+async def on_collecting_message(
+    event: MessageCreated, context: MemoryContext, services: Services
+) -> None:
     text = user_message_text(event)
     if not text:
         return
+    await append_turn(context, "user", text)
+    await analyze_and_render(event, context, services)
 
-    await _append_turn(context, "user", text)
-    await _analyze_and_render(event, context)
+
+@router.message_callback(
+    CreateRequest.confirming_emergency, callbacks.has_action(callbacks.EMERGENCY)
+)
+async def on_emergency_answer(
+    event: MessageCallback, context: MemoryContext, services: Services
+) -> None:
+    _, answer = callbacks.unpack(event.callback.payload)
+    is_emergency = answer == "yes"
+    data = await context.get_data()
+
+    await context.update_data(**{IS_EMERGENCY: is_emergency})
+    await context.set_state(CreateRequest.editing_draft)
+    triage = services.triage.preview(data[CATEGORY], is_emergency)
+    await render(event, context, texts.draft(data[DRAFT], triage), keyboards.draft())
 
 
 @router.message_created(CreateRequest.editing_draft)
-async def on_draft_comment(event: MessageCreated, context: MemoryContext) -> None:
-    """Пользователь пишет, что поправить в черновике."""
-
+async def on_draft_comment(
+    event: MessageCreated, context: MemoryContext, services: Services
+) -> None:
     comment = user_message_text(event)
     if not comment:
         return
 
-    services = get_services()
     data = await context.get_data()
-    draft = data.get(DRAFT, "")
-
-    updated = await services.ai.refine(draft, comment)
+    updated = await services.ai.refine(data.get(DRAFT, ""), comment)
     await context.update_data(**{DRAFT: updated})
 
-    await render(
-        event,
-        context,
-        texts.draft(
-            updated,
-            data.get(RESPONSIBLE, "Управляющая организация"),
-            data.get(URGENCY, "обычная"),
-        ),
-        keyboards.draft(),
-    )
+    triage = services.triage.preview(data[CATEGORY], data[IS_EMERGENCY])
+    await render(event, context, texts.draft(updated, triage), keyboards.draft())
 
 
 @router.message_callback(callbacks.is_action(callbacks.DRAFT_RESTART))
 async def on_restart(event: MessageCallback, context: MemoryContext) -> None:
-    """Начать оформление заново."""
-
-    await _reset_scenario(context)
+    await reset_scenario(context)
     await render(
         event,
         context,
@@ -121,14 +120,11 @@ async def on_restart(event: MessageCallback, context: MemoryContext) -> None:
 
 
 @router.message_callback(callbacks.is_action(callbacks.DRAFT_DONE))
-async def on_submit(event: MessageCallback, context: MemoryContext) -> None:
-    """«Готово» — регистрируем обращение и отправляем его в УК."""
-
-    services = get_services()
+async def on_submit(
+    event: MessageCallback, context: MemoryContext, services: Services
+) -> None:
     data = await context.get_data()
-    draft = data.get(DRAFT)
-
-    if not draft:
+    if not data.get(DRAFT):
         await render(
             event,
             context,
@@ -139,54 +135,37 @@ async def on_submit(event: MessageCallback, context: MemoryContext) -> None:
         return
 
     await render(event, context, texts.submitting(), keyboards.draft())
-
-    request = await _get_or_create_request(event, context, data, draft)
-    result = await services.uk.submit(request)
-
-    if not result.ok:
-        await render(
-            event,
-            context,
-            texts.submit_failed(result.error or "неизвестная ошибка"),
-            keyboards.retry_submit(),
-        )
+    try:
+        ticket = await register_once(event, context, services, data)
+    except Exception:  # noqa: BLE001 - any storage failure: keep the draft, offer retry
+        logger.exception("Ticket registration failed")
+        await render(event, context, texts.submit_failed(), keyboards.retry_submit())
         return
 
-    request.external_id = result.external_id
-    request.is_mock_integration = result.is_mock
-    request.set_status(RequestStatus.SENT)
-
-    await _reset_scenario(context)
-    await context.set_state(None)
-
+    await reset_scenario(context)
     await render(
         event,
         context,
-        texts.submitted(request),
+        texts.submitted(ticket),
         keyboards.after_submit(),
-        notification=f"Обращение {request.number} отправлено",
+        notification=f"Заявка № {ticket.number} зарегистрирована",
     )
 
-    if services.config.demo_status_simulation and event.bot is not None:
-        schedule_demo_status_flow(
-            event.bot, request, services.config.demo_status_delay_sec
-        )
 
+async def analyze_and_render(
+    event: MessageCreated, context: MemoryContext, services: Services
+) -> None:
+    """Ask the next clarifying question, or triage and show the draft."""
 
-async def _analyze_and_render(event: MessageCreated, context: MemoryContext) -> None:
-    """Прогоняет диалог через AI и показывает вопрос либо черновик."""
-
-    services = get_services()
     data = await context.get_data()
     turns = [DialogTurn(**turn) for turn in data.get(TURNS, [])]
-
     analysis: Analysis = await services.ai.analyze(
         turns, category_code=data.get(CATEGORY)
     )
 
     if not analysis.is_ready or not analysis.draft:
         question = analysis.question or "Расскажите, пожалуйста, подробнее."
-        await _append_turn(context, "bot", question)
+        await append_turn(context, "bot", question)
         await render(
             event,
             context,
@@ -195,82 +174,62 @@ async def _analyze_and_render(event: MessageCreated, context: MemoryContext) -> 
         )
         return
 
+    complaint = " ".join(turn.text for turn in turns if turn.role == "user")
+    triage = await services.triage.execute(complaint, category_hint=data.get(CATEGORY))
     await context.update_data(
         **{
             DRAFT: analysis.draft,
-            CATEGORY: analysis.category_code,
-            TITLE: analysis.title,
-            RESPONSIBLE: analysis.responsible,
-            URGENCY: analysis.urgency,
+            CATEGORY: triage.category_code,
+            IS_EMERGENCY: triage.is_emergency,
         }
     )
+    await show_draft_or_confirmation(event, context, analysis.draft, triage)
+
+
+async def show_draft_or_confirmation(
+    event: MessageCreated, context: MemoryContext, draft: str, triage: TriageResult
+) -> None:
+    if triage.needs_emergency_confirmation:
+        await context.set_state(CreateRequest.confirming_emergency)
+        await render(
+            event, context, texts.emergency_question(), keyboards.emergency_question()
+        )
+        return
+
     await context.set_state(CreateRequest.editing_draft)
-
-    await render(
-        event,
-        context,
-        texts.draft(analysis.draft, analysis.responsible, analysis.urgency),
-        keyboards.draft(),
-    )
+    await render(event, context, texts.draft(draft, triage), keyboards.draft())
 
 
-async def _get_or_create_request(
-    event: MessageCallback,
-    context: MemoryContext,
-    data: dict,
-    draft: str,
-) -> Request:
-    """Возвращает заявку сценария, создавая её при первой отправке.
-
-    Нужно для повторной отправки после ошибки: дубликат не создаётся.
-    """
-
-    services = get_services()
-    request_id = data.get(REQUEST_ID)
-
-    if request_id:
-        existing = await services.requests.get(request_id)
-        if existing is not None:
-            existing.text = draft
-            return existing
+async def register_once(
+    event: MessageCallback, context: MemoryContext, services: Services, data: dict
+) -> TicketView:
+    """Create the ticket; a retry after a failure never creates a duplicate."""
 
     chat_id, user_id = event.get_ids()
-    category = get_category(data.get(CATEGORY))
+    if data.get(TICKET_ID):
+        return await services.get_ticket.execute(UUID(data[TICKET_ID]), user_id)
 
-    request = await services.requests.create(
-        user_id=user_id,
-        chat_id=chat_id,
-        title=data.get(TITLE) or category.title,
-        category=category.code,
-        text=draft,
-        responsible=data.get(RESPONSIBLE) or category.responsible,
-        urgency=data.get(URGENCY) or category.urgency,
+    ticket = await services.create_ticket.execute(
+        CreateTicketCommand(
+            reporter_id=user_id,
+            chat_id=chat_id,
+            category_code=data[CATEGORY],
+            is_emergency=bool(data[IS_EMERGENCY]),
+            description=data[DRAFT],
+        )
     )
-    await context.update_data(**{REQUEST_ID: request.id})
-    return request
+    await context.update_data(**{TICKET_ID: str(ticket.id)})
+    return ticket
 
 
-async def _append_turn(context: MemoryContext, role: str, text: str) -> None:
-    """Добавляет реплику в диалог уточнения."""
-
+async def append_turn(context: MemoryContext, role: str, text: str) -> None:
     data = await context.get_data()
-    turns = list(data.get(TURNS, []))
-    turns.append({"role": role, "text": text})
+    turns = [*data.get(TURNS, []), {"role": role, "text": text}]
     await context.update_data(**{TURNS: turns})
 
 
-async def _reset_scenario(context: MemoryContext) -> None:
-    """Очищает данные и состояние сценария, сохраняя привязку к экрану."""
+async def reset_scenario(context: MemoryContext) -> None:
+    """Clear scenario data but keep the link to the current screen message."""
 
     await context.set_state(None)
-    await context.update_data(
-        **{
-            TURNS: [],
-            CATEGORY: None,
-            DRAFT: None,
-            TITLE: None,
-            RESPONSIBLE: None,
-            URGENCY: None,
-            REQUEST_ID: None,
-        }
-    )
+    await context.update_data(**dict.fromkeys(SCENARIO_KEYS))

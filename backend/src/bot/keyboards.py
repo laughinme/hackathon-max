@@ -13,9 +13,10 @@ from maxapi.types.attachments.buttons.attachment_button import (
 )
 from maxapi.utils.inline_keyboard import InlineKeyboardBuilder
 
+from application.tickets.dto import TicketView
 from bot import callbacks
+from bot.presenters import STATUS_EMOJI, short_description
 from domain.tickets.catalog import CATEGORIES, OTHER
-from domain.tickets.entities import Request
 
 
 def main_menu() -> AttachmentButton:
@@ -24,14 +25,14 @@ def main_menu() -> AttachmentButton:
     builder = InlineKeyboardBuilder()
     builder.row(
         CallbackButton(
-            text="📝 Создать обращение",
+            text="📝 Сообщить о проблеме",
             payload=callbacks.pack(callbacks.NEW),
             intent=Intent.POSITIVE,
         )
     )
     builder.row(
         CallbackButton(
-            text="📂 Мои обращения",
+            text="📂 Мои заявки",
             payload=callbacks.pack(callbacks.MY_LIST),
         )
     )
@@ -80,7 +81,7 @@ def draft() -> AttachmentButton:
     builder = InlineKeyboardBuilder()
     builder.row(
         CallbackButton(
-            text="✅ Готово",
+            text="✅ Отправить",
             payload=callbacks.pack(callbacks.DRAFT_DONE),
             intent=Intent.POSITIVE,
         )
@@ -101,7 +102,7 @@ def after_submit() -> AttachmentButton:
     builder = InlineKeyboardBuilder()
     builder.row(
         CallbackButton(
-            text="📂 Мои обращения",
+            text="📂 Мои заявки",
             payload=callbacks.pack(callbacks.MY_LIST),
         )
     )
@@ -124,24 +125,44 @@ def retry_submit() -> AttachmentButton:
     return builder.as_markup()
 
 
-def requests_list(requests: list[Request]) -> AttachmentButton:
-    """Список обращений — по одной кнопке в строке."""
+def requests_list(tickets: list[TicketView]) -> AttachmentButton:
+    """One button per ticket, newest first."""
 
     builder = InlineKeyboardBuilder()
-    for request in requests:
+    for ticket in tickets:
         builder.row(
             CallbackButton(
                 text=(
-                    f"{request.status.emoji} {request.number} — {request.short_title}"
+                    f"{STATUS_EMOJI[ticket.status]} № {ticket.number} — "
+                    f"{short_description(ticket.description)}"
                 ),
-                payload=callbacks.pack(callbacks.MY_ITEM, request.id),
+                payload=callbacks.pack(callbacks.MY_ITEM, str(ticket.id)),
             )
         )
     builder.row(
         CallbackButton(
-            text="📝 Создать обращение",
+            text="📝 Сообщить о проблеме",
             payload=callbacks.pack(callbacks.NEW),
         )
+    )
+    builder.row(_back_to_menu())
+    return builder.as_markup()
+
+
+def emergency_question() -> AttachmentButton:
+    """Resident confirms or denies an emergency when the classifier is unsure."""
+
+    builder = InlineKeyboardBuilder()
+    builder.row(
+        CallbackButton(
+            text="⚠️ Да, это авария",
+            payload=callbacks.pack(callbacks.EMERGENCY, "yes"),
+            intent=Intent.NEGATIVE,
+        ),
+        CallbackButton(
+            text="Нет, не срочно",
+            payload=callbacks.pack(callbacks.EMERGENCY, "no"),
+        ),
     )
     builder.row(_back_to_menu())
     return builder.as_markup()
@@ -153,7 +174,7 @@ def request_card() -> AttachmentButton:
     builder = InlineKeyboardBuilder()
     builder.row(
         CallbackButton(
-            text="⬅️ К списку обращений",
+            text="⬅️ К списку заявок",
             payload=callbacks.pack(callbacks.MY_LIST),
         )
     )

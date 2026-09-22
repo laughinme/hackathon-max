@@ -1,12 +1,15 @@
-"""Раздел «Мои обращения»: список и карточка обращения."""
+""" "My tickets": list and ticket card."""
 
 from __future__ import annotations
 
+from uuid import UUID
+
 from maxapi import Router
 from maxapi.context import MemoryContext
-from maxapi.types.updates import MessageCallback
+from maxapi.types.updates.message_callback import MessageCallback
 
-from app.services import get_services
+from app.services import Services
+from application.errors import TicketNotFoundError
 from bot import callbacks, keyboards, texts
 from bot.screen import render
 
@@ -14,55 +17,32 @@ router = Router(router_id="my_requests")
 
 
 @router.message_callback(callbacks.is_action(callbacks.MY_LIST))
-async def on_my_requests(event: MessageCallback, context: MemoryContext) -> None:
-    """Список обращений пользователя — по кнопке на каждое."""
-
-    services = get_services()
+async def on_my_requests(
+    event: MessageCallback, context: MemoryContext, services: Services
+) -> None:
     _, user_id = event.get_ids()
-    requests = await services.requests.list_for_user(user_id)
-
-    if not requests:
-        await render(
-            event,
-            context,
-            texts.empty_requests(),
-            keyboards.requests_list([]),
-        )
-        return
-
-    await render(
-        event,
-        context,
-        texts.requests_list(len(requests)),
-        keyboards.requests_list(requests),
-    )
+    tickets = await services.list_tickets.execute(user_id)
+    text = texts.requests_list(len(tickets)) if tickets else texts.empty_requests()
+    await render(event, context, text, keyboards.requests_list(tickets))
 
 
 @router.message_callback(callbacks.has_action(callbacks.MY_ITEM))
-async def on_request_card(event: MessageCallback, context: MemoryContext) -> None:
-    """Карточка обращения: статус, текст и история."""
-
-    services = get_services()
+async def on_request_card(
+    event: MessageCallback, context: MemoryContext, services: Services
+) -> None:
     _, user_id = event.get_ids()
     _, raw_id = callbacks.unpack(event.callback.payload)
 
-    request = None
-    if raw_id and raw_id.isdigit():
-        request = await services.requests.get_for_user(int(raw_id), user_id)
-
-    if request is None:
+    try:
+        ticket = await services.get_ticket.execute(UUID(raw_id or ""), user_id)
+    except (ValueError, TicketNotFoundError):
         await render(
             event,
             context,
             texts.request_not_found(),
             keyboards.request_card(),
-            notification="Обращение не найдено",
+            notification="Заявка не найдена",
         )
         return
 
-    await render(
-        event,
-        context,
-        texts.request_card(request),
-        keyboards.request_card(),
-    )
+    await render(event, context, texts.request_card(ticket), keyboards.request_card())
