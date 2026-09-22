@@ -126,3 +126,20 @@ frontend/src/
 - Явные мапперы ORM ↔ домен; доменные сущности как `@dataclass(slots=True)`.
 - Транзакционный outbox вместо прямых HTTP-вызовов из сервисов (в шаблоне есть `outbox_dispatcher.py` для ML — идея верная, обобщаем).
 - `import-linter` и `pyright` в CI, чтобы правила слоёв держались не на дисциплине.
+
+## 7. Текущее состояние кода (22.09, после переезда прототипа)
+
+Прототип на `maxapi` разложен по слоям без изменения логики (карта переезда — [PROTOTYPE_REVIEW.md §5](PROTOTYPE_REVIEW.md#5-куда-что-переехало)). Отличия от целевой схемы выше, которые ещё предстоит закрыть:
+
+| Сейчас | Цель | Где |
+|---|---|---|
+| long polling (`dispatcher.start_polling`) | webhook `POST /webhooks/max` через `FastAPIMaxWebhook`, Caddy 443 | `app/main.py`, `api/webhooks/` |
+| `MemoryContext` FSM и in-memory `RequestRepository` | Postgres: `DialogState`, репозитории с мапперами, inbox/outbox | `infrastructure/db/` |
+| `Request.set_status()` без проверки переходов; эмодзи и подписи в домене | `state_machine.py`, рендер статусов в `bot/render/` | `domain/tickets/` |
+| `UKClient` (mock HTTP в «систему УК») и демо-таймер статусов | роль диспетчера, use case `change_status`; статусы меняет человек | `application/tickets/`, `api/http/v1/` |
+| хендлеры вызывают глобальный `get_services()` | зависимости через middleware диспетчера или контейнер | `app/services.py`, `bot/` |
+| `AIService.analyze/refine` — вопросы и текст обращения | классификатор категории + слоты (`location`, `severity`) → создание заявки; текст обращения опционален | `application/ports/ai.py` |
+| нет мини-приложения и REST | `api/http/v1` по [CONTRACTS.md](CONTRACTS.md), проверка `initData` | `api/` |
+| `scripts/simulate_flow.py` с `FakeBot` | pytest с фейковыми портами + тесты домена | `tests/` |
+
+Решение по транспорту: `maxapi` остаётся (Q-06 в DECISIONS), исходящие вызовы заворачиваются в порт `MaxGateway`.

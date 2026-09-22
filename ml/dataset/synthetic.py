@@ -12,14 +12,14 @@ from __future__ import annotations
 import random
 from dataclasses import dataclass
 
-from ml.prompts import (
+from infrastructure.llm.prompts import (
     TASK_DIALOG,
     TASK_REFINE,
     build_dialog_messages,
     build_refine_messages,
 )
 from ml.dataset.schema import TrainingExample
-from ml.schemas import ModelDecision, Slots, required_slots
+from infrastructure.llm.schemas import ModelDecision, Slots, required_slots
 
 
 @dataclass(frozen=True)

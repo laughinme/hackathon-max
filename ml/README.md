@@ -1,5 +1,7 @@
 # ML-часть: модель уточняющих вопросов и генерации обращения
 
+> Статус в проекте: исследовательский пакет, **вне P0–P2 онлайн-этапа** (см. `docs/DECISIONS.md`, Q-17). Модули контракта, промптов и инференса переехали в `backend/src/infrastructure/llm/`; команды ниже запускать из корня с `PYTHONPATH=backend/src:.`.
+
 Модель решает одну задачу: на каждом шаге диалога либо задать
 **один** уточняющий вопрос, либо сформировать **текст обращения**
 в управляющую организацию.
@@ -11,7 +13,7 @@
 
 ## Контракт
 
-Модель отвечает одним JSON-объектом ([ml/schemas.py](schemas.py)):
+Модель отвечает одним JSON-объектом (`backend/src/infrastructure/llm/schemas.py`):
 
 ```json
 {
@@ -38,9 +40,12 @@
 ## Структура
 
 ```
-ml/
+backend/src/infrastructure/llm/
   schemas.py           контракт ответа модели + слоты
   prompts.py           системный промпт и сборка чата (обучение = инференс)
+  client.py            HTTP-клиент OpenAI-совместимого endpoint'а
+  service.py           реализация AIService: валидация, починка, откат
+ml/
   dataset/
     schema.py          формат обучающего примера (JSONL)
     synthetic.py       генератор bootstrap-диалогов
@@ -48,9 +53,6 @@ ml/
   training/
     config.py          база, LoRA и гиперпараметры
     train_lora.py      SFT-дообучение (loss только на ответе модели)
-  inference/
-    client.py          HTTP-клиент OpenAI-совместимого endpoint'а
-    service.py         реализация AIService: валидация, починка, откат
   evaluation/
     metrics.py         продуктовые метрики качества
     run_eval.py        прогон валидационной выборки через модель
@@ -69,7 +71,7 @@ ml/
 ## Как обучать
 
 ```bash
-pip install -r ../requirements-ml.txt
+pip install -r requirements-ml.txt   # плюс PYTHONPATH=backend/src:. из корня репозитория
 
 # 1. Выборка
 python -m ml.dataset.build --count 4000 --out data/dataset
@@ -123,7 +125,7 @@ python -m ml.evaluation.run_eval --base-url http://localhost:8000/v1
 
 ## Поведение при сбоях
 
-`LLMAIService` ([inference/service.py](inference/service.py)):
+`LLMAIService` (`backend/src/infrastructure/llm/service.py`):
 
 1. невалидный JSON → одна попытка починки с указанием ошибки;
 2. повторный брак или недоступность модели → откат на

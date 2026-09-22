@@ -1,12 +1,11 @@
 services:
   bot:
-    build: .
-    image: smart-city-max-bot:latest
-    container_name: smart-city-max-bot
+    build: ./backend
+    image: domovoy-backend:latest
+    container_name: domovoy-bot
     restart: unless-stopped
     env_file:
-      - .env
-    environment:
-      # Бот работает по long polling: входящие порты не нужны.
-      PYTHONPATH: /app
+      - ./backend/.env
     stop_grace_period: 10s
+    # Прототип работает по long polling; целевая схема — webhook за Caddy
+    # (см. docs/ARCHITECTURE.md), тогда здесь появятся caddy и postgres.

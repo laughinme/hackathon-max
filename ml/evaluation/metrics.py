@@ -14,7 +14,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 
-from ml.schemas import ModelDecision, Slots
+from infrastructure.llm.schemas import ModelDecision, Slots
 
 #: Признаки выдуманных нормативных ссылок в тексте обращения.
 NORMATIVE_PATTERNS = (

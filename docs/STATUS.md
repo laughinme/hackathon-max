@@ -4,7 +4,9 @@
 
 ## Где мы
 
-Фаза **Dive → Create**. Кейс, вебинары, Q&A, документация MAX изучены; рынок и платформа проверены онлайн; предложены продукт, архитектура и план. Кода нет. Бот `@t446_hakaton_max_bot` отвечает на `GET /me`, вебхук не подписан.
+Фаза **Dive → Create**. Кейс, вебинары, Q&A, документация MAX изучены; рынок и платформа проверены онлайн; предложены продукт, архитектура и план. Бот `@t446_hakaton_max_bot` отвечает на `GET /me`, вебхук не подписан.
+
+**Код:** в `main` смержен прототип бота на `maxapi` (личный диалог, long polling, in-memory) и разложен по слоям `backend/src/{app,bot,domain,application,infrastructure}`; `cd backend && uv sync && PYTHONPATH=src uv run python -m scripts.simulate_flow` проходит 4 сценария. Ревью и список расхождений — [PROTOTYPE_REVIEW.md](PROTOTYPE_REVIEW.md). ML-каркас (`ml/`) не запускался, предложено заморозить (Q-17).
 
 Готово 22.09: `docs/` (кейс, платформа, рынок, продукт, архитектура, данные, контракты, решения), `case/README.md`, `.gitignore`, брифинг-страница для команды: https://claude.ai/artifact/T7CU7dR1LcdhpwNwqLKvbv (приватная, расшарить команде).
 
@@ -13,7 +15,7 @@
 1. Команда принимает решения Q-01…Q-16 из [DECISIONS.md](DECISIONS.md) (созвон 30 минут).
 2. **Проверить руками**: добавляется ли бот в групповой чат; приходят ли сообщения после назначения админом с `read_all_messages`; открывается ли мини-приложение из группы. Если запрет — сразу письмо организаторам.
 3. Купить VPS и домен, поднять Caddy, поставить echo-вебхук (`POST /subscriptions`), убедиться, что события приходят.
-4. Каркас репозитория по [ARCHITECTURE.md](ARCHITECTURE.md): `uv`, FastAPI, Postgres, Alembic, ruff, pyright, import-linter, тесты, Docker compose одной командой, CI.
+4. Прототип → целевая архитектура по порядку из [PROTOTYPE_REVIEW.md §6](PROTOTYPE_REVIEW.md#6-что-делать-с-этим-кодом-дальше-порядок): вебхук + FastAPI + Caddy + Postgres в compose; state machine и SLA; убрать `UKClient` и демо-таймер; роль диспетчера.
 5. Домен: `Ticket`, state machine, SLA-калькулятор с тестами; справочник норм — начать проверку по первоисточникам.
 6. Frontend: Vite + React + TS, проверить `@maxhub/max-ui` и MAX Bridge на веб-версии MAX; авторизация по `initData`.
 7. Кастдев: составить гайд, найти 5–8 респондентов.

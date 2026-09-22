@@ -12,8 +12,8 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any, Iterable, Iterator
 
-from ml.prompts import ChatMessage
-from ml.schemas import ModelDecision
+from infrastructure.llm.prompts import ChatMessage
+from infrastructure.llm.schemas import ModelDecision
 
 
 @dataclass

@@ -2,7 +2,7 @@
 
 **Проект одной фразой:** чат-бот + мини-приложение в MAX для трека «Умный город» хакатона MAX: заявка из домового чата с нормативным сроком, диспетчерская для УО, эскалация при просрочке. Дедлайн MVP — **30.09.2026 12:00 МСК**.
 
-**Текущая фаза:** Dive → Create. Решения по продукту и стеку ждут подтверждения команды ([docs/DECISIONS.md](docs/DECISIONS.md)); кода пока нет.
+**Текущая фаза:** Dive → Create. В `main` — прототип бота на `maxapi`, разложенный по слоям; ревью и план доработки — [docs/PROTOTYPE_REVIEW.md](docs/PROTOTYPE_REVIEW.md). Решения по продукту и стеку ждут подтверждения команды ([docs/DECISIONS.md](docs/DECISIONS.md)).
 
 ## Что читать и в каком порядке
 
@@ -14,6 +14,7 @@
 6. [docs/DATA.md](docs/DATA.md), [docs/CONTRACTS.md](docs/CONTRACTS.md) — модель данных, нормативный справочник, API.
 7. [docs/MARKET.md](docs/MARKET.md) — рынок, конкуренты, ниши.
 8. [docs/DECISIONS.md](docs/DECISIONS.md) — принятые решения и открытые вопросы.
+9. [docs/PROTOTYPE_REVIEW.md](docs/PROTOTYPE_REVIEW.md) — что уже в коде, что с ним не так и что делать дальше.
 
 Брифинг для команды (страница по всем документам разом): https://claude.ai/artifact/T7CU7dR1LcdhpwNwqLKvbv
 
@@ -24,9 +25,10 @@
 | `case/` | официальные материалы кейса, саммари вебинаров и Q&A ([навигация](case/README.md)) | только чтение; ничего не менять по смыслу |
 | `docs/` | наши документы (см. список выше) | по темам, без дублирования: ссылаться, а не копировать |
 | `docs/max/` | снимок документации MAX Bot API и мини-приложений, OpenAPI-схема, `maxapi` | обновлять скриптом из [docs/max/README.md](docs/max/README.md) |
-| `backend/` | FastAPI-бэкенд (бот + API мини-приложения) | структура — ARCHITECTURE.md §2 |
+| `backend/` | бэкенд: `src/app` (сборка), `src/bot` (хендлеры MAX), `src/domain`, `src/application`, `src/infrastructure`; `scripts/simulate_flow.py` — оффлайн-прогон; `uv` | структура — ARCHITECTURE.md §2, текущее состояние — §7. Запуск: `cd backend && uv sync && PYTHONPATH=src uv run python -m app.main` |
+| `ml/` | исследовательский каркас дообучения LoRA (не запускался, вне P0–P2) | не подключать к рантайму без решения Q-17 |
+| `compose.yaml` | запуск одной командой (`docker compose up --build`) | требование кейса |
 | `frontend/` | мини-приложение (Vite + React + TS) | структура — ARCHITECTURE.md §4 |
-| `infra/` | compose, Caddy, деплой | одна команда запуска |
 | `template/` | старый проект команды для переиспользования | в `.gitignore`; копировать файлы осознанно, там есть секреты в `backend/secrets/` |
 
 ## Правила работы

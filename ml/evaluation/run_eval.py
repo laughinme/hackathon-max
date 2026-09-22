@@ -20,9 +20,9 @@ from pydantic import ValidationError
 
 from ml.dataset.schema import read_jsonl
 from ml.evaluation.metrics import EvalCounters, score_prediction
-from ml.inference.client import LLMClient, LLMSettings, LLMUnavailableError
-from ml.prompts import extract_json
-from ml.schemas import ModelDecision
+from infrastructure.llm.client import LLMClient, LLMSettings, LLMUnavailableError
+from infrastructure.llm.prompts import extract_json
+from infrastructure.llm.schemas import ModelDecision
 
 logger = logging.getLogger(__name__)
 

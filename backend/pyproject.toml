@@ -1,0 +1,39 @@
+[project]
+name = "domovoy-backend"
+version = "0.1.0"
+description = "MAX bot and mini-app backend for the Smart City track (hackathon MAX 2026)"
+requires-python = ">=3.13,<3.14"
+dependencies = [
+    "maxapi==1.2.2",
+    "aiohttp==3.14.3",
+    "pydantic==2.13.5",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3",
+    "pytest-asyncio>=1.1",
+    "ruff>=0.14",
+    "pyright>=1.1.400",
+]
+
+[tool.uv]
+package = false
+
+[tool.ruff]
+line-length = 88
+target-version = "py313"
+src = ["src", "scripts"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+
+[tool.pyright]
+include = ["src"]
+pythonVersion = "3.13"
+extraPaths = ["src"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+pythonpath = ["src"]
+testpaths = ["tests"]
