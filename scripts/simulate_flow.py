@@ -327,6 +327,92 @@ async def scenario_uk_failure(sim: Simulation) -> None:
     )
 
 
+async def scenario_llm_service(sim: Simulation) -> None:
+    """Бот работает поверх ответов модели, а не заглушки.
+
+    Модель подменяется скриптованным клиентом: проверяем, что бот
+    корректно показывает вопрос и черновик из JSON-решения модели
+    и что при недоступности модели сценарий не встаёт.
+    """
+
+    print("\n=== Сценарий 4: AI-слой на модели ===")
+
+    from app.services import get_services
+    from ml.inference.client import LLMUnavailableError
+    from ml.inference.service import LLMAIService
+    from ml.schemas import ModelDecision, Slots
+
+    ask = ModelDecision(
+        action="ask",
+        category="cleaning",
+        urgency="обычная",
+        slots=Slots(problem="не вывозят мусор"),
+        missing_slots=["location", "started_at"],
+        question="Где именно стоит мусор и как давно?",
+        explanation="Отвечает УК (санитарное содержание).",
+    )
+    draft = ModelDecision(
+        action="draft",
+        category="cleaning",
+        urgency="обычная",
+        slots=Slots(
+            problem="не вывозят мусор",
+            location="контейнерная площадка у дома",
+            started_at="неделю",
+        ),
+        missing_slots=[],
+        draft="Прошу организовать вывоз мусора с контейнерной площадки.",
+        explanation="Отвечает УК (санитарное содержание).",
+    )
+
+    class ScriptedClient:
+        """Клиент модели со сценарным ответом."""
+
+        def __init__(self, replies: list[object]) -> None:
+            self._replies = list(replies)
+
+        async def complete(self, messages: list[Any]) -> str:
+            reply = self._replies.pop(0)
+            if isinstance(reply, Exception):
+                raise reply
+            return str(reply)
+
+    services = get_services()
+    original_ai = services.ai
+    replies: list[object] = [
+        ask.as_training_target(),
+        "не json, модель сорвалась",
+        draft.as_training_target(),
+        LLMUnavailableError("сервис модели недоступен"),
+        LLMUnavailableError("сервис модели недоступен"),
+    ]
+    object.__setattr__(
+        services, "ai", LLMAIService(ScriptedClient(replies))  # type: ignore[arg-type]
+    )
+
+    try:
+        await sim.click("menu")
+        await sim.send_text("У нас не вывозят мусор от контейнеров")
+        check(
+            "Где именно стоит мусор" in sim.screen_text,
+            "показан вопрос, сформулированный моделью",
+        )
+
+        await sim.send_text("Контейнерная площадка у дома, уже неделю")
+        check(
+            "Прошу организовать вывоз мусора" in sim.screen_text,
+            "показан черновик от модели (после починки невалидного JSON)",
+        )
+
+        await sim.send_text("добавь, что появился запах")
+        check(
+            "Уточнение от заявителя" in sim.screen_text,
+            "при недоступности модели сработал откат на заглушку",
+        )
+    finally:
+        object.__setattr__(services, "ai", original_ai)
+
+
 async def main() -> None:
     logging.basicConfig(level=logging.WARNING)
     setup_services(load_config())
@@ -335,6 +421,7 @@ async def main() -> None:
     await scenario_quick_button(sim)
     await scenario_free_text(sim)
     await scenario_uk_failure(sim)
+    await scenario_llm_service(sim)
 
     print("\n🎉 Все сценарии пройдены")
 
