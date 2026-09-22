@@ -12,7 +12,7 @@ from maxapi.types.command import BotCommand
 from app import notifier
 from app.config import Config, load_config
 from app.handlers import create, fallback, my_requests, start
-from app.services import setup_services
+from app.services import setup_services, shutdown_services
 
 logger = logging.getLogger(__name__)
 
@@ -65,8 +65,9 @@ async def run() -> None:
     dispatcher = build_dispatcher()
 
     logger.info(
-        "Запуск бота. Интеграция с УК: %s",
+        "Запуск бота. Интеграция с УК: %s. AI-слой: %s",
         "реальная" if config.uk_enabled else "модельная (mock)",
+        "дообученная модель" if config.llm_enabled else "заглушка",
     )
 
     try:
@@ -74,6 +75,7 @@ async def run() -> None:
         await dispatcher.start_polling(bot)
     finally:
         await notifier.shutdown()
+        await shutdown_services()
         await bot.close_session()
         logger.info("Бот остановлен")
 

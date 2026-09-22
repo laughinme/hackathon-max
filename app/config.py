@@ -23,6 +23,16 @@ def _env_int(name: str, default: int) -> int:
         return default
 
 
+def _env_float(name: str, default: float) -> float:
+    raw = os.getenv(name)
+    if not raw:
+        return default
+    try:
+        return float(raw)
+    except ValueError:
+        return default
+
+
 @dataclass(frozen=True)
 class Config:
     """Параметры запуска бота."""
@@ -38,6 +48,15 @@ class Config:
     # Демонстрационная автосмена статусов заявки.
     demo_status_simulation: bool
     demo_status_delay_sec: int
+
+    # Дообученная модель. Обслуживается отдельно за OpenAI-совместимым
+    # endpoint'ом; при недоступности бот работает на StubAIService.
+    llm_enabled: bool
+    llm_base_url: str
+    llm_model: str
+    llm_api_key: str | None
+    llm_timeout_sec: float
+    llm_temperature: float
 
     @property
     def uk_enabled(self) -> bool:
@@ -65,4 +84,10 @@ def load_config() -> Config:
         uk_mock_mode=_env_bool("UK_MOCK_MODE", default=uk_api_url is None),
         demo_status_simulation=_env_bool("DEMO_STATUS_SIMULATION", True),
         demo_status_delay_sec=_env_int("DEMO_STATUS_DELAY_SEC", 25),
+        llm_enabled=_env_bool("LLM_ENABLED", False),
+        llm_base_url=os.getenv("LLM_BASE_URL", "http://localhost:8000/v1"),
+        llm_model=os.getenv("LLM_MODEL", "smart-city-jkh"),
+        llm_api_key=os.getenv("LLM_API_KEY", "").strip() or None,
+        llm_timeout_sec=_env_float("LLM_TIMEOUT_SEC", 20.0),
+        llm_temperature=_env_float("LLM_TEMPERATURE", 0.2),
     )
