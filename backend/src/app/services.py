@@ -11,8 +11,10 @@ from dataclasses import dataclass
 
 from app.config import Config
 from application.ports.ai import AIService
+from application.ports.classifier import Classifier
 from infrastructure.ai.stub import StubAIService, get_ai_service
 from infrastructure.memory.requests import RequestRepository, repository
+from infrastructure.ml.catboost_classifier import CatBoostClassifier
 from infrastructure.uk.client import UKClient
 
 logger = logging.getLogger(__name__)
@@ -25,6 +27,7 @@ class Services:
     config: Config
     uk: UKClient
     ai: AIService
+    classifier: Classifier
     requests: RequestRepository
     llm_client: object | None = None
 
@@ -64,6 +67,21 @@ def build_ai(config: Config) -> tuple[AIService, object | None]:
     return LLMAIService(client, fallback=StubAIService()), client
 
 
+def build_classifier(config: Config) -> Classifier:
+    """Классификатор категории и аварийности жалобы (DECISIONS D-005).
+
+    Модели CatBoost ещё не обучены — `CatBoostClassifier` сам проверяет
+    файлы по путям из конфига при первом обращении и откатывается на
+    правила, если их нет. Подключение готовой модели не требует
+    изменений здесь: положить файлы и перезапустить бота.
+    """
+
+    return CatBoostClassifier(
+        category_model_path=config.ml_category_model_path,
+        emergency_model_path=config.ml_emergency_model_path,
+    )
+
+
 def setup_services(config: Config) -> Services:
     """Создаёт и запоминает зависимости приложения."""
 
@@ -74,6 +92,7 @@ def setup_services(config: Config) -> Services:
         config=config,
         uk=UKClient(config),
         ai=ai,
+        classifier=build_classifier(config),
         requests=repository,
         llm_client=llm_client,
     )

@@ -58,6 +58,14 @@ class Config:
     llm_timeout_sec: float
     llm_temperature: float
 
+    # Классификация жалоб: категория + аварийность (DECISIONS D-005).
+    # Модели CatBoost обучаются офлайн; пока файлов по этим путям нет,
+    # работает RuleBasedClassifier (ключевые слова) — бот не падает и
+    # не ждёт ML. threshold — порог уверенности для fallback-диалога.
+    ml_category_model_path: str
+    ml_emergency_model_path: str
+    ml_confidence_threshold: float
+
     @property
     def uk_enabled(self) -> bool:
         """Есть ли реальная внешняя система УК."""
@@ -90,4 +98,11 @@ def load_config() -> Config:
         llm_api_key=os.getenv("LLM_API_KEY", "").strip() or None,
         llm_timeout_sec=_env_float("LLM_TIMEOUT_SEC", 20.0),
         llm_temperature=_env_float("LLM_TEMPERATURE", 0.2),
+        ml_category_model_path=os.getenv(
+            "ML_CATEGORY_MODEL_PATH", "models/category_classifier.cbm"
+        ),
+        ml_emergency_model_path=os.getenv(
+            "ML_EMERGENCY_MODEL_PATH", "models/emergency_classifier.cbm"
+        ),
+        ml_confidence_threshold=_env_float("ML_CONFIDENCE_THRESHOLD", 0.6),
     )
