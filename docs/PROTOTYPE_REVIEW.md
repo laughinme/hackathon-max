@@ -64,10 +64,12 @@
 
 ## 6. Что делать с этим кодом дальше (порядок)
 
-1. Вебхук вместо polling: `FastAPIMaxWebhook` из `maxapi`, эндпоинт `/webhooks/max`, секрет, `/health`; Caddy и Postgres в `compose.yaml`.
-2. Домен: `Ticket` с таблицей переходов, `SlaPolicy` и матрица ответственности из [DATA.md](DATA.md); `catalog.py` расширить полями `responsible_party`, `sla_key`.
-3. Хранилище: SQLAlchemy-модели и репозиторий заявок, `DialogState` в БД вместо `MemoryContext`; outbox для исходящих.
-4. Убрать `UKClient` и демо-таймер; добавить роль диспетчера и use case `change_status`; статусы меняются человеком.
-5. Групповой чат: подсказка бота на сообщение о проблеме, карточка заявки, «Я тоже» (переиспользуя `screen.render`).
-6. REST для мини-приложения по [CONTRACTS.md](CONTRACTS.md), проверка `initData`.
-7. Симулятор → pytest с фейковым транспортом; тесты SLA и state machine.
+Пункты 1, 2, 4 и 7 и хранилище заявок из пункта 3 закрыты шагом 1 (23.09, [D-008](DECISIONS.md)). Остальное — в дорожной карте [STATUS.md](STATUS.md).
+
+1. ~~Вебхук вместо polling~~ — сделано: `POST /webhooks/max`, секрет, `/health`, `/ready`; Postgres и Caddy (профиль `prod`) в `compose.yaml`.
+2. ~~Домен: `Ticket`, переходы, `SlaPolicy`, ответственность~~ — сделано.
+3. Хранилище: ~~репозиторий заявок~~ сделано; `DialogState` в БД и outbox — шаг 2.
+4. ~~Убрать `UKClient` и демо-таймер, use case `change_status`~~ — сделано; роль диспетчера в интерфейсе — шаг 2.
+5. Групповой чат: подсказка бота, карточка заявки, «Я тоже» — шаг 3.
+6. REST для мини-приложения и проверка `initData` — шаг 2.
+7. ~~Тесты SLA и state machine~~ — сделано; симулятор оставлен как e2e-прогон бота.

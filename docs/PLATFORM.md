@@ -93,3 +93,10 @@
 - **Хостинг**: для входящих вебхуков достаточно Let's Encrypt; сертификат Минцифры нужен только для исходящих запросов к `platform-api2.max.ru`. IP-диапазоны MAX не публикуются → защита вебхука только секретом. VK Cloud даёт хостинг мини-приложений MAX с бонусом 2500 ₽/мес ([cloud.vk.com](https://cloud.vk.com/promopage/max-mini-app/), страница открывается не всегда). Timeweb Cloud и Selectel — быстрые VPS с доменом.
 - **Python SDK**: `maxapi` 1.2.2 (15.08.2026), вебхуки через FastAPI/aiohttp/Litestar, FSM; форк `max-messenger/max-botapi-python` отмечен MAX как проверенный, но отстаёт от upstream.
 - Отладка мини-приложения: в мобильном клиенте нет DevTools, тестируют через веб-версию MAX в браузере ([habr](https://habr.com/ru/articles/1039030/)).
+
+## 9. Особенности `maxapi` 1.2.2 (проверено 23.09 на реальном токене)
+
+- `bot.set_my_commands()` ходит в `PATCH /me`, MAX отвечает `404 method.not.found`. Использовать `bot.set_commands()` (`PATCH /me/commands`).
+- `FastAPIMaxWebhook` сам проверяет `X-Max-Bot-Api-Secret` (403 при неверном) и обрабатывает событие внутри HTTP-запроса; при `Dispatcher(use_create_task=True)` — в фоне.
+- Хранилище состояния диалога подменяемое: `Dispatcher(storage=<класс BaseContext>)`; по умолчанию `MemoryContext`.
+- Данные, которые middleware кладёт в `data`, приходят в хендлер аргументом с тем же именем (так передаётся `services`).

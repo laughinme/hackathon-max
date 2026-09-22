@@ -1,11 +1,17 @@
-# Контракты (черновик до появления кода)
+# Контракты
 
 Источник истины после старта разработки — OpenAPI, генерируемая FastAPI (`/api/openapi.json`) и типы фронтенда из неё. Здесь — договорённости, которые нужны до кода. Формат ошибок и слои — в [ARCHITECTURE.md](ARCHITECTURE.md), API MAX — в [PLATFORM.md](PLATFORM.md) и [`max/GUIDE.md`](max/GUIDE.md).
 
 ## 1. Входящий вебхук MAX
 
-- `POST /webhooks/max` — тело `Update` (типы из [`max/openapi/schema.yaml`](max/openapi/schema.yaml)), заголовок `X-Max-Bot-Api-Secret` должен совпадать с `MAX_WEBHOOK_SECRET`, иначе `403`.
-- Ответ всегда `200 {}` в течение сотен миллисекунд; обработка — из `inbox_events`.
+**Реализовано (шаг 1):**
+- `POST /webhooks/max` — только в режиме `BOT_MODE=webhook`; тело `Update`; заголовок `X-Max-Bot-Api-Secret` должен совпадать с `WEBHOOK_SECRET`, иначе `403` (проверяет `maxapi`, тест — `backend/tests/unit/app/test_http.py`). Ответ `200 {"ok": true}` после обработки события хендлером (синхронно; пределы MAX — 30 с).
+- `GET /health` → `200 {"status": "ok", "bot_mode": "polling" | "webhook"}` — процесс жив.
+- `GET /ready` → `200 {"database": "ok"}` или `503 {"database": "unavailable"}` — для healthcheck Docker и uptime-монитора.
+- При старте в режиме `webhook`: `GET /subscriptions`, и если нашего URL нет — `POST /subscriptions` с `update_types = [message_created, message_callback, bot_started, bot_added, bot_removed]` и секретом. В режиме `polling` подписки удаляются (`maxapi.delete_webhook`).
+
+**План (шаг 2):**
+- Обработка через `inbox_events`, ответ `200` сразу.
 - Ключ дедупликации: `message_created` → `mid`; `message_callback` → `callback_id`; `bot_started`/`bot_added`/`user_added` и прочие → `update_type + chat_id + user_id + timestamp`.
 - Подписка при старте: `update_types = [message_created, message_callback, bot_started, bot_added, bot_removed, user_added, user_removed, bot_admin_permissions_changed]`.
 
@@ -19,6 +25,8 @@ Payload callback-кнопок (≤ 1024 символов, ASCII): `<ns>:<action>
 - `tk:watch:<ticket_id>` — следить в личке;
 - `form:<flow>:<step>:<value>` — шаги пошаговой формы;
 - `demo:role:<resident|dispatcher>` — переключение роли в демо.
+
+Реализовано в боте сейчас (формат `<действие>:<аргумент>`, `bot/callbacks.py`): `menu`, `new`, `cat:<категория>`, `emg:yes|no` (подтверждение аварийности), `draft_done`, `draft_restart`, `my`, `item:<uuid заявки>`. Переход на схему `ns:action:args` выше — вместе с групповым чатом (шаг 3).
 
 Диплинки: `?start=h_<building_code>` (дом), `?start=t_<ticket_number>` (заявка), `?startapp=house_<code>`, `?startapp=ticket_<id>`, `?startapp=dispatcher`. Без персональных данных.
 

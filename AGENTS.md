@@ -2,11 +2,11 @@
 
 **Проект одной фразой:** чат-бот + мини-приложение в MAX для трека «Умный город» хакатона MAX: заявка из домового чата с нормативным сроком, диспетчерская для УО, эскалация при просрочке. Дедлайн MVP — **30.09.2026 12:00 МСК**.
 
-**Текущая фаза:** Dive → Create. В `main` — прототип бота на `maxapi`, разложенный по слоям; ревью и план доработки — [docs/PROTOTYPE_REVIEW.md](docs/PROTOTYPE_REVIEW.md). Решения по продукту и стеку ждут подтверждения команды ([docs/DECISIONS.md](docs/DECISIONS.md)).
+**Текущая фаза:** Create. Шаг 1 дорожной карты (ядро заявки: домен, Postgres, вебхук) — сделан; план и следующий шаг — [docs/STATUS.md](docs/STATUS.md). LLM — только хостинговая по API, без дообучения ([D-007](docs/DECISIONS.md)).
 
 ## Что читать и в каком порядке
 
-1. [docs/STATUS.md](docs/STATUS.md) — где мы, что дальше, риски (обновляется каждый день).
+1. [docs/STATUS.md](docs/STATUS.md) — где мы, **дорожная карта реализации**, план по дням, риски.
 2. [docs/CASE_BRIEF.md](docs/CASE_BRIEF.md) — кейс, критерии с весами, сроки, ответы организаторов (факты).
 3. [docs/PRODUCT.md](docs/PRODUCT.md) — что строим, сценарий, приоритеты P0/P1/P2, демо (предложение).
 4. [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — слои, правила зависимостей, что взято из шаблона.
@@ -25,9 +25,9 @@
 | `case/` | официальные материалы кейса, саммари вебинаров и Q&A ([навигация](case/README.md)) | только чтение; ничего не менять по смыслу |
 | `docs/` | наши документы (см. список выше) | по темам, без дублирования: ссылаться, а не копировать |
 | `docs/max/` | снимок документации MAX Bot API и мини-приложений, OpenAPI-схема, `maxapi` | обновлять скриптом из [docs/max/README.md](docs/max/README.md) |
-| `backend/` | бэкенд: `src/app` (сборка), `src/bot` (хендлеры MAX), `src/domain`, `src/application`, `src/infrastructure`; `scripts/simulate_flow.py` — оффлайн-прогон; `uv` | структура — ARCHITECTURE.md §2, текущее состояние — §7. Запуск: `cd backend && uv sync && PYTHONPATH=src uv run python -m app.main` |
+| `backend/` | бэкенд: `src/app` (FastAPI, сборка), `src/bot` (хендлеры MAX), `src/domain`, `src/application`, `src/infrastructure` (Postgres, ML, LLM); `tests/`; `scripts/simulate_flow.py`; `uv` | структура и команды — [backend/README.md](backend/README.md), правила слоёв — ARCHITECTURE.md §2, состояние — §7 |
 | `ml/` | отдельный сервис классификации жалоб (категория + аварийность), свой `pyproject.toml`/Docker/`uv`, порт 8100; каркас LoRA от 22.09 удалён и не связан с этим кодом ([DECISIONS.md D-005, D-006](docs/DECISIONS.md)) | структура и HTTP-контракт — [ml/README.md](ml/README.md), [docs/CONTRACTS.md §4](docs/CONTRACTS.md); модели (`*.cbm`) — в `ml/models/`, в `.gitignore`, не коммитить |
-| `compose.yaml` | запуск одной командой (`docker compose up --build`) | требование кейса |
+| `compose.yaml`, `infra/caddy/` | запуск одной командой (`docker compose up --build`: Postgres, бот, ML); профиль `prod` добавляет Caddy с HTTPS для вебхука | требование кейса |
 | `frontend/` | мини-приложение (Vite + React + TS) | структура — ARCHITECTURE.md §4 |
 | `template/` | старый проект команды для переиспользования | в `.gitignore`; копировать файлы осознанно, там есть секреты в `backend/secrets/` |
 

@@ -134,19 +134,17 @@ frontend/src/
 - Транзакционный outbox вместо прямых HTTP-вызовов из сервисов (в шаблоне есть `outbox_dispatcher.py` для ML — идея верная, обобщаем).
 - `import-linter` и `pyright` в CI, чтобы правила слоёв держались не на дисциплине.
 
-## 7. Текущее состояние кода (22.09, после переезда прототипа)
+## 7. Текущее состояние кода (23.09, после шага 1)
 
-Прототип на `maxapi` разложен по слоям без изменения логики (карта переезда — [PROTOTYPE_REVIEW.md §5](PROTOTYPE_REVIEW.md#5-куда-что-переехало)). Отличия от целевой схемы выше, которые ещё предстоит закрыть:
+Сделано ([D-008](DECISIONS.md)): домен заявки (`domain/tickets/`: `entities.py`, `state_machine.py`, `sla.py`, `calendar.py`, `responsibility.py`), use case'ы (`application/tickets/`: `triage_complaint.py`, `create_ticket.py`, `change_status.py`, `queries.py`), порты `tickets.py` и `clock.py`, Postgres (`infrastructure/db/`: модели, мапперы, репозиторий, UoW, миграции Alembic), in-memory адаптеры для тестов, FastAPI-процесс с вебхуком или polling (`app/main.py`), DI через middleware (`bot/middleware.py`), представление статусов и сроков в `bot/presenters.py`.
 
-| Сейчас | Цель | Где |
+| Ещё не сделано | Цель | Шаг дорожной карты ([STATUS.md](STATUS.md)) |
 |---|---|---|
-| long polling (`dispatcher.start_polling`) | webhook `POST /webhooks/max` через `FastAPIMaxWebhook`, Caddy 443 | `app/main.py`, `api/webhooks/` |
-| `MemoryContext` FSM и in-memory `RequestRepository` | Postgres: `DialogState`, репозитории с мапперами, inbox/outbox | `infrastructure/db/` |
-| `Request.set_status()` без проверки переходов; эмодзи и подписи в домене | `state_machine.py`, рендер статусов в `bot/render/` | `domain/tickets/` |
-| `UKClient` (mock HTTP в «систему УК») и демо-таймер статусов | роль диспетчера, use case `change_status`; статусы меняет человек | `application/tickets/`, `api/http/v1/` |
-| хендлеры вызывают глобальный `get_services()` | зависимости через middleware диспетчера или контейнер | `app/services.py`, `bot/` |
-| `AIService.analyze/refine` — вопросы и текст обращения для каждой заявки | `classifier.py` (HTTP до сервиса `ml/`: категория + аварийность → вход `SlaPolicy`, откат на правила при недоступности) на каждой заявке; `ai.py` (хостинговая LLM) — только фото-описание и fallback-диалог при низкой уверенности (D-005, D-006) | `application/ports/classifier.py`, `application/ports/ai.py` |
-| нет мини-приложения и REST | `api/http/v1` по [CONTRACTS.md](CONTRACTS.md), проверка `initData` | `api/` |
-| `scripts/simulate_flow.py` с `FakeBot` | pytest с фейковыми портами + тесты домена | `tests/` |
+| нет домов, жителей и ролей | `Building`, `Membership`, роль диспетчера УО | 2 |
+| нет REST и авторизации мини-приложения | `api/http/v1` по [CONTRACTS.md](CONTRACTS.md), проверка `initData` | 2 |
+| смена статуса не рассылает уведомления | outbox + порт `MaxGateway` с лимитом 2 сообщения/с на чат | 2 |
+| состояние диалога в `MemoryContext` (теряется при перезапуске) | своя реализация `BaseContext` на Postgres | 2 |
+| бот работает только в личном диалоге | реестр чатов, подсказка в групповом чате, «Я тоже» | 3 |
+| нет контроля просрочек | планировщик просрочек, эскалация в ГЖИ | 5 |
 
-Решение по транспорту: `maxapi` остаётся (Q-06 в DECISIONS), исходящие вызовы заворачиваются в порт `MaxGateway`.
+Решение по транспорту: `maxapi` остаётся (Q-06). Команды бота ставятся через `bot.set_commands()` (`PATCH /me/commands`): старый `set_my_commands()` ходит в `PATCH /me`, который MAX больше не поддерживает.
