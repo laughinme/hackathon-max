@@ -21,7 +21,10 @@ services:
       retries: 10
 
   bot:
-    build: ./backend
+    # Repo root as context: the image also builds the mini-app (frontend/).
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
     image: domovoy-backend:latest
     container_name: domovoy-bot
     restart: unless-stopped

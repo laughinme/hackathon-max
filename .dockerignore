@@ -1,10 +1,19 @@
-.git
-.gitignore
-.venv
+# Build context is the repo root (backend/Dockerfile). Send only what the
+# image needs: backend sources and the mini-app sources.
+**/.git
+**/.venv
+**/node_modules
 **/__pycache__
 **/*.py[cod]
-.pytest_cache
-.ruff_cache
-.mypy_cache
-.env
-README.md
+**/.pytest_cache
+**/.ruff_cache
+**/.mypy_cache
+**/.env
+**/.DS_Store
+frontend/dist
+case
+docs
+template
+ml
+infra
+backend/tests

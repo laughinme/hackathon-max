@@ -54,6 +54,8 @@ class Config:
     # Hackathon demo: synthetic data and a "become a dispatcher" button so
     # checkers can walk both sides with one MAX account.
     demo_mode: bool
+    # Built mini-app served at `/` (frontend/dist); None when not built.
+    miniapp_dir: str | None
     # Accept `Authorization: dev <max_user_id>` in the REST API (frontend work
     # outside MAX). Never in production.
     dev_auth_enabled: bool
@@ -113,6 +115,7 @@ def load_config() -> Config:
         polling_takeover=_env_bool("POLLING_TAKEOVER", False),
         demo_mode=_env_bool("DEMO_MODE", True),
         dev_auth_enabled=_env_bool("DEV_AUTH_ENABLED", False),
+        miniapp_dir=_env_str("MINIAPP_DIR") or None,
         llm_enabled=_env_bool("LLM_ENABLED", False),
         llm_base_url=_env_str("LLM_BASE_URL", "https://ai.api.cloud.yandex.net/v1"),
         llm_model=_env_str("LLM_MODEL"),

@@ -1,6 +1,7 @@
 # Temporary test deployment on fly.io to verify the MAX webhook end to end.
 # Production target is Yandex Cloud (DECISIONS D-009). Deploy from repo root:
-#   fly deploy backend -c infra/fly/backend.toml --dockerfile backend/Dockerfile --ha=false
+#   fly deploy . -c infra/fly/backend.toml --dockerfile backend/Dockerfile --ha=false
+# The mini-app is served at https://domovoy-test.fly.dev/ by the same image.
 app = "domovoy-test"
 primary_region = "ams"
 

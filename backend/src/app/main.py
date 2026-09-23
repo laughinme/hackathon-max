@@ -11,6 +11,7 @@ import asyncio
 import contextlib
 import logging
 from collections.abc import AsyncGenerator
+from pathlib import Path
 from typing import Any
 
 import uvicorn
@@ -23,6 +24,7 @@ from maxapi.exceptions.max import MaxApiError
 from maxapi.types.command import BotCommand
 
 from api.http.app import mount_api
+from api.http.miniapp import mount_miniapp
 from api.webhooks.max import WebhookReceiver
 from app.config import Config, load_config
 from app.relay import run_relay
@@ -194,6 +196,9 @@ def create_app(config: Config) -> FastAPI:
 
     if config.dev_auth_enabled:
         logger.warning("DEV_AUTH_ENABLED: REST accepts 'Authorization: dev <id>'")
+    if config.miniapp_dir and (Path(config.miniapp_dir) / "index.html").is_file():
+        mount_miniapp(app, Path(config.miniapp_dir))
+        logger.info("Mini-app served at / from %s", config.miniapp_dir)
     return app
 
 

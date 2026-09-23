@@ -77,6 +77,7 @@ CONFIG = Config(
     polling_takeover=False,
     demo_mode=True,
     dev_auth_enabled=False,
+    miniapp_dir=None,
     llm_enabled=False,
     llm_base_url="",
     llm_model="",

@@ -3,15 +3,9 @@
 {$DOMAIN} {
 	encode zstd gzip
 
-	handle /webhooks/* {
-		reverse_proxy bot:8080
-	}
-
-	handle /health {
-		reverse_proxy bot:8080
-	}
-
+	# Webhook, REST (/api), ops and the mini-app (/) are all served by the
+	# backend container; Caddy only terminates TLS.
 	handle {
-		respond "Not found" 404
+		reverse_proxy bot:8080
 	}
 }
