@@ -1,0 +1,217 @@
+{
+  "trained_at": "2026-09-23T17:46:42+00:00",
+  "params": {
+    "iterations": 3000,
+    "learning_rate": null,
+    "depth": 6,
+    "early_stopping_rounds": 150,
+    "val_size": 0.15,
+    "seed": 42
+  },
+  "tasks": {
+    "category": {
+      "test_size": 350,
+      "best_iteration": 1888,
+      "accuracy": 0.94,
+      "f1_macro": 0.9399,
+      "share_below_confidence": {
+        "threshold": 0.6,
+        "share": 0.0171
+      },
+      "report": {
+        "cleaning": {
+          "precision": 0.9019607843137255,
+          "recall": 0.92,
+          "f1-score": 0.9108910891089109,
+          "support": 50.0
+        },
+        "door": {
+          "precision": 0.9215686274509803,
+          "recall": 0.94,
+          "f1-score": 0.9306930693069307,
+          "support": 50.0
+        },
+        "heating": {
+          "precision": 0.96,
+          "recall": 0.96,
+          "f1-score": 0.96,
+          "support": 50.0
+        },
+        "lift": {
+          "precision": 1.0,
+          "recall": 0.96,
+          "f1-score": 0.9795918367346939,
+          "support": 50.0
+        },
+        "light": {
+          "precision": 0.9555555555555556,
+          "recall": 0.86,
+          "f1-score": 0.9052631578947369,
+          "support": 50.0
+        },
+        "other": {
+          "precision": 0.9074074074074074,
+          "recall": 0.98,
+          "f1-score": 0.9423076923076923,
+          "support": 50.0
+        },
+        "water": {
+          "precision": 0.9411764705882353,
+          "recall": 0.96,
+          "f1-score": 0.9504950495049505,
+          "support": 50.0
+        },
+        "accuracy": 0.94,
+        "macro avg": {
+          "precision": 0.9410955493308435,
+          "recall": 0.9399999999999998,
+          "f1-score": 0.9398916992654165,
+          "support": 350.0
+        },
+        "weighted avg": {
+          "precision": 0.9410955493308435,
+          "recall": 0.94,
+          "f1-score": 0.9398916992654165,
+          "support": 350.0
+        }
+      },
+      "confusion_matrix": {
+        "labels": [
+          "cleaning",
+          "door",
+          "heating",
+          "lift",
+          "light",
+          "other",
+          "water"
+        ],
+        "matrix": [
+          [
+            46,
+            1,
+            0,
+            0,
+            1,
+            2,
+            0
+          ],
+          [
+            1,
+            47,
+            0,
+            0,
+            1,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            48,
+            0,
+            0,
+            0,
+            2
+          ],
+          [
+            0,
+            2,
+            0,
+            48,
+            0,
+            0,
+            0
+          ],
+          [
+            4,
+            1,
+            0,
+            0,
+            43,
+            2,
+            0
+          ],
+          [
+            0,
+            0,
+            0,
+            0,
+            0,
+            49,
+            1
+          ],
+          [
+            0,
+            0,
+            2,
+            0,
+            0,
+            0,
+            48
+          ]
+        ]
+      },
+      "model_file": "category_classifier.cbm",
+      "train_size": 951,
+      "val_size": 168
+    },
+    "emergency": {
+      "test_size": 350,
+      "best_iteration": 1005,
+      "accuracy": 0.9657,
+      "f1_macro": 0.9657,
+      "share_below_confidence": {
+        "threshold": 0.6,
+        "share": 0.0029
+      },
+      "report": {
+        "0": {
+          "precision": 0.9657142857142857,
+          "recall": 0.9657142857142857,
+          "f1-score": 0.9657142857142857,
+          "support": 175.0
+        },
+        "1": {
+          "precision": 0.9657142857142857,
+          "recall": 0.9657142857142857,
+          "f1-score": 0.9657142857142857,
+          "support": 175.0
+        },
+        "accuracy": 0.9657142857142857,
+        "macro avg": {
+          "precision": 0.9657142857142857,
+          "recall": 0.9657142857142857,
+          "f1-score": 0.9657142857142857,
+          "support": 350.0
+        },
+        "weighted avg": {
+          "precision": 0.9657142857142857,
+          "recall": 0.9657142857142857,
+          "f1-score": 0.9657142857142857,
+          "support": 350.0
+        }
+      },
+      "confusion_matrix": {
+        "labels": [
+          "0",
+          "1"
+        ],
+        "matrix": [
+          [
+            169,
+            6
+          ],
+          [
+            6,
+            169
+          ]
+        ]
+      },
+      "emergency_recall": 0.9657,
+      "emergency_precision": 0.9657,
+      "model_file": "emergency_classifier.cbm",
+      "train_size": 951,
+      "val_size": 168
+    }
+  }
+}

@@ -15,27 +15,54 @@
 ## Что тут лежит
 
 - `src/mlsvc/` — FastAPI-приложение: `main.py` (роуты), `classifier.py`
-  (загрузка `.cbm`-файлов и инференс), `config.py`, `schemas.py`.
-- `models/` — сюда кладутся обученные файлы (в `.gitignore`, бинарники не
-  коммитятся). Пути настраиваются через `.env` (см. `.env.example`).
-- `tests/` — юнит-тесты сервиса.
+  (загрузка `.cbm`-файлов и инференс), `features.py` (формат входа модели —
+  общий для обучения и сервиса), `config.py`, `schemas.py`.
+- `dataset/` — генератор синтетического датасета и сами `train`/`test`
+  ([dataset/README.md](dataset/README.md)).
+- `training/train.py` — обучение обеих моделей.
+- `models/` — обученные `.cbm` (~10 МБ на обе) и `metrics.json`, лежат в
+  репозитории: после клона сервис работает сразу, без обучения. Пути для
+  сервиса — через `.env` (см. `.env.example`).
+- `tests/` — тесты сервиса и стыковки «обучение → сервис».
 
 ## Обучение
 
-Датасет и скрипт обучения этот каркас не включает — это отдельная задача
-(разметка текстов жалоб по категории и аварийности, см. открытый вопрос в
-D-005). На выходе тренировки должно получиться два файла:
+```bash
+cd ml
+uv sync --group train
+PYTHONPATH=src uv run python training/train.py                    # обе модели
+PYTHONPATH=src uv run python training/train.py --task emergency   # одна
+```
 
-- `category_classifier.cbm` — многоклассовый классификатор, классы — коды
-  категорий из `backend/src/domain/tickets/catalog.py` (`water`, `light`,
-  `heating`, `door`, `cleaning`, `lift`, `other`).
-- `emergency_classifier.cbm` — бинарный классификатор, класс `1` = авария.
+Около минуты на CPU. Скрипт учится на `dataset/data/train.csv` (15% из него
+отрезается на валидацию для ранней остановки), оценивает на
+`dataset/data/test.csv` и сохраняет в `models/`:
 
-`src/mlsvc/classifier.py` вызывает `model.predict_proba([text])`, то есть
-ждёт модель, обученную на сыром тексте жалобы как одном текстовом признаке
-(`text_features` в CatBoost). Если пайплайн признаков другой (TF-IDF,
-эмбеддинги, доп. колонки) — поправьте `predict_category`/`predict_emergency`
-под него, контракт `/classify` наружу от этого не изменится.
+- `category_classifier.cbm` — многоклассовый (`water`, `light`, `heating`,
+  `door`, `cleaning`, `lift`, `other` — коды из
+  `backend/src/domain/tickets/catalog.py`);
+- `emergency_classifier.cbm` — бинарный, класс `1` = авария;
+- `metrics.json` — accuracy, macro-F1, отчёт по классам, матрица ошибок,
+  для аварийности отдельно recall/precision, и доля ответов ниже порога
+  уверенности бэкенда (0.6) — столько жалоб ушло бы в уточняющий диалог.
+
+`test` в обучении не участвует ни как train, ни как валидация — это
+фиксированный бенчмарк, по нему метрики сравнимы между запусками. Ранняя
+остановка — по logloss, не по F1: F1 выходит на плато за десяток итераций при
+ещё «плоских» вероятностях, и тогда почти треть жалоб оказывается ниже порога
+уверенности.
+
+Текст подаётся модели одним текстовым признаком CatBoost; токенизация
+(нижний регистр, отделение пунктуации, буквенные триграммы против опечаток)
+задана в `src/mlsvc/features.py`. Меняете признаки — меняйте их там: этот же
+модуль использует сервис, а `tests/test_training.py` проверяет, что
+обученная модель грузится и отвечает через `ClassifierModels`.
+
+Чтобы сервис подхватил новые модели — перезапустить его (`docker compose
+restart ml`), бот трогать не нужно. Переобученные модели коммитьте вместе с
+`metrics.json`, чтобы было видно, какие метрики у версии в репозитории.
+Каждое переобучение добавляет в историю git ещё ~10 МБ — коммитьте модели,
+когда они действительно лучше, а не после каждого эксперимента.
 
 ## Запуск
 
@@ -60,7 +87,7 @@ PYTHONPATH=src uv run uvicorn mlsvc.main:app --reload --port 8100
 cd ml
 uv sync --group dev
 PYTHONPATH=src uv run pytest
-uv run ruff check src tests
+uv run ruff check src tests training
 ```
 
 ## HTTP-контракт
@@ -71,4 +98,4 @@ uv run ruff check src tests
 |---|---|---|
 | GET | `/health` | `200 {"status": "ok"}` — процесс жив |
 | GET | `/ready` | `200 {"category_model_loaded": bool, "emergency_model_loaded": bool}` |
-| POST | `/classify` | `{"text": str}` → `200 {category_code, category_confidence, is_emergency, emergency_confidence}`, или `503`, если модели не загружены |
+| POST | `/classify` | `{"text": str}` → `200 {category_code, category_confidence, is_emergency, emergency_confidence}`, или `503`, если модели не загружены. `emergency_confidence` — уверенность в `is_emergency` (0.5–1), не вероятность аварии |

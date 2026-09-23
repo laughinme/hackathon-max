@@ -203,12 +203,6 @@ jwt_*.pem
 case/raw/
 **/chat.json
 *.har
-
-# Обученные модели — бинарники, не в git; кладутся руками на сервер
-# или волонтируются в compose.yaml (DECISIONS D-006).
-ml/models/*.cbm
-!ml/models/.gitkeep
-
 # Local tooling
 .idea/
 .vscode/

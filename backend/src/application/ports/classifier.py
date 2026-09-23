@@ -21,6 +21,8 @@ class Classification:
     category_code: str
     category_confidence: float
     is_emergency: bool
+    # Уверенность в значении is_emergency, а не P(авария): её сравнивают с
+    # порогом fallback-диалога (ML_CONFIDENCE_THRESHOLD).
     emergency_confidence: float
 
 
