@@ -15,9 +15,11 @@ class ClassifyResponse(BaseModel):
     """Ответ `POST /classify` — вход в SlaPolicy на стороне бэкенда."""
 
     category_code: str
-    category_confidence: float
+    category_confidence: float = Field(description="Вероятность выбранной категории")
     is_emergency: bool
-    emergency_confidence: float
+    emergency_confidence: float = Field(
+        description="Уверенность в значении is_emergency (0.5–1), не P(авария)"
+    )
 
 
 class ReadyResponse(BaseModel):

@@ -57,7 +57,7 @@ Payload callback-кнопок (≤ 1024 символов, ASCII): `<ns>:<action>
 
 | Метод | Путь | Назначение |
 |---|---|---|
-| POST | `/classify` | `{text: str}` → `200 {category_code, category_confidence: float, is_emergency: bool, emergency_confidence: float}`, либо `503`, если модели ещё не обучены |
+| POST | `/classify` | `{text: str}` → `200 {category_code, category_confidence: float, is_emergency: bool, emergency_confidence: float}`, либо `503`, если модели ещё не обучены. `category_confidence` — вероятность выбранной категории; `emergency_confidence` — уверенность в значении `is_emergency` (от 0.5 до 1), **не** вероятность аварии: бэкенд сравнивает оба поля с порогом fallback-диалога |
 | GET | `/health` | `200 {status: "ok"}` — процесс жив, не зависит от того, загружены ли модели |
 | GET | `/ready` | `200 {category_model_loaded: bool, emergency_model_loaded: bool}` |
 

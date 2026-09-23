@@ -53,9 +53,10 @@ services:
       - path: ./ml/.env
         required: false
     volumes:
-      # Trained models are dropped here without rebuilding the image
-      # (DECISIONS D-006); until then /classify answers 503 and the bot
-      # falls back to keyword rules.
+      # Trained models are committed in ml/models/*.cbm (DECISIONS D-006,
+      # 24.09); mounted as a volume, so new models are picked up by a
+      # restart without rebuilding. Without them /classify answers 503 and
+      # the bot falls back to keyword rules.
       - ./ml/models:/app/models:ro
     stop_grace_period: 10s
 

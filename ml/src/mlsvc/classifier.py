@@ -1,13 +1,8 @@
 """Загрузка и инференс моделей CatBoost.
 
 Два отдельных классификатора — категория и аварийность (DECISIONS
-D-005 в корне репозитория): учатся на разных таргетах и, возможно,
-разных наборах признаков. Предполагается, что обе модели обучены на
-«сыром» тексте жалобы как одном текстовом признаке (`text_features`
-в CatBoost) — `predict_proba` здесь вызывается с одной текстовой
-колонкой. Если пайплайн признаков другой (TF-IDF, эмбеддинги, доп.
-колонки) — методы `predict_category`/`predict_emergency` нужно
-поправить под него.
+D-005 в корне репозитория). Обучаются скриптом `training/train.py`;
+формат входа задаёт `features.to_frame`, общий для обучения и сервиса.
 """
 
 from __future__ import annotations
@@ -17,11 +12,12 @@ from pathlib import Path
 
 from catboost import CatBoostClassifier
 
+from mlsvc.features import to_frame
+
 logger = logging.getLogger(__name__)
 
-#: Индекс класса "авария" в бинарном классификаторе аварийности
-#: (0 = не авария, 1 = авария) — таким и должен быть обучающий таргет.
-EMERGENCY_CLASS_INDEX = 1
+#: Метка класса «авария» в модели аварийности (таргет is_emergency: 0/1).
+EMERGENCY_LABEL = 1
 
 
 class ModelsNotReadyError(RuntimeError):
@@ -65,9 +61,7 @@ class ClassifierModels:
         if self._emergency_model is None and self._emergency_model_path.is_file():
             self._emergency_model = CatBoostClassifier()
             self._emergency_model.load_model(str(self._emergency_model_path))
-            logger.info(
-                "Загружена модель аварийности: %s", self._emergency_model_path
-            )
+            logger.info("Загружена модель аварийности: %s", self._emergency_model_path)
 
     def predict_category(self, text: str) -> tuple[str, float]:
         if self._category_model is None:
@@ -75,9 +69,9 @@ class ClassifierModels:
                 f"Модель категории не найдена: {self._category_model_path}"
             )
 
-        probabilities = self._category_model.predict_proba([text])[0]
+        probabilities = self._category_model.predict_proba(to_frame([text]))[0]
         classes = self._category_model.classes_
-        best_index = probabilities.argmax()
+        best_index = int(probabilities.argmax())
         return str(classes[best_index]), float(probabilities[best_index])
 
     def predict_emergency(self, text: str) -> tuple[bool, float]:
@@ -86,6 +80,14 @@ class ClassifierModels:
                 f"Модель аварийности не найдена: {self._emergency_model_path}"
             )
 
-        probabilities = self._emergency_model.predict_proba([text])[0]
-        emergency_probability = float(probabilities[EMERGENCY_CLASS_INDEX])
-        return emergency_probability >= 0.5, emergency_probability
+        probabilities = self._emergency_model.predict_proba(to_frame([text]))[0]
+        classes = [int(label) for label in self._emergency_model.classes_]
+        emergency_probability = float(probabilities[classes.index(EMERGENCY_LABEL)])
+        is_emergency = emergency_probability >= 0.5
+        # Уверенность в принятом решении, а не P(авария): бэкенд сравнивает её
+        # с порогом fallback-диалога, и уверенное «не авария» (P=0.01) не должно
+        # выглядеть как сомнение и включать fail-safe.
+        confidence = (
+            emergency_probability if is_emergency else 1 - emergency_probability
+        )
+        return is_emergency, confidence

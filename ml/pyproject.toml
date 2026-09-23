@@ -8,10 +8,18 @@ dependencies = [
     "uvicorn[standard]>=0.30,<1.0",
     "pydantic>=2.9,<3.0",
     "catboost>=1.2,<2.0",
+    "pandas>=2.2",
+    "httpx>=0.27",
+    "python-dotenv>=1.0",
 ]
 
 [dependency-groups]
+# Только для training/train.py (метрики, сплит) — в образ сервиса не входит.
+train = [
+    "scikit-learn>=1.5",
+]
 dev = [
+    { include-group = "train" },
     "pytest>=8.3",
     "pytest-asyncio>=1.1",
     "httpx>=0.27",
@@ -24,12 +32,12 @@ package = false
 [tool.ruff]
 line-length = 88
 target-version = "py313"
-src = ["src"]
+src = ["src", "."]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
-pythonpath = ["src"]
+pythonpath = ["src", "."]
 testpaths = ["tests"]

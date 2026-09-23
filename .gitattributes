@@ -1,2 +1,5 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# Обученные модели CatBoost — бинарники, без нормализации переводов строк и диффов.
+*.cbm binary
