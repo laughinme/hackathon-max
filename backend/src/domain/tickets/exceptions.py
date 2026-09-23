@@ -39,3 +39,10 @@ class TicketNotOverdueError(DomainError):
             "A complaint to the housing inspection is possible only after the "
             "legal deadline has passed and the ticket is still open"
         )
+
+
+class TicketClosedError(DomainError):
+    code = "ticket_closed"
+
+    def __init__(self) -> None:
+        super().__init__("The ticket is closed")

@@ -171,3 +171,34 @@ async def test_overdue_watch_and_escalation_on_postgres(world):
         "ticket_overdue",
         "ticket_overdue_dispatcher",
     ]
+
+
+async def test_house_chat_flow_and_inbox_on_postgres(world):
+    from application.chats.file_from_chat import FileFromChatCommand
+    from application.chats.spot_complaint import NewProblem
+    from infrastructure.db.inbox import SqlInbox
+
+    services, clock, session_factory = world
+    chat, author, neighbour = -555, 901, 902
+    await services.register_chat.execute(chat, author)
+    await services.bind_chat.execute(chat, "psk001", author)
+    spotted = await services.spot_complaint.execute(
+        chat, author, "m.1", "Лифт опять не работает, застрял между этажами"
+    )
+    assert isinstance(spotted, NewProblem)
+    ticket = await services.file_from_chat.execute(
+        FileFromChatCommand(spotted.hint.id, RESIDENT, card_mid="card.1")
+    )
+    again = await services.file_from_chat.execute(
+        FileFromChatCommand(spotted.hint.id, neighbour, card_mid="card.1")
+    )
+    assert again.id == ticket.id
+    assert ticket.chat_card_mid == "card.1" and ticket.supporter_ids == (author,)
+
+    result = await services.support_ticket.execute(ticket.id, neighbour)
+    assert result.counted and result.ticket.supporter_ids == (author, neighbour)
+
+    inbox = SqlInbox(session_factory)
+    assert await inbox.register("cb:1", clock.now())
+    assert not await inbox.register("cb:1", clock.now())
+    assert await inbox.purge(clock.now() + timedelta(days=4)) == 1

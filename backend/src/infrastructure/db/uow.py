@@ -7,6 +7,7 @@ from typing import Self
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from infrastructure.db.chat_repository import SqlChatRepository
 from infrastructure.db.housing_repository import SqlHousingRepository
 from infrastructure.db.outbox import SqlOutbox
 from infrastructure.db.repositories import SqlTicketRepository
@@ -16,6 +17,7 @@ class SqlUnitOfWork:
     tickets: SqlTicketRepository
     housing: SqlHousingRepository
     outbox: SqlOutbox
+    chats: SqlChatRepository
 
     def __init__(self, session_factory: async_sessionmaker[AsyncSession]) -> None:
         self._session_factory = session_factory
@@ -26,6 +28,7 @@ class SqlUnitOfWork:
         self.tickets = SqlTicketRepository(self._session)
         self.housing = SqlHousingRepository(self._session)
         self.outbox = SqlOutbox(self._session)
+        self.chats = SqlChatRepository(self._session)
         return self
 
     async def __aexit__(

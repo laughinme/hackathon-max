@@ -14,9 +14,11 @@ from maxapi.utils.inline_keyboard import InlineKeyboardBuilder
 
 from app.services import Services
 from bot import callbacks, keyboards, privacy_texts
+from bot.scopes import DialogScope
 from bot.screen import SCREEN_KEY, render, sender_id
 
 router = Router(router_id="privacy")
+router.filter(DialogScope())
 
 
 def _policy_keyboard() -> AttachmentButton:

@@ -12,12 +12,14 @@ from app.services import Services
 from application.errors import TicketNotFoundError
 from application.tickets.change_status import ChangeStatusCommand
 from bot import callbacks, keyboards, texts
+from bot.scopes import DialogScope
 from bot.screen import render, sender_id
 from domain.errors import DomainError
 from domain.tickets.enums import ActorRole, TicketStatus
 from domain.tickets.exceptions import TicketNotOverdueError
 
 router = Router(router_id="my_requests")
+router.filter(DialogScope())
 
 
 @router.message_callback(callbacks.is_action(callbacks.MY_LIST))

@@ -36,10 +36,18 @@ def card(ticket: TicketView) -> str:
         f"Категория: {category_title(ticket.category_code)}, "
         f"{urgency_label(ticket.is_emergency)}\n"
         f"Срок устранения: до <b>{format_moment(ticket.resolve_by)}</b>\n"
-        f"<i>{ticket.deadline_basis}</i>\n\n"
+        f"<i>{ticket.deadline_basis}</i>\n"
+        f"{_neighbours(ticket)}\n"
         f"<b>Описание</b>\n{ticket.description}\n\n"
         f"<b>История</b>\n{history}"
     )
+
+
+def _neighbours(ticket: TicketView) -> str:
+    if not ticket.supporters_count:
+        return ""
+    source = " · из домового чата" if ticket.chat_card_mid else ""
+    return f"👥 Касается ещё соседей: <b>{ticket.supporters_count}</b>{source}\n"
 
 
 def ask_comment(status_label: str) -> str:

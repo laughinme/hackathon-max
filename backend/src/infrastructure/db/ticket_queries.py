@@ -44,6 +44,23 @@ class SqlTicketQueries:
         query = query.order_by(is_closed, TicketRow.resolve_by).limit(limit)
         return await self._fetch(query, now)
 
+    async def find_open_duplicate(
+        self, building_id: UUID, category_code: str, since: datetime, now: datetime
+    ) -> TicketView | None:
+        views = await self._fetch(
+            self._base()
+            .where(
+                TicketRow.building_id == building_id,
+                TicketRow.category_code == category_code,
+                TicketRow.status.in_(OPEN_VALUES),
+                TicketRow.created_at >= since,
+            )
+            .order_by(TicketRow.created_at.desc())
+            .limit(1),
+            now,
+        )
+        return views[0] if views else None
+
     @staticmethod
     def _base() -> Select[tuple[TicketRow, str]]:
         return select(TicketRow, BuildingRow.address).join(

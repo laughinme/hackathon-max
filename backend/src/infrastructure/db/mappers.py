@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from domain.tickets.entities import Ticket, TicketEvent
+from domain.tickets.entities import Ticket, TicketEvent, TicketSupport
 from domain.tickets.enums import ActorRole, ResponsibleParty, TicketStatus
 from domain.tickets.sla import Deadlines
-from infrastructure.db.models import TicketEventRow, TicketRow
+from infrastructure.db.models import TicketEventRow, TicketRow, TicketSupportRow
 
 
 def ticket_to_domain(row: TicketRow) -> Ticket:
@@ -32,6 +32,11 @@ def ticket_to_domain(row: TicketRow) -> Ticket:
         events=[event_to_domain(event) for event in row.events],
         overdue_notified_at=row.overdue_notified_at,
         escalated_at=row.escalated_at,
+        supporters=[
+            TicketSupport(user_id=support.user_id, at=support.at)
+            for support in row.supports
+        ],
+        chat_card_mid=row.chat_card_mid,
     )
 
 
@@ -71,6 +76,14 @@ def apply_ticket(row: TicketRow, ticket: Ticket) -> None:
     row.updated_at = ticket.updated_at
     row.overdue_notified_at = ticket.overdue_notified_at
     row.escalated_at = ticket.escalated_at
+    row.chat_card_mid = ticket.chat_card_mid
+
+    stored_supporters = {support.user_id for support in row.supports or []}
+    for support in ticket.supporters:
+        if support.user_id not in stored_supporters:
+            row.supports.append(
+                TicketSupportRow(user_id=support.user_id, at=support.at)
+            )
 
     stored = len(row.events) if row.events else 0
     for position, event in enumerate(ticket.events[stored:], start=stored):

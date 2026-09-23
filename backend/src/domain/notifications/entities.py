@@ -17,6 +17,8 @@ class NotificationKind(StrEnum):
     TICKET_OVERDUE_DISPATCHER = "ticket_overdue_dispatcher"
     #: To the reporter: the complaint to the housing inspection as a PDF.
     ESCALATION_DOCUMENT = "escalation_document"
+    #: To the house chat (recipient is the chat id): redraw the ticket card.
+    TICKET_CARD_REFRESH = "ticket_card_refresh"
 
 
 @dataclass(frozen=True, slots=True)

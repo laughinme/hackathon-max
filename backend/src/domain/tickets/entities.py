@@ -7,7 +7,11 @@ from datetime import datetime, timedelta
 from uuid import UUID, uuid4
 
 from domain.tickets.enums import ActorRole, ResponsibleParty, TicketStatus
-from domain.tickets.exceptions import NotTicketReporterError, TicketNotOverdueError
+from domain.tickets.exceptions import (
+    NotTicketReporterError,
+    TicketClosedError,
+    TicketNotOverdueError,
+)
 from domain.tickets.responsibility import Responsibility
 from domain.tickets.sla import Deadlines
 from domain.tickets.state_machine import OPEN, ensure_transition
@@ -39,6 +43,14 @@ class TicketEvent:
     comment: str | None = None
 
 
+@dataclass(frozen=True, slots=True)
+class TicketSupport:
+    """A neighbour pressed "me too": the same problem affects them."""
+
+    user_id: int
+    at: datetime
+
+
 @dataclass(slots=True)
 class Ticket:
     """A resident's problem registered with a deadline and a responsible party."""
@@ -63,6 +75,10 @@ class Ticket:
     overdue_notified_at: datetime | None = None
     #: When the reporter first asked for a complaint to the housing inspection.
     escalated_at: datetime | None = None
+    #: Neighbours who reported the same problem ("me too"), in order.
+    supporters: list[TicketSupport] = field(default_factory=list)
+    #: The card message in the house chat, edited on every change.
+    chat_card_mid: str | None = None
 
     @classmethod
     def register(
@@ -138,6 +154,25 @@ class Ticket:
 
     def is_overdue(self, now: datetime) -> bool:
         return self.is_open and now > self.deadlines.resolve_by
+
+    def support(self, user_id: int, now: datetime) -> bool:
+        """True if this neighbour is counted now; the reporter and repeats are
+        not. A closed ticket takes no support: the problem is solved."""
+
+        if not self.is_open:
+            raise TicketClosedError()
+        if user_id == self.reporter_id or self.is_supported_by(user_id):
+            return False
+        self.supporters.append(TicketSupport(user_id=user_id, at=now))
+        self.updated_at = now
+        return True
+
+    def is_supported_by(self, user_id: int) -> bool:
+        return any(support.user_id == user_id for support in self.supporters)
+
+    def attach_chat_card(self, chat_id: int, message_mid: str) -> None:
+        self.chat_id = chat_id
+        self.chat_card_mid = message_mid
 
     def mark_overdue_notified(self, now: datetime) -> bool:
         """True once per ticket: the moment to tell people the deadline passed."""

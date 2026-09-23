@@ -60,6 +60,10 @@ class TicketOut(BaseModel):
     can_confirm: bool = Field(
         description="The current user (the reporter) may confirm or reopen now"
     )
+    supporters_count: int = Field(
+        description='Neighbours who pressed "me too" in the house chat'
+    )
+    from_house_chat: bool = Field(description="Filed from a house chat card")
     demo_can_expire: bool = Field(
         description="DEMO_MODE: the reporter may move the deadline into the past"
     )
@@ -97,6 +101,8 @@ class TicketOut(BaseModel):
             escalated_at=view.escalated_at,
             can_escalate=is_reporter and view.can_escalate,
             can_confirm=is_reporter and view.status is TicketStatus.DONE,
+            supporters_count=view.supporters_count,
+            from_house_chat=view.chat_card_mid is not None,
             demo_can_expire=viewer.demo_mode
             and is_reporter
             and view.status in OPEN

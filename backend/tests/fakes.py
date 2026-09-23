@@ -78,6 +78,7 @@ CONFIG = Config(
     demo_mode=True,
     dev_auth_enabled=False,
     miniapp_dir=None,
+    bot_link="https://max.ru/test_bot",
     llm_enabled=False,
     llm_base_url="",
     llm_model="",

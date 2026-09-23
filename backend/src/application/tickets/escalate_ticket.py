@@ -8,6 +8,7 @@ from application.errors import TicketNotFoundError
 from application.ports.clock import Clock
 from application.ports.ticket_queries import TicketQueries
 from application.ports.unit_of_work import UnitOfWorkFactory
+from application.tickets.chat_card import queue_card_refresh
 from application.tickets.dto import TicketView
 from domain.notifications.entities import Notification, NotificationKind
 
@@ -45,6 +46,7 @@ class EscalateTicket:
                     created_at=now,
                 )
             )
+            await queue_card_refresh(uow, ticket, now)
             await uow.commit()
 
         view = await self._queries.get(ticket_id, now)

@@ -15,6 +15,7 @@ from uuid import UUID
 
 from application.ports.outbox import PendingNotification
 from application.tickets.dto import TicketView, to_view
+from domain.chats.entities import ChatHint, HouseChat
 from domain.housing.entities import (
     Building,
     Dispatcher,
@@ -43,6 +44,8 @@ class InMemoryStore:
     residents: dict[int, Resident] = field(default_factory=dict)
     dispatchers: dict[int, Dispatcher] = field(default_factory=dict)
     outbox: dict[UUID, OutboxEntry] = field(default_factory=dict)
+    chats: dict[int, HouseChat] = field(default_factory=dict)
+    hints: dict[UUID, ChatHint] = field(default_factory=dict)
 
 
 _DELETED = object()
@@ -148,6 +151,29 @@ class InMemoryHousingRepository:
         return sorted(found, key=lambda d: d.joined_at)
 
 
+class InMemoryChatRepository:
+    def __init__(self, store: InMemoryStore, pending: _Pending) -> None:
+        self._store = store
+        self._pending = pending
+
+    async def get(self, chat_id: int) -> HouseChat | None:
+        chat = self._store.chats.get(chat_id)
+        return copy.deepcopy(chat) if chat else None
+
+    async def save(self, chat: HouseChat) -> None:
+        self._pending.put("chats", chat.chat_id, chat)
+
+    async def add_hint(self, hint: ChatHint) -> None:
+        self._pending.put("hints", hint.id, hint)
+
+    async def get_hint(self, hint_id: UUID) -> ChatHint | None:
+        hint = self._store.hints.get(hint_id)
+        return copy.deepcopy(hint) if hint else None
+
+    async def save_hint(self, hint: ChatHint) -> None:
+        self._pending.put("hints", hint.id, hint)
+
+
 class InMemoryOutbox:
     def __init__(self, pending: _Pending) -> None:
         self._pending = pending
@@ -161,6 +187,7 @@ class InMemoryUnitOfWork:
     tickets: InMemoryTicketRepository
     housing: InMemoryHousingRepository
     outbox: InMemoryOutbox
+    chats: InMemoryChatRepository
 
     def __init__(self, store: InMemoryStore) -> None:
         self._store = store
@@ -171,6 +198,7 @@ class InMemoryUnitOfWork:
         self.tickets = InMemoryTicketRepository(self._store, self._pending)
         self.housing = InMemoryHousingRepository(self._store, self._pending)
         self.outbox = InMemoryOutbox(self._pending)
+        self.chats = InMemoryChatRepository(self._store, self._pending)
         return self
 
     async def __aexit__(
@@ -221,6 +249,20 @@ class InMemoryTicketQueries:
         ]
         tickets.sort(key=lambda t: (not t.is_open, t.deadlines.resolve_by))
         return [self._view(t, now) for t in tickets[:limit]]
+
+    async def find_open_duplicate(
+        self, building_id: UUID, category_code: str, since: datetime, now: datetime
+    ) -> TicketView | None:
+        found = [
+            t
+            for t in self._store.tickets.values()
+            if t.building_id == building_id
+            and t.category_code == category_code
+            and t.is_open
+            and t.created_at >= since
+        ]
+        found.sort(key=lambda t: t.created_at, reverse=True)
+        return self._view(found[0], now) if found else None
 
 
 class InMemoryOutboxReader:

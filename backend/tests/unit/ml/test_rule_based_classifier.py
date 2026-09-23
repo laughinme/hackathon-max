@@ -52,3 +52,17 @@ async def test_emergency_confidence_is_deliberately_low(
     result = await classifier.classify("лифт застрял, внутри человек")
 
     assert result.emergency_confidence < 0.6
+
+
+def test_subject_named_first_wins_a_tie_with_the_place():
+    from domain.tickets.catalog import guess_category
+
+    assert guess_category("Лифт не работает во втором подъезде").code == "lift"
+    assert guess_category("В подъезде сломан домофон").code == "door"
+
+
+def test_small_talk_is_not_a_complaint_even_with_a_category_word():
+    from domain.chats.complaint_signals import sounds_like_complaint
+
+    assert not sounds_like_complaint("Кто потерял ключи у подъезда?")
+    assert sounds_like_complaint("Лифт опять не работает")

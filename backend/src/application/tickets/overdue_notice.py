@@ -5,6 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 
 from application.ports.unit_of_work import UnitOfWork
+from application.tickets.chat_card import queue_card_refresh
 from domain.notifications.entities import Notification, NotificationKind
 from domain.tickets.entities import Ticket
 
@@ -32,3 +33,4 @@ async def queue_overdue_notices(uow: UnitOfWork, ticket: Ticket, now: datetime) 
                 created_at=now,
             )
         )
+    await queue_card_refresh(uow, ticket, now)

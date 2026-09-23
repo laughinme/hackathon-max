@@ -6,6 +6,7 @@ from collections.abc import Callable
 from types import TracebackType
 from typing import Protocol, Self
 
+from application.ports.chats import ChatRepository
 from application.ports.housing import HousingRepository
 from application.ports.outbox import Outbox
 from application.ports.tickets import TicketRepository
@@ -22,6 +23,9 @@ class UnitOfWork(Protocol):
 
     @property
     def outbox(self) -> Outbox: ...
+
+    @property
+    def chats(self) -> ChatRepository: ...
 
     async def __aenter__(self) -> Self: ...
 

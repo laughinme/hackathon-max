@@ -54,6 +54,8 @@ class Config:
     # Hackathon demo: synthetic data and a "become a dispatcher" button so
     # checkers can walk both sides with one MAX account.
     demo_mode: bool
+    # Public link to the bot: deep links in house chats and on QR codes.
+    bot_link: str
     # Built mini-app served at `/` (frontend/dist); None when not built.
     miniapp_dir: str | None
     # Accept `Authorization: dev <max_user_id>` in the REST API (frontend work
@@ -116,6 +118,7 @@ def load_config() -> Config:
         demo_mode=_env_bool("DEMO_MODE", True),
         dev_auth_enabled=_env_bool("DEV_AUTH_ENABLED", False),
         miniapp_dir=_env_str("MINIAPP_DIR") or None,
+        bot_link=_env_str("BOT_LINK", "https://max.ru/t446_hakaton_max_bot"),
         llm_enabled=_env_bool("LLM_ENABLED", False),
         llm_base_url=_env_str("LLM_BASE_URL", "https://ai.api.cloud.yandex.net/v1"),
         llm_model=_env_str("LLM_MODEL"),

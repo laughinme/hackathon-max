@@ -44,6 +44,15 @@ class TicketView:
     escalated_at: datetime | None = None
     #: The reporter may ask for the complaint now (open past the deadline).
     can_escalate: bool = False
+    #: Neighbours who pressed "me too".
+    supporter_ids: tuple[int, ...] = ()
+    #: The house chat where the ticket card lives, if it was filed there.
+    chat_id: int | None = None
+    chat_card_mid: str | None = None
+
+    @property
+    def supporters_count(self) -> int:
+        return len(self.supporter_ids)
 
     @property
     def is_open(self) -> bool:
@@ -81,4 +90,7 @@ def to_view(ticket: Ticket, now: datetime, building_address: str) -> TicketView:
         ),
         escalated_at=ticket.escalated_at,
         can_escalate=ticket.can_escalate(now),
+        supporter_ids=tuple(support.user_id for support in ticket.supporters),
+        chat_id=ticket.chat_id,
+        chat_card_mid=ticket.chat_card_mid,
     )

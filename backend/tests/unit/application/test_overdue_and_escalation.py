@@ -9,6 +9,7 @@ from application.tickets.create_ticket import CreateTicketCommand
 from bot.notifications import MaxNotificationSender, render
 from domain.notifications.entities import Notification, NotificationKind
 from domain.tickets.exceptions import NotTicketReporterError, TicketNotOverdueError
+from infrastructure.memory.tickets import InMemoryTicketQueries
 from tests.fakes import make_world
 
 REPORTER = 42
@@ -119,7 +120,11 @@ async def test_sender_attaches_the_pdf_for_escalation():
     bot = FakeBot()
 
     await MaxNotificationSender(
-        cast(Any, bot), world.services.escalation_document
+        cast(Any, bot),
+        world.services.escalation_document,
+        InMemoryTicketQueries(world.store),
+        world.clock,
+        "https://max.ru/test_bot",
     ).send(notification)
 
     [message] = bot.messages
@@ -130,7 +135,7 @@ async def test_sender_attaches_the_pdf_for_escalation():
 
 
 def test_every_notification_kind_has_a_text():
-    for kind in NotificationKind:
+    for kind in set(NotificationKind) - {NotificationKind.TICKET_CARD_REFRESH}:
         note = SimpleNamespace(
             kind=kind, ticket_number="2026-00001", status="in_progress", comment=None
         )

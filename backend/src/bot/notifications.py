@@ -10,8 +10,10 @@ from maxapi import Bot
 from maxapi.enums.upload_type import UploadType
 from maxapi.types.input_media import InputMediaBuffer
 
+from application.ports.clock import Clock
+from application.ports.ticket_queries import TicketQueries
 from application.tickets.build_escalation_document import BuildEscalationDocument
-from bot import dispatcher_keyboards
+from bot import dispatcher_keyboards, group_keyboards, group_texts
 from bot.presenters import STATUS_LABELS
 from domain.notifications.entities import Notification, NotificationKind
 from domain.tickets.enums import TicketStatus
@@ -45,6 +47,8 @@ def render(notification: Notification) -> str:
                 "подайте в инспекцию вашего региона: лично, почтой или через её "
                 "электронную приёмную. Ответ по закону — в течение 30 дней."
             )
+        case NotificationKind.TICKET_CARD_REFRESH:
+            return ""  # the card text is rendered from the current ticket
         case NotificationKind.TICKET_STATUS_CHANGED:
             status = TicketStatus(notification.status)
             lines = [
@@ -59,12 +63,25 @@ def render(notification: Notification) -> str:
 
 
 class MaxNotificationSender:
-    def __init__(self, bot: Bot, documents: BuildEscalationDocument) -> None:
+    def __init__(
+        self,
+        bot: Bot,
+        documents: BuildEscalationDocument,
+        tickets: TicketQueries,
+        clock: Clock,
+        bot_link: str,
+    ) -> None:
         self._bot = bot
         self._documents = documents
+        self._tickets = tickets
+        self._clock = clock
+        self._bot_link = bot_link
         self._last_sent: dict[int, float] = {}
 
     async def send(self, notification: Notification) -> None:
+        if notification.kind is NotificationKind.TICKET_CARD_REFRESH:
+            await self._refresh_card(notification)
+            return
         recipient = notification.recipient_user_id
         if recipient <= 0:  # synthetic demo user, nobody to message
             logger.info("Skip notification to synthetic user %s", recipient)
@@ -81,6 +98,18 @@ class MaxNotificationSender:
             attachments=await self._attachments(notification),
         )
         self._last_sent[recipient] = time.monotonic()
+
+    async def _refresh_card(self, notification: Notification) -> None:
+        """Edit the card in the house chat to the ticket's current state."""
+
+        ticket = await self._tickets.get(notification.ticket_id, self._clock.now())
+        if ticket is None or ticket.chat_card_mid is None:
+            return
+        await self._bot.edit_message(
+            message_id=ticket.chat_card_mid,
+            text=group_texts.card(ticket),
+            attachments=[group_keyboards.card(ticket, self._bot_link)],
+        )
 
     async def _attachments(self, notification: Notification) -> list:
         ticket_id = notification.ticket_id
@@ -104,3 +133,5 @@ class MaxNotificationSender:
                         ticket_id, TicketStatus(notification.status)
                     )
                 ]
+            case NotificationKind.TICKET_CARD_REFRESH:
+                return []

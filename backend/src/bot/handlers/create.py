@@ -21,6 +21,7 @@ from application.tickets.create_ticket import CreateTicketCommand
 from application.tickets.dto import TicketView
 from application.tickets.triage_complaint import TriageResult
 from bot import callbacks, keyboards, texts
+from bot.scopes import DialogScope
 from bot.screen import render, sender_id, user_message_text
 from bot.states import CreateRequest
 from bot.views import show_building_choice
@@ -29,6 +30,7 @@ from domain.tickets.catalog import get_category
 
 logger = logging.getLogger(__name__)
 router = Router(router_id="create")
+router.filter(DialogScope())
 
 # FSM context keys of the scenario.
 TURNS = "turns"

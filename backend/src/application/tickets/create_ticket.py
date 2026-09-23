@@ -8,9 +8,8 @@ from application.ports.clock import Clock
 from application.ports.ticket_queries import TicketQueries
 from application.ports.unit_of_work import UnitOfWorkFactory
 from application.tickets.dto import TicketView
+from application.tickets.registration import NewTicket, register_ticket
 from domain.housing.exceptions import BuildingNotFoundError, ResidentNotBoundError
-from domain.tickets.entities import Ticket
-from domain.tickets.responsibility import responsibility_for
 from domain.tickets.sla import SlaPolicy
 
 
@@ -46,20 +45,18 @@ class CreateTicket:
             if building is None:
                 raise BuildingNotFoundError()
 
-            ticket = Ticket.register(
-                sequence=await uow.tickets.next_sequence(),
-                building_id=building.id,
-                company_id=building.company_id,
-                reporter_id=command.reporter_id,
-                chat_id=command.chat_id,
-                category_code=command.category_code,
-                is_emergency=command.is_emergency,
-                description=command.description,
-                responsibility=responsibility_for(command.category_code),
-                deadlines=self._sla.deadlines(
-                    command.category_code, command.is_emergency, now
+            ticket = await register_ticket(
+                uow,
+                self._sla,
+                building,
+                NewTicket(
+                    reporter_id=command.reporter_id,
+                    chat_id=command.chat_id,
+                    category_code=command.category_code,
+                    is_emergency=command.is_emergency,
+                    description=command.description,
                 ),
-                now=now,
+                now,
             )
             await uow.tickets.add(ticket)
             await uow.commit()

@@ -32,6 +32,10 @@ export function TicketPage({ id }: { id: string }) {
           <StatusBadge status={ticket.status} />
           {ticket.is_emergency && <span className="badge badge--emergency">⚠️ Авария</span>}
           {ticket.escalated_at && <span className="badge badge--escalated">📨 Жалоба в жилинспекцию</span>}
+          {ticket.supporters_count > 0 && (
+            <span className="badge">👥 Касается {ticket.supporters_count + 1} соседей</span>
+          )}
+          {ticket.from_house_chat && <span className="badge">💬 Из домового чата</span>}
         </div>
       </header>
 

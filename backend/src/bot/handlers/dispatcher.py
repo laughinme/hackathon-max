@@ -18,6 +18,7 @@ from application.errors import TicketNotFoundError
 from application.tickets.change_status import ChangeStatusCommand
 from bot import callbacks, dispatcher_keyboards, dispatcher_texts, keyboards
 from bot.presenters import STATUS_LABELS
+from bot.scopes import DialogScope
 from bot.screen import render, sender_id, user_message_text
 from bot.states import DispatcherFlow
 from domain.errors import DomainError
@@ -25,6 +26,7 @@ from domain.housing.exceptions import NotADispatcherError
 from domain.tickets.enums import ActorRole, TicketStatus
 
 router = Router(router_id="dispatcher")
+router.filter(DialogScope())
 
 PENDING_TICKET = "dispatcher_ticket"
 PENDING_STATUS = "dispatcher_status"

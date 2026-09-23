@@ -332,6 +332,16 @@ export interface components {
              */
             can_confirm: boolean;
             /**
+             * Supporters Count
+             * @description Neighbours who pressed "me too" in the house chat
+             */
+            supporters_count: number;
+            /**
+             * From House Chat
+             * @description Filed from a house chat card
+             */
+            from_house_chat: boolean;
+            /**
              * Demo Can Expire
              * @description DEMO_MODE: the reporter may move the deadline into the past
              */

@@ -62,10 +62,16 @@ class TicketRow(Base):
         DateTime(timezone=True)
     )
     escalated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    chat_card_mid: Mapped[str | None] = mapped_column(String(64))
 
     events: Mapped[list[TicketEventRow]] = relationship(
         back_populates="ticket",
         order_by="TicketEventRow.position",
+        lazy="selectin",
+        cascade="all, delete-orphan",
+    )
+    supports: Mapped[list[TicketSupportRow]] = relationship(
+        order_by="TicketSupportRow.at",
         lazy="selectin",
         cascade="all, delete-orphan",
     )
@@ -87,6 +93,45 @@ class TicketEventRow(Base):
     comment: Mapped[str | None] = mapped_column(Text)
 
     ticket: Mapped[TicketRow] = relationship(back_populates="events")
+
+
+class TicketSupportRow(Base):
+    """ "Me too" from a neighbour; one per person and ticket."""
+
+    __tablename__ = "ticket_supports"
+
+    ticket_id: Mapped[UUID] = mapped_column(
+        ForeignKey("tickets.id", ondelete="CASCADE"), primary_key=True
+    )
+    user_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
+class HouseChatRow(Base):
+    __tablename__ = "house_chats"
+
+    chat_id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    building_id: Mapped[UUID | None] = mapped_column(
+        ForeignKey("buildings.id"), index=True
+    )
+    added_by: Mapped[int] = mapped_column(BigInteger)
+    added_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    is_active: Mapped[bool] = mapped_column(Boolean)
+
+
+class ChatHintRow(Base):
+    __tablename__ = "chat_hints"
+
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    chat_id: Mapped[int] = mapped_column(BigInteger, index=True)
+    message_mid: Mapped[str] = mapped_column(String(64))
+    author_id: Mapped[int] = mapped_column(BigInteger)
+    text: Mapped[str] = mapped_column(Text)
+    category_code: Mapped[str] = mapped_column(String(32))
+    is_emergency: Mapped[bool] = mapped_column(Boolean)
+    needs_emergency_confirmation: Mapped[bool] = mapped_column(Boolean)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    ticket_id: Mapped[UUID | None] = mapped_column(ForeignKey("tickets.id"))
 
 
 class ManagementCompanyRow(Base):

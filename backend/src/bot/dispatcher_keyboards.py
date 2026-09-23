@@ -36,6 +36,10 @@ def _queue_mark(ticket: TicketView) -> str:
     return "⚠️" if ticket.is_emergency else "⏰"
 
 
+def _crowd(ticket: TicketView) -> str:
+    return f"👥{ticket.supporters_count + 1} " if ticket.supporters_count else ""
+
+
 def queue(tickets: list[TicketView]) -> AttachmentButton:
     builder = InlineKeyboardBuilder()
     for ticket in tickets[:QUEUE_BUTTONS]:
@@ -43,7 +47,7 @@ def queue(tickets: list[TicketView]) -> AttachmentButton:
             CallbackButton(
                 text=(
                     f"{_queue_mark(ticket)} до {format_moment(ticket.resolve_by)} · "
-                    f"{short_description(ticket.description, 24)}"
+                    f"{_crowd(ticket)}{short_description(ticket.description, 24)}"
                 ),
                 payload=callbacks.pack(callbacks.QUEUE_ITEM, str(ticket.id)),
             )

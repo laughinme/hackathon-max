@@ -11,6 +11,10 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from app.config import Config
+from application.chats.bind_chat import BindChat, GetChatBinding
+from application.chats.file_from_chat import FileFromChat
+from application.chats.register_chat import LeaveChat, RegisterChat
+from application.chats.spot_complaint import SpotComplaint
 from application.housing.bind_resident import BindResident
 from application.housing.demo import BecomeDemoDispatcher, ListDemoBuildings
 from application.housing.forget_user import ForgetUser
@@ -31,6 +35,7 @@ from application.tickets.queries import (
     ListDispatcherQueue,
     ListReporterTickets,
 )
+from application.tickets.support_ticket import SupportTicket
 from application.tickets.triage_complaint import TriageComplaint
 from domain.tickets.sla import SlaPolicy
 from infrastructure.ai.stub import StubAIService
@@ -62,6 +67,13 @@ class Services:
     detect_overdue: DetectOverdueTickets
     demo_expire_deadline: DemoExpireDeadline
     forget_user: ForgetUser
+    register_chat: RegisterChat
+    leave_chat: LeaveChat
+    bind_chat: BindChat
+    chat_binding: GetChatBinding
+    spot_complaint: SpotComplaint
+    file_from_chat: FileFromChat
+    support_ticket: SupportTicket
     identify: IdentifyUser
     bind_resident: BindResident
     become_demo_dispatcher: BecomeDemoDispatcher
@@ -164,6 +176,20 @@ def build_services(
         ),
         detect_overdue=DetectOverdueTickets(uow_factory, clock),
         forget_user=ForgetUser(uow_factory),
+        register_chat=RegisterChat(uow_factory, clock),
+        leave_chat=LeaveChat(uow_factory),
+        bind_chat=BindChat(uow_factory, clock),
+        chat_binding=GetChatBinding(uow_factory),
+        spot_complaint=SpotComplaint(
+            uow_factory,
+            queries,
+            classifier,
+            sla,
+            clock,
+            config.ml_confidence_threshold,
+        ),
+        file_from_chat=FileFromChat(uow_factory, queries, sla, clock),
+        support_ticket=SupportTicket(uow_factory, queries, clock),
         demo_expire_deadline=DemoExpireDeadline(
             uow_factory, queries, clock, demo_mode=config.demo_mode
         ),

@@ -35,11 +35,12 @@ from bot.handlers import (
     create,
     dispatcher,
     fallback,
+    group,
     my_requests,
     privacy,
     start,
 )
-from bot.middleware import DialogOnlyMiddleware, ServicesMiddleware
+from bot.middleware import ServicesMiddleware
 from bot.notifications import MaxNotificationSender
 from infrastructure.clock import SystemClock
 from infrastructure.db.dialog_context import PostgresDialogContext
@@ -82,7 +83,6 @@ def build_dispatcher(
         else Dispatcher()
     )
     dp.errors(ExceptionTypeFilter(Exception))(on_error)
-    dp.register_outer_middleware(DialogOnlyMiddleware())
     dp.register_outer_middleware(ServicesMiddleware(services))
     dp.include_routers(
         start.router,
@@ -90,6 +90,7 @@ def build_dispatcher(
         my_requests.router,
         dispatcher.router,
         privacy.router,
+        group.router,
         fallback.router,
     )
     return dp
@@ -140,10 +141,11 @@ def create_app(config: Config) -> FastAPI:
     engine = make_engine(config.database_url)
     session_factory = make_session_factory(engine)
     clock = SystemClock()
+    queries = SqlTicketQueries(session_factory)
     services = build_services(
         config,
         uow_factory=lambda: SqlUnitOfWork(session_factory),
-        queries=SqlTicketQueries(session_factory),
+        queries=queries,
         clock=clock,
     )
     bot = Bot(token=config.bot_token, format=ParseMode.HTML)
@@ -158,7 +160,13 @@ def create_app(config: Config) -> FastAPI:
     )
     deliver = DeliverNotifications(
         SqlOutboxReader(session_factory),
-        MaxNotificationSender(bot, services.escalation_document),
+        MaxNotificationSender(
+            bot,
+            services.escalation_document,
+            queries,
+            clock,
+            config.bot_link,
+        ),
         clock,
     )
 

@@ -3,6 +3,8 @@
 
 from __future__ import annotations
 
+from uuid import UUID
+
 from maxapi import Router
 from maxapi.context.base import BaseContext
 from maxapi.filters.command import Command
@@ -11,16 +13,21 @@ from maxapi.types.updates.message_callback import MessageCallback
 from maxapi.types.updates.message_created import MessageCreated
 
 from app.services import Services
-from bot import callbacks, home_keyboards, home_texts
+from application.errors import TicketNotFoundError
+from bot import callbacks, home_keyboards, home_texts, keyboards, texts
 from bot.handlers.create import TURNS, analyze_and_render
+from bot.scopes import DialogScope
 from bot.screen import render, sender_id
 from bot.views import show_building_choice, show_main_menu
 from domain.housing.exceptions import BuildingNotFoundError
 
 router = Router(router_id="start")
+router.filter(DialogScope())
 
 #: Deep link payload `https://max.ru/<bot>?start=h_<building code>`.
 BUILDING_LINK_PREFIX = "h_"
+#: `?start=t_<ticket id>` from "follow in private" on a house chat card.
+TICKET_LINK_PREFIX = "t_"
 
 
 @router.bot_started()
@@ -28,6 +35,9 @@ async def on_bot_started(
     event: BotStarted, context: BaseContext, services: Services
 ) -> None:
     payload = event.payload or ""
+    if payload.startswith(TICKET_LINK_PREFIX):
+        if await _show_ticket(event, context, services, payload):
+            return
     if payload.startswith(BUILDING_LINK_PREFIX):
         code = payload.removeprefix(BUILDING_LINK_PREFIX)
         try:
@@ -104,3 +114,23 @@ async def on_demo_dispatcher(
         home_texts.demo_dispatcher_enabled(identity.dispatcher.company_name),
         home_keyboards.main_menu(identity, services.config.demo_mode),
     )
+
+
+async def _show_ticket(
+    event: BotStarted, context: BaseContext, services: Services, payload: str
+) -> bool:
+    """Open a ticket from its house chat card; the dialog now exists, so the
+    person will get the status updates in private."""
+
+    try:
+        ticket_id = UUID(payload.removeprefix(TICKET_LINK_PREFIX))
+        ticket = await services.get_ticket.execute(ticket_id, event.user.user_id)
+    except (ValueError, TicketNotFoundError):
+        return False
+    await render(
+        event,
+        context,
+        texts.request_card(ticket),
+        keyboards.request_card(ticket, demo_mode=services.config.demo_mode),
+    )
+    return True

@@ -15,12 +15,14 @@ from maxapi.types.updates.message_created import MessageCreated
 from app.services import Services
 from bot import keyboards, texts
 from bot.handlers.create import TURNS, analyze_and_render, reset_scenario
+from bot.scopes import DialogScope
 from bot.screen import render, sender_id, user_message_text
 from bot.states import CreateRequest
 from bot.views import show_building_choice
 
 logger = logging.getLogger(__name__)
 router = Router(router_id="fallback")
+router.filter(DialogScope())
 
 #: Слишком короткий текст не считаем описанием проблемы.
 MIN_PROBLEM_LENGTH = 8

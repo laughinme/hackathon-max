@@ -129,17 +129,22 @@ def get_category(code: str | None) -> Category:
 def guess_category(text: str) -> Category:
     """Грубое определение категории по ключевым словам.
 
-    Это резервный путь для MVP. В боевой версии категорию определяет
-    LLM-классификатор (см. app/ai/service.py).
+    Резервный путь, когда классификатор недоступен (D-005, D-006). Больше
+    совпадений — выше; при равенстве побеждает категория, чьё слово стоит
+    раньше: предмет жалобы обычно называют первым («лифт … во втором
+    подъезде»), место — потом.
     """
 
     lowered = text.lower()
     best: Category | None = None
-    best_score = 0
+    best_key = (0, 0)
 
     for category in CATEGORIES:
-        score = sum(1 for kw in category.keywords if kw in lowered)
-        if score > best_score:
-            best, best_score = category, score
+        positions = [lowered.find(kw) for kw in category.keywords if kw in lowered]
+        if not positions:
+            continue
+        key = (len(positions), -min(positions))
+        if key > best_key:
+            best, best_key = category, key
 
     return best or OTHER

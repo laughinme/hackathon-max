@@ -24,7 +24,8 @@ class ListReporterTickets:
 
 
 class GetTicketForUser:
-    """The reporter or a dispatcher of the managing company may see a ticket."""
+    """The reporter, a neighbour who supported it, or a dispatcher of the
+    managing company may see a ticket."""
 
     def __init__(
         self, uow_factory: UnitOfWorkFactory, queries: TicketQueries, clock: Clock
@@ -37,7 +38,7 @@ class GetTicketForUser:
         ticket = await self._queries.get(ticket_id, self._clock.now())
         if ticket is None:
             raise TicketNotFoundError()
-        if ticket.reporter_id == user_id:
+        if ticket.reporter_id == user_id or user_id in ticket.supporter_ids:
             return ticket
         async with self._uow_factory() as uow:
             dispatcher = await uow.housing.get_dispatcher(user_id)

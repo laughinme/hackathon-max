@@ -21,3 +21,9 @@ class TicketQueries(Protocol):
     ) -> list[TicketView]:
         """Open tickets first, ordered by the resolution deadline."""
         ...
+
+    async def find_open_duplicate(
+        self, building_id: UUID, category_code: str, since: datetime, now: datetime
+    ) -> TicketView | None:
+        """The newest open ticket of this building and category since `since`."""
+        ...

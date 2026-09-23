@@ -106,7 +106,7 @@ class FakeBot:
         files = [a for a in attachments or [] if isinstance(a, InputMediaBuffer)]
         self.documents += [(file.filename or "", file.buffer) for file in files]
         keyboards = [a for a in attachments or [] if a not in files]
-        message = self._build_message(mid, text, keyboards)
+        message = self._build_message(mid, text, keyboards, chat_id)
         self.messages[mid] = message
         return SendedMessage(message=message)
 
@@ -119,7 +119,10 @@ class FakeBot:
     ) -> None:
         if message_id not in self.messages:
             raise ValueError(f"Сообщение {message_id} не найдено")
-        self.messages[message_id] = self._build_message(message_id, text, attachments)
+        chat_id = self.messages[message_id].recipient.chat_id
+        self.messages[message_id] = self._build_message(
+            message_id, text, attachments, chat_id
+        )
 
     async def delete_message(self, message_id: str) -> None:
         if self.messages.pop(message_id, None) is None:
@@ -141,12 +144,21 @@ class FakeBot:
         )
 
     def _build_message(
-        self, mid: str, text: str | None, attachments: list[Any] | None
+        self,
+        mid: str,
+        text: str | None,
+        attachments: list[Any] | None,
+        chat_id: int | None = None,
     ) -> Message:
+        """Negative chat ids are house chats, like in MAX."""
+
         self._seq += 1
+        in_group = chat_id is not None and chat_id < 0
         return Message(
             recipient=Recipient(
-                chat_id=CHAT_ID, user_id=USER_ID, chat_type=ChatType.DIALOG
+                chat_id=chat_id if in_group else CHAT_ID,
+                user_id=None if in_group else USER_ID,
+                chat_type=ChatType.CHAT if in_group else ChatType.DIALOG,
             ),
             timestamp=0,
             body=MessageBody(
@@ -546,6 +558,9 @@ async def main() -> None:
         MaxNotificationSender(
             sim.bot,  # type: ignore[arg-type]
             services.escalation_document,
+            InMemoryTicketQueries(store),
+            clock,
+            "https://max.ru/simulation_bot",
         ),
         clock,
     )
@@ -556,6 +571,10 @@ async def main() -> None:
     await scenario_dispatcher_and_resident(sim)
     await scenario_overdue_and_complaint(sim, clock)
     await scenario_demo_expire(sim)
+
+    from scripts.simulate_group import scenario_house_chat
+
+    await scenario_house_chat(sim, check)
 
     print("\n🎉 Все сценарии пройдены")
 
