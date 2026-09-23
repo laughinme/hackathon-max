@@ -100,6 +100,13 @@ async def scenario_house_chat(sim: Any, check: Callable[[bool, str], None]) -> N
     check("Выберите дом" in text, "бот поздоровался и попросил выбрать дом")
     await chat.press(ANNA, mid, "gbld:psk002")
     check("Чат привязан к дому" in chat.text(mid), "чат привязан к дому")
+    bound_mid = mid
+    await chat.press(VERA, bound_mid, "gpulse")
+    check("Пульс дома" in chat.last()[1], "пульс дома опубликован в чате")
+    documents = len(sim.bot.documents)
+    await chat.press(VERA, bound_mid, "gleaf")
+    check(len(sim.bot.documents) == documents + 1, "листовка с QR пришла в чат")
+    mid = chat.last()[0]
 
     await chat.say(VERA, "Всем привет, кто потерял ключи?")
     check(chat.last()[0] == mid, "на обычное сообщение бот молчит")

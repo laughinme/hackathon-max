@@ -16,6 +16,7 @@ from application.chats.file_from_chat import FileFromChat
 from application.chats.register_chat import LeaveChat, RegisterChat
 from application.chats.spot_complaint import SpotComplaint
 from application.housing.bind_resident import BindResident
+from application.housing.build_leaflet import BuildLeaflet
 from application.housing.demo import BecomeDemoDispatcher, ListDemoBuildings
 from application.housing.forget_user import ForgetUser
 from application.housing.identity import IdentifyUser
@@ -30,6 +31,7 @@ from application.tickets.create_ticket import CreateTicket
 from application.tickets.demo_expire_deadline import DemoExpireDeadline
 from application.tickets.detect_overdue import DetectOverdueTickets
 from application.tickets.escalate_ticket import EscalateTicket
+from application.tickets.pulse import GetBuildingPulse
 from application.tickets.queries import (
     GetTicketForUser,
     ListDispatcherQueue,
@@ -45,6 +47,7 @@ from infrastructure.llm.service import LLMAIService
 from infrastructure.ml.http_classifier import HttpClassifier
 from infrastructure.ml.rule_based import RuleBasedClassifier
 from infrastructure.pdf.escalation import PdfEscalationRenderer
+from infrastructure.pdf.leaflet import PdfLeafletRenderer
 
 logger = logging.getLogger(__name__)
 
@@ -74,6 +77,8 @@ class Services:
     spot_complaint: SpotComplaint
     file_from_chat: FileFromChat
     support_ticket: SupportTicket
+    building_pulse: GetBuildingPulse
+    leaflet: BuildLeaflet
     identify: IdentifyUser
     bind_resident: BindResident
     become_demo_dispatcher: BecomeDemoDispatcher
@@ -190,6 +195,8 @@ def build_services(
         ),
         file_from_chat=FileFromChat(uow_factory, queries, sla, clock),
         support_ticket=SupportTicket(uow_factory, queries, clock),
+        building_pulse=GetBuildingPulse(queries, clock),
+        leaflet=BuildLeaflet(uow_factory, PdfLeafletRenderer(), config.bot_link),
         demo_expire_deadline=DemoExpireDeadline(
             uow_factory, queries, clock, demo_mode=config.demo_mode
         ),

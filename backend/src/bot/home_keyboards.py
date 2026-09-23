@@ -38,6 +38,27 @@ def main_menu(identity: Identity, demo_mode: bool) -> AttachmentButton:
             )
         )
     home_label = "🏠 Сменить дом" if identity.residency else "🏠 Выбрать дом"
+    if identity.residency:
+        builder.row(
+            CallbackButton(
+                text="📊 Пульс дома", payload=callbacks.pack(callbacks.PULSE)
+            ),
+            CallbackButton(
+                text="🧭 Кто отвечает", payload=callbacks.pack(callbacks.GUIDE)
+            ),
+        )
+        builder.row(
+            CallbackButton(
+                text="📣 Листовка с QR для соседей",
+                payload=callbacks.pack(callbacks.LEAFLET),
+            )
+        )
+    else:
+        builder.row(
+            CallbackButton(
+                text="🧭 Кто за что отвечает", payload=callbacks.pack(callbacks.GUIDE)
+            )
+        )
     builder.row(
         CallbackButton(
             text=home_label, payload=callbacks.pack(callbacks.CHANGE_BUILDING)

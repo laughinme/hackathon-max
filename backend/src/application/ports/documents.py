@@ -23,3 +23,18 @@ class EscalationDocument:
 
 class EscalationRenderer(Protocol):
     def render(self, document: EscalationDocument) -> bytes: ...
+
+
+@dataclass(frozen=True, slots=True)
+class Leaflet:
+    """Notice for the entrance with a QR code to the bot."""
+
+    address: str
+    link: str
+    company_name: str
+    company_phone: str
+    is_demo: bool
+
+
+class LeafletRenderer(Protocol):
+    def render(self, leaflet: Leaflet) -> bytes: ...

@@ -7,7 +7,9 @@ from uuid import UUID
 
 from maxapi import Router
 from maxapi.enums.message_link_type import MessageLinkType
+from maxapi.enums.upload_type import UploadType
 from maxapi.filters.command import Command
+from maxapi.types.input_media import InputMediaBuffer
 from maxapi.types.message import NewMessageLink
 from maxapi.types.updates.bot_added import BotAdded
 from maxapi.types.updates.bot_removed import BotRemoved
@@ -15,9 +17,10 @@ from maxapi.types.updates.message_callback import MessageCallback
 from maxapi.types.updates.message_created import MessageCreated
 
 from app.services import Services
+from application.chats.bind_chat import ChatBinding
 from application.chats.file_from_chat import FileFromChatCommand
 from application.chats.spot_complaint import KnownProblem
-from bot import callbacks, group_keyboards, group_texts
+from bot import callbacks, extras_texts, group_keyboards, group_texts
 from bot.scopes import GroupScope
 from bot.screen import user_message_text
 from domain.errors import DomainError
@@ -104,7 +107,7 @@ async def on_building(event: MessageCallback, services: Services) -> None:
     link = f"{services.config.bot_link}?start=h_{binding.building.code}"
     await event.edit(
         text=group_texts.bound(binding.building, link),
-        attachments=[],
+        attachments=[group_keyboards.house_tools()],
         notification="Чат привязан к дому",
     )
 
@@ -175,13 +178,63 @@ async def on_support(event: MessageCallback, services: Services) -> None:
     )
 
 
+@router.message_callback(callbacks.is_action(callbacks.GROUP_PULSE))
+async def on_pulse(event: MessageCallback, services: Services) -> None:
+    binding = await _binding(event, services)
+    if binding is None:
+        await event.ack(notification="Сначала выберите дом этого чата")
+        return
+    pulse = await services.building_pulse.execute(binding.building.id)
+    await event.ack()
+    await event._ensure_bot().send_message(  # noqa: SLF001
+        chat_id=binding.chat.chat_id,
+        text=extras_texts.pulse(binding.building.address, pulse),
+    )
+
+
+@router.message_callback(callbacks.is_action(callbacks.GROUP_LEAFLET))
+async def on_leaflet(event: MessageCallback, services: Services) -> None:
+    binding = await _binding(event, services)
+    if binding is None:
+        await event.ack(notification="Сначала выберите дом этого чата")
+        return
+    document = await services.leaflet.execute(binding.building.id)
+    await event.ack(notification="Готовлю листовку")
+    await event._ensure_bot().send_message(  # noqa: SLF001
+        chat_id=binding.chat.chat_id,
+        text=extras_texts.leaflet_caption(binding.building.address),
+        attachments=[
+            InputMediaBuffer(
+                document.content, filename=document.filename, type=UploadType.FILE
+            )
+        ],
+    )
+
+
+@router.message_callback(callbacks.is_action(callbacks.GROUP_GUIDE))
+async def on_guide(event: MessageCallback) -> None:
+    await event.ack()
+    chat_id = event.message.recipient.chat_id if event.message else None
+    if chat_id is not None:
+        await event._ensure_bot().send_message(  # noqa: SLF001
+            chat_id=chat_id, text=extras_texts.guide()
+        )
+
+
+async def _binding(event: MessageCallback, services: Services) -> ChatBinding | None:
+    chat_id = event.message.recipient.chat_id if event.message else None
+    return await services.chat_binding.execute(chat_id) if chat_id else None
+
+
 async def _post_binding_prompt(event: object, chat_id: int, services: Services) -> None:
     bot = event._ensure_bot()  # type: ignore[attr-defined]  # noqa: SLF001
     binding = await services.chat_binding.execute(chat_id)
     if binding is not None:
         link = f"{services.config.bot_link}?start=h_{binding.building.code}"
         await bot.send_message(
-            chat_id=chat_id, text=group_texts.bound(binding.building, link)
+            chat_id=chat_id,
+            text=group_texts.bound(binding.building, link),
+            attachments=[group_keyboards.house_tools()],
         )
         return
     buildings = await services.list_demo_buildings.execute()

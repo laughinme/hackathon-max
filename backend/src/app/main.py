@@ -36,6 +36,7 @@ from bot.handlers import (
     dispatcher,
     fallback,
     group,
+    house,
     my_requests,
     privacy,
     start,
@@ -90,6 +91,7 @@ def build_dispatcher(
         my_requests.router,
         dispatcher.router,
         privacy.router,
+        house.router,
         group.router,
         fallback.router,
     )

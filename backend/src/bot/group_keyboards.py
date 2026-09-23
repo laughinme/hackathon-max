@@ -27,6 +27,25 @@ def buildings(options: list[Building]) -> AttachmentButton:
     return builder.as_markup()
 
 
+def house_tools() -> AttachmentButton:
+    builder = InlineKeyboardBuilder()
+    builder.row(
+        CallbackButton(
+            text="📊 Пульс дома", payload=callbacks.pack(callbacks.GROUP_PULSE)
+        ),
+        CallbackButton(
+            text="🖨 Листовка с QR", payload=callbacks.pack(callbacks.GROUP_LEAFLET)
+        ),
+    )
+    builder.row(
+        CallbackButton(
+            text="🧭 Кто за что отвечает",
+            payload=callbacks.pack(callbacks.GROUP_GUIDE),
+        )
+    )
+    return builder.as_markup()
+
+
 def hint(hint_id: UUID, ask_emergency: bool) -> AttachmentButton:
     builder = InlineKeyboardBuilder()
     if ask_emergency:

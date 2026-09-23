@@ -250,6 +250,17 @@ class InMemoryTicketQueries:
         tickets.sort(key=lambda t: (not t.is_open, t.deadlines.resolve_by))
         return [self._view(t, now) for t in tickets[:limit]]
 
+    async def list_for_building(
+        self, building_id: UUID, since: datetime, now: datetime
+    ) -> list[TicketView]:
+        found = [
+            t
+            for t in self._store.tickets.values()
+            if t.building_id == building_id and t.created_at >= since
+        ]
+        found.sort(key=lambda t: t.created_at, reverse=True)
+        return [self._view(t, now) for t in found]
+
     async def find_open_duplicate(
         self, building_id: UUID, category_code: str, since: datetime, now: datetime
     ) -> TicketView | None:

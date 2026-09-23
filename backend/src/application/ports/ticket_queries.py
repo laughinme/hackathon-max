@@ -27,3 +27,9 @@ class TicketQueries(Protocol):
     ) -> TicketView | None:
         """The newest open ticket of this building and category since `since`."""
         ...
+
+    async def list_for_building(
+        self, building_id: UUID, since: datetime, now: datetime
+    ) -> list[TicketView]:
+        """Tickets of one building created since `since`, newest first."""
+        ...
