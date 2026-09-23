@@ -27,16 +27,24 @@ from api.http.app import mount_api
 from api.http.miniapp import mount_miniapp
 from api.webhooks.max import WebhookReceiver
 from app.config import Config, load_config
-from app.relay import run_overdue_watch, run_relay
+from app.relay import run_housekeeping, run_overdue_watch, run_relay
 from app.services import Services, build_services
 from application.notifications.deliver import DeliverNotifications
 from bot.errors import on_error
-from bot.handlers import create, dispatcher, fallback, my_requests, start
+from bot.handlers import (
+    create,
+    dispatcher,
+    fallback,
+    my_requests,
+    privacy,
+    start,
+)
 from bot.middleware import DialogOnlyMiddleware, ServicesMiddleware
 from bot.notifications import MaxNotificationSender
 from infrastructure.clock import SystemClock
 from infrastructure.db.dialog_context import PostgresDialogContext
 from infrastructure.db.engine import make_engine, make_session_factory, ping
+from infrastructure.db.inbox import SqlInbox
 from infrastructure.db.outbox import SqlOutboxReader
 from infrastructure.db.ticket_queries import SqlTicketQueries
 from infrastructure.db.uow import SqlUnitOfWork
@@ -54,6 +62,7 @@ UPDATE_TYPES = [
 BOT_COMMANDS = (
     BotCommand(name="start", description="Начать работу с ботом"),
     BotCommand(name="menu", description="Главное меню"),
+    BotCommand(name="privacy", description="Мои данные и их удаление"),
 )
 
 
@@ -80,6 +89,7 @@ def build_dispatcher(
         create.router,
         my_requests.router,
         dispatcher.router,
+        privacy.router,
         fallback.router,
     )
     return dp
@@ -142,7 +152,10 @@ def create_app(config: Config) -> FastAPI:
         storage=PostgresDialogContext,
         storage_kwargs={"session_factory": session_factory},
     )
-    receiver = WebhookReceiver(dp, bot, config.webhook_secret or "")
+    inbox = SqlInbox(session_factory)
+    receiver = WebhookReceiver(
+        dp, bot, config.webhook_secret or "", inbox=inbox, clock=clock
+    )
     deliver = DeliverNotifications(
         SqlOutboxReader(session_factory),
         MaxNotificationSender(bot, services.escalation_document),
@@ -154,6 +167,7 @@ def create_app(config: Config) -> FastAPI:
         await set_commands(bot)
         relay = asyncio.create_task(run_relay(deliver))
         overdue = asyncio.create_task(run_overdue_watch(services.detect_overdue))
+        housekeeping = asyncio.create_task(run_housekeeping(inbox, clock))
         polling: asyncio.Task[None] | None = None
         try:
             if config.bot_mode == "webhook":
@@ -168,6 +182,7 @@ def create_app(config: Config) -> FastAPI:
         finally:
             relay.cancel()
             overdue.cancel()
+            housekeeping.cancel()
             if polling is not None:
                 await dp.stop_polling()
             await services.close()
@@ -206,12 +221,21 @@ def create_app(config: Config) -> FastAPI:
     return app
 
 
+class _SkipProbes(logging.Filter):
+    """Platform health checks every 15 s drown the useful access log lines."""
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        message = record.getMessage()
+        return not ('"GET /ready' in message or '"GET /health' in message)
+
+
 def main() -> None:
     config = load_config()
     logging.basicConfig(
         level=getattr(logging, config.log_level, logging.INFO),
         format="%(asctime)s | %(levelname)-8s | %(name)s | %(message)s",
     )
+    logging.getLogger("uvicorn.access").addFilter(_SkipProbes())
     uvicorn.run(
         create_app(config),
         host=config.http_host,

@@ -4,8 +4,11 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from datetime import timedelta
 
 from application.notifications.deliver import DeliverNotifications
+from application.ports.clock import Clock
+from application.ports.inbox import Inbox
 from application.tickets.detect_overdue import DetectOverdueTickets
 
 logger = logging.getLogger(__name__)
@@ -41,3 +44,21 @@ async def run_overdue_watch(detect: DetectOverdueTickets) -> None:
             found = 0
         if not found:
             await asyncio.sleep(OVERDUE_INTERVAL_SECONDS)
+
+
+#: MAX redelivers within minutes; keys older than this are useless.
+INBOX_RETENTION = timedelta(days=3)
+HOUSEKEEPING_INTERVAL_SECONDS = 3600.0
+
+
+async def run_housekeeping(inbox: Inbox, clock: Clock) -> None:
+    while True:
+        try:
+            purged = await inbox.purge(clock.now() - INBOX_RETENTION)
+            if purged:
+                logger.info("Inbox keys purged: %s", purged)
+        except asyncio.CancelledError:
+            raise
+        except Exception:  # noqa: BLE001 - keep the loop alive
+            logger.exception("Housekeeping iteration failed")
+        await asyncio.sleep(HOUSEKEEPING_INTERVAL_SECONDS)

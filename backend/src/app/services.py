@@ -13,6 +13,7 @@ from typing import Any
 from app.config import Config
 from application.housing.bind_resident import BindResident
 from application.housing.demo import BecomeDemoDispatcher, ListDemoBuildings
+from application.housing.forget_user import ForgetUser
 from application.housing.identity import IdentifyUser
 from application.ports.ai import AIService
 from application.ports.classifier import Classifier
@@ -60,6 +61,7 @@ class Services:
     escalation_document: BuildEscalationDocument
     detect_overdue: DetectOverdueTickets
     demo_expire_deadline: DemoExpireDeadline
+    forget_user: ForgetUser
     identify: IdentifyUser
     bind_resident: BindResident
     become_demo_dispatcher: BecomeDemoDispatcher
@@ -161,6 +163,7 @@ def build_services(
             uow_factory, queries, PdfEscalationRenderer(), clock
         ),
         detect_overdue=DetectOverdueTickets(uow_factory, clock),
+        forget_user=ForgetUser(uow_factory),
         demo_expire_deadline=DemoExpireDeadline(
             uow_factory, queries, clock, demo_mode=config.demo_mode
         ),

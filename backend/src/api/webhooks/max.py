@@ -19,14 +19,27 @@ from fastapi import FastAPI, Header, HTTPException, Request
 from maxapi import Bot, Dispatcher
 from maxapi.methods.types.getted_updates import process_update_webhook
 
+from application.ports.clock import Clock
+from application.ports.inbox import Inbox
+
 logger = logging.getLogger(__name__)
 
 
 class WebhookReceiver:
-    def __init__(self, dispatcher: Dispatcher, bot: Bot, secret: str) -> None:
+    def __init__(
+        self,
+        dispatcher: Dispatcher,
+        bot: Bot,
+        secret: str,
+        *,
+        inbox: Inbox | None = None,
+        clock: Clock | None = None,
+    ) -> None:
         self._dispatcher = dispatcher
         self._bot = bot
         self._secret = secret
+        self._inbox = inbox
+        self._clock = clock
         self._tasks: set[asyncio.Task[None]] = set()
 
     def mount(self, app: FastAPI, path: str) -> None:
@@ -61,6 +74,11 @@ class WebhookReceiver:
         update_type = payload.get("update_type")
         logger.info("Update %s %s", update_type, _where(payload))
         try:
+            if self._inbox is not None and self._clock is not None:
+                key = dedup_key(payload)
+                if not await self._inbox.register(key, self._clock.now()):
+                    logger.info("Duplicate update %s dropped", key)
+                    return
             event = await process_update_webhook(event_json=payload, bot=self._bot)
             if event is None:
                 logger.warning("Unsupported update type %s", update_type)
@@ -80,3 +98,20 @@ def _where(payload: dict[str, Any]) -> str:
         "chat_type", "channel" if payload.get("is_channel") else "?"
     )
     return f"chat_id={chat_id} chat_type={chat_type}"
+
+
+def dedup_key(payload: dict[str, Any]) -> str:
+    """Stable identity of an update across MAX redeliveries."""
+
+    update_type = payload.get("update_type", "?")
+    callback = payload.get("callback") or {}
+    if callback.get("callback_id"):
+        return f"cb:{callback['callback_id']}"
+    body = (payload.get("message") or {}).get("body") or {}
+    if body.get("mid"):
+        return f"{update_type}:{body['mid']}"
+    user = payload.get("user") or {}
+    return (
+        f"{update_type}:{payload.get('timestamp')}:"
+        f"{payload.get('chat_id')}:{user.get('user_id')}"
+    )

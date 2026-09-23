@@ -22,7 +22,7 @@ from domain.housing.entities import (
     Resident,
 )
 from domain.notifications.entities import Notification
-from domain.tickets.entities import Ticket
+from domain.tickets.entities import ANONYMOUS_REPORTER, Ticket
 
 
 @dataclass
@@ -45,12 +45,18 @@ class InMemoryStore:
     outbox: dict[UUID, OutboxEntry] = field(default_factory=dict)
 
 
+_DELETED = object()
+
+
 class _Pending:
     def __init__(self) -> None:
         self.writes: list[tuple[str, Any, Any]] = []
 
     def put(self, table: str, key: Any, value: Any) -> None:
         self.writes.append((table, key, copy.deepcopy(value)))
+
+    def drop(self, table: str, key: Any) -> None:
+        self.writes.append((table, key, _DELETED))
 
 
 class InMemoryTicketRepository:
@@ -73,6 +79,14 @@ class InMemoryTicketRepository:
         if ticket.id not in self._store.tickets:
             raise LookupError(f"Ticket {ticket.id} is not persisted")
         self._pending.put("tickets", ticket.id, ticket)
+
+    async def detach_reporter(self, reporter_id: int) -> int:
+        mine = [t for t in self._store.tickets.values() if t.reporter_id == reporter_id]
+        for ticket in mine:
+            detached = copy.deepcopy(ticket)
+            detached.reporter_id = ANONYMOUS_REPORTER
+            self._pending.put("tickets", ticket.id, detached)
+        return len(mine)
 
     async def list_overdue_unnotified(self, now: datetime, limit: int) -> list[Ticket]:
         due = [
@@ -121,6 +135,12 @@ class InMemoryHousingRepository:
     async def save_dispatcher(self, dispatcher: Dispatcher) -> None:
         self._pending.put("dispatchers", dispatcher.max_user_id, dispatcher)
 
+    async def delete_resident(self, max_user_id: int) -> None:
+        self._pending.drop("residents", max_user_id)
+
+    async def delete_dispatcher(self, max_user_id: int) -> None:
+        self._pending.drop("dispatchers", max_user_id)
+
     async def list_dispatchers(self, company_id: UUID) -> list[Dispatcher]:
         found = [
             d for d in self._store.dispatchers.values() if d.company_id == company_id
@@ -163,7 +183,10 @@ class InMemoryUnitOfWork:
 
     async def commit(self) -> None:
         for table, key, value in self._pending.writes:
-            getattr(self._store, table)[key] = value
+            if value is _DELETED:
+                getattr(self._store, table).pop(key, None)
+            else:
+                getattr(self._store, table)[key] = value
         self._pending.writes.clear()
 
 
@@ -234,3 +257,20 @@ class InMemoryOutboxReader:
         entry.attempts += 1
         entry.last_error = error
         entry.next_attempt_at = retry_at
+
+
+class InMemoryInbox:
+    def __init__(self) -> None:
+        self.keys: dict[str, datetime] = {}
+
+    async def register(self, key: str, now: datetime) -> bool:
+        if key in self.keys:
+            return False
+        self.keys[key] = now
+        return True
+
+    async def purge(self, older_than: datetime) -> int:
+        old = [key for key, at in self.keys.items() if at < older_than]
+        for key in old:
+            del self.keys[key]
+        return len(old)

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from domain.housing.entities import (
@@ -97,3 +97,13 @@ class SqlHousingRepository:
             .order_by(DispatcherRow.joined_at)
         )
         return [dispatcher_to_domain(row) for row in rows]
+
+    async def delete_resident(self, max_user_id: int) -> None:
+        await self._session.execute(
+            delete(ResidentRow).where(ResidentRow.max_user_id == max_user_id)
+        )
+
+    async def delete_dispatcher(self, max_user_id: int) -> None:
+        await self._session.execute(
+            delete(DispatcherRow).where(DispatcherRow.max_user_id == max_user_id)
+        )

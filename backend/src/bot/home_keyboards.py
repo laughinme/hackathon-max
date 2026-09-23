@@ -41,7 +41,8 @@ def main_menu(identity: Identity, demo_mode: bool) -> AttachmentButton:
     builder.row(
         CallbackButton(
             text=home_label, payload=callbacks.pack(callbacks.CHANGE_BUILDING)
-        )
+        ),
+        CallbackButton(text="🔒 Мои данные", payload=callbacks.pack(callbacks.PRIVACY)),
     )
     return builder.as_markup()
 

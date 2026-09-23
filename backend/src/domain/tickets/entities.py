@@ -12,6 +12,10 @@ from domain.tickets.responsibility import Responsibility
 from domain.tickets.sla import Deadlines
 from domain.tickets.state_machine import OPEN, ensure_transition
 
+#: Reporter id of a ticket whose author asked to delete their data: the ticket
+#: stays with the company as a record about the building, nobody is notified.
+ANONYMOUS_REPORTER = 0
+
 DEMO_EXPIRED_AGO = timedelta(minutes=1)
 DEMO_EXPIRED_COMMENT = (
     "Демо-режим: срок устранения перенесён в прошлое, чтобы показать эскалацию"

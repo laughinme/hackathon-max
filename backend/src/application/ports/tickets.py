@@ -20,6 +20,10 @@ class TicketRepository(Protocol):
 
     async def save(self, ticket: Ticket) -> None: ...
 
+    async def detach_reporter(self, reporter_id: int) -> int:
+        """Keep the tickets for the company, drop the link to the person."""
+        ...
+
     async def list_overdue_unnotified(self, now: datetime, limit: int) -> list[Ticket]:
         """Open tickets past their deadline that nobody was told about yet,
         locked for this transaction so two watchers never notify twice."""

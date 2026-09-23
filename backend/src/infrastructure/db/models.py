@@ -150,6 +150,15 @@ class OutboxRow(Base):
     last_error: Mapped[str | None] = mapped_column(Text)
 
 
+class InboxRow(Base):
+    """Keys of processed webhook updates, to drop MAX redeliveries."""
+
+    __tablename__ = "inbox"
+
+    dedup_key: Mapped[str] = mapped_column(String(160), primary_key=True)
+    received_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+
+
 class DialogStateRow(Base):
     """Bot conversation state (scenario step and draft) per chat and user."""
 
