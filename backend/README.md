@@ -67,6 +67,7 @@ src/
   infrastructure/  db/ (ORM, мапперы, репозиторий, UoW, migrations/), memory/ (адаптеры для тестов),
                    ml/ (HTTP-классификатор + правила), ai/stub.py, llm/ (клиент OpenAI-совместимого API)
 scripts/simulate_flow.py   оффлайн-прогон бота без API MAX (in-memory хранилище)
+scripts/compare_classifiers.py  правила vs CatBoost vs LLM на CSV с жалобами (Q-18)
 tests/                     unit (домен, use case'ы, HTTP), integration (Postgres)
 ```
 
@@ -77,6 +78,7 @@ cd backend
 uv run pytest                                            # unit (домен, use case'ы, REST, initData)
 TEST_DATABASE_URL=postgresql+asyncpg://… uv run pytest   # + integration на реальном Postgres (БД очищается)
 PYTHONPATH=src uv run python -m scripts.simulate_flow   # 5 сценариев бота, включая диспетчера и уведомления
+PYTHONPATH=src uv run python -m scripts.compare_classifiers eval.csv   # сравнение классификаторов (CLASSIFIER=catboost|llm|rules)
 DATABASE_URL=… PYTHONPATH=src uv run python -m scripts.seed_demo   # демо-данные вручную
 uv run ruff check src tests scripts && uv run pyright src
 ```

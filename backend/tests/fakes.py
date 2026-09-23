@@ -83,6 +83,7 @@ CONFIG = Config(
     llm_api_key=None,
     llm_timeout_sec=1.0,
     llm_temperature=0.0,
+    classifier="catboost",
     ml_service_url="http://localhost:1",
     ml_service_timeout_sec=0.1,
     ml_confidence_threshold=0.6,

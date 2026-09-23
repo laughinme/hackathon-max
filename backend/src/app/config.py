@@ -7,6 +7,10 @@ from dataclasses import dataclass
 from typing import Literal
 
 BotMode = Literal["polling", "webhook"]
+#: Who classifies complaints (DECISIONS Q-18): the CatBoost service in `ml/`,
+#: the hosted LLM, or keyword rules. All three sit behind one port.
+ClassifierKind = Literal["catboost", "llm", "rules"]
+CLASSIFIER_KINDS: tuple[str, ...] = ("catboost", "llm", "rules")
 
 
 def _env_bool(name: str, default: bool = False) -> bool:
@@ -63,7 +67,8 @@ class Config:
     llm_timeout_sec: float
     llm_temperature: float
 
-    # Complaint classification service (DECISIONS D-005, D-006).
+    # Complaint classification (DECISIONS D-005, D-006, Q-18).
+    classifier: ClassifierKind
     ml_service_url: str
     ml_service_timeout_sec: float
     ml_confidence_threshold: float
@@ -90,6 +95,12 @@ def load_config() -> Config:
     if bot_mode == "webhook" and not (webhook_url and webhook_secret):
         raise RuntimeError("BOT_MODE=webhook requires WEBHOOK_URL and WEBHOOK_SECRET.")
 
+    classifier = _env_str("CLASSIFIER", "catboost").lower()
+    if classifier not in CLASSIFIER_KINDS:
+        raise RuntimeError("CLASSIFIER must be 'catboost', 'llm' or 'rules'.")
+    if classifier == "llm" and not _env_str("LLM_MODEL"):
+        raise RuntimeError("CLASSIFIER=llm requires LLM_MODEL (and LLM_API_KEY).")
+
     return Config(
         bot_token=token,
         log_level=_env_str("LOG_LEVEL", "INFO").upper(),
@@ -108,6 +119,7 @@ def load_config() -> Config:
         llm_api_key=_env_str("LLM_API_KEY") or None,
         llm_timeout_sec=_env_float("LLM_TIMEOUT_SEC", 20.0),
         llm_temperature=_env_float("LLM_TEMPERATURE", 0.2),
+        classifier=classifier,  # type: ignore[arg-type]
         ml_service_url=_env_str("ML_SERVICE_URL", "http://localhost:8100"),
         ml_service_timeout_sec=_env_float("ML_SERVICE_TIMEOUT_SEC", 3.0),
         ml_confidence_threshold=_env_float("ML_CONFIDENCE_THRESHOLD", 0.6),

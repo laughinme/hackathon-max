@@ -29,7 +29,11 @@ from application.tickets.queries import (
 from application.tickets.triage_complaint import TriageComplaint
 from domain.tickets.sla import SlaPolicy
 from infrastructure.ai.stub import StubAIService
+from infrastructure.llm.classifier import LlmClassifier
+from infrastructure.llm.client import LLMClient, LLMSettings
+from infrastructure.llm.service import LLMAIService
 from infrastructure.ml.http_classifier import HttpClassifier
+from infrastructure.ml.rule_based import RuleBasedClassifier
 
 logger = logging.getLogger(__name__)
 
@@ -58,17 +62,12 @@ class Services:
             await resource.close()
 
 
-def build_ai(config: Config) -> tuple[AIService, Any | None]:
-    """Hosted LLM (DECISIONS D-007) or the rule-based stub."""
+def build_llm_client(config: Config) -> LLMClient | None:
+    """One client for the dialog layer and the classifier; None when unused."""
 
-    if not config.llm_enabled:
-        logger.info("AI layer: StubAIService (rules)")
-        return StubAIService(), None
-
-    from infrastructure.llm.client import LLMClient, LLMSettings
-    from infrastructure.llm.service import LLMAIService
-
-    client = LLMClient(
+    if not (config.llm_enabled or config.classifier == "llm"):
+        return None
+    return LLMClient(
         LLMSettings(
             base_url=config.llm_base_url,
             model=config.llm_model,
@@ -77,17 +76,39 @@ def build_ai(config: Config) -> tuple[AIService, Any | None]:
             temperature=config.llm_temperature,
         )
     )
+
+
+def build_ai(config: Config, client: LLMClient | None) -> AIService:
+    """Hosted LLM (DECISIONS D-007) or the rule-based stub."""
+
+    if not config.llm_enabled or client is None:
+        logger.info("AI layer: StubAIService (rules)")
+        return StubAIService()
     logger.info("AI layer: hosted LLM %s, fallback StubAIService", config.llm_model)
-    return LLMAIService(client, fallback=StubAIService()), client
+    return LLMAIService(client, fallback=StubAIService())
 
 
-def build_classifier(config: Config) -> HttpClassifier:
-    """ML service over HTTP with rule-based fallback (DECISIONS D-005, D-006)."""
+def build_classifier(
+    config: Config, client: LLMClient | None
+) -> tuple[Classifier, Any | None]:
+    """The classifier chosen by `CLASSIFIER` (DECISIONS D-005, D-006, Q-18).
 
-    return HttpClassifier(
+    Every option falls back to keyword rules, so a dead ML service or LLM
+    makes classification worse but never stops the bot.
+    """
+
+    if config.classifier == "llm" and client is not None:
+        logger.info("Classifier: hosted LLM %s, fallback rules", config.llm_model)
+        return LlmClassifier(client), None
+    if config.classifier == "rules":
+        logger.info("Classifier: keyword rules")
+        return RuleBasedClassifier(), None
+    logger.info("Classifier: CatBoost at %s, fallback rules", config.ml_service_url)
+    http = HttpClassifier(
         base_url=config.ml_service_url,
         timeout_sec=config.ml_service_timeout_sec,
     )
+    return http, http
 
 
 def build_services(
@@ -101,15 +122,19 @@ def build_services(
 ) -> Services:
     closeables: list[Any] = []
 
-    if ai is None:
-        ai, llm_client = build_ai(config)
+    llm_client = None
+    if ai is None or classifier is None:
+        llm_client = build_llm_client(config)
         if llm_client is not None:
             closeables.append(llm_client)
 
+    if ai is None:
+        ai = build_ai(config, llm_client)
+
     if classifier is None:
-        http_classifier = build_classifier(config)
-        closeables.append(http_classifier)
-        classifier = http_classifier
+        classifier, resource = build_classifier(config, llm_client)
+        if resource is not None:
+            closeables.append(resource)
 
     sla = SlaPolicy()
     return Services(

@@ -1,4 +1,5 @@
 from datetime import timedelta
+from typing import Any
 from uuid import uuid4
 
 import pytest
@@ -24,8 +25,8 @@ async def world() -> World:
     return world
 
 
-def command(**overrides) -> CreateTicketCommand:
-    values = dict(
+def command(**overrides: Any) -> CreateTicketCommand:
+    values: dict[str, Any] = dict(
         reporter_id=REPORTER,
         chat_id=1000,
         category_code="lift",
