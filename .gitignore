@@ -216,4 +216,5 @@ ml/models/*.cbm
 
 # ML: сгенерированные выборки, чекпоинты и адаптеры весов
 data/
+!ml/dataset/data/
 *.jsonl
