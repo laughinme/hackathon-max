@@ -7,7 +7,13 @@ from uuid import UUID
 from fastapi import APIRouter, Query
 
 from api.http.deps import IdentityDep, ServicesDep
-from api.http.v1.schemas.tickets import ConfirmationIn, StatusChangeIn, TicketOut
+from api.http.v1.schemas.tickets import (
+    ConfirmationIn,
+    StatusChangeIn,
+    TicketOut,
+    Viewer,
+)
+from app.services import Services
 from application.housing.identity import Identity
 from application.tickets.change_status import ChangeStatusCommand
 from application.tickets.dto import TicketView
@@ -16,11 +22,25 @@ from domain.tickets.enums import ActorRole, TicketStatus
 router = APIRouter(tags=["tickets"])
 
 
-def _role_for(identity: Identity, ticket: TicketView) -> ActorRole:
-    dispatcher = identity.dispatcher
-    if dispatcher is not None and dispatcher.company_id == ticket.company_id:
-        return ActorRole.DISPATCHER
-    return ActorRole.RESIDENT
+def _out(
+    view: TicketView,
+    identity: Identity,
+    services: Services,
+    role: ActorRole | None = None,
+) -> TicketOut:
+    """`role` picks `available_statuses`; reporter-only flags (confirm,
+    complaint, demo deadline) follow the viewer, even if they also dispatch."""
+
+    if role is None:
+        dispatcher = identity.dispatcher
+        is_dispatcher = (
+            dispatcher is not None and dispatcher.company_id == view.company_id
+        )
+        role = ActorRole.DISPATCHER if is_dispatcher else ActorRole.RESIDENT
+    viewer = Viewer(
+        user_id=identity.max_user_id, role=role, demo_mode=services.config.demo_mode
+    )
+    return TicketOut.from_view(view, viewer)
 
 
 @router.get("/tickets", response_model=list[TicketOut], summary="My tickets")
@@ -28,7 +48,7 @@ async def list_my_tickets(
     identity: IdentityDep, services: ServicesDep
 ) -> list[TicketOut]:
     views = await services.list_tickets.execute(identity.max_user_id)
-    return [TicketOut.from_view(view, ActorRole.RESIDENT) for view in views]
+    return [_out(view, identity, services, ActorRole.RESIDENT) for view in views]
 
 
 @router.get(
@@ -44,7 +64,7 @@ async def dispatcher_queue(
     views = await services.list_queue.execute(
         identity.max_user_id, open_only=not include_closed
     )
-    return [TicketOut.from_view(view, ActorRole.DISPATCHER) for view in views]
+    return [_out(view, identity, services, ActorRole.DISPATCHER) for view in views]
 
 
 @router.get("/tickets/{ticket_id}", response_model=TicketOut, summary="Ticket card")
@@ -52,7 +72,7 @@ async def get_ticket(
     ticket_id: UUID, identity: IdentityDep, services: ServicesDep
 ) -> TicketOut:
     view = await services.get_ticket.execute(ticket_id, identity.max_user_id)
-    return TicketOut.from_view(view, _role_for(identity, view))
+    return _out(view, identity, services)
 
 
 @router.post(
@@ -72,7 +92,7 @@ async def change_status(
             comment=body.comment,
         )
     )
-    return TicketOut.from_view(view, ActorRole.DISPATCHER)
+    return _out(view, identity, services, ActorRole.DISPATCHER)
 
 
 @router.post(
@@ -93,7 +113,7 @@ async def confirm(
             comment=body.comment,
         )
     )
-    return TicketOut.from_view(view, ActorRole.RESIDENT)
+    return _out(view, identity, services)
 
 
 @router.post(
@@ -107,4 +127,17 @@ async def escalate(
     ticket_id: UUID, identity: IdentityDep, services: ServicesDep
 ) -> TicketOut:
     view = await services.escalate.execute(ticket_id, identity.max_user_id)
-    return TicketOut.from_view(view, ActorRole.RESIDENT)
+    return _out(view, identity, services)
+
+
+@router.post(
+    "/tickets/{ticket_id}/demo/expire-deadline",
+    response_model=TicketOut,
+    summary="DEMO_MODE only: move the reporter's deadline into the past, so the "
+    "overdue notice and the complaint can be checked without waiting",
+)
+async def demo_expire_deadline(
+    ticket_id: UUID, identity: IdentityDep, services: ServicesDep
+) -> TicketOut:
+    view = await services.demo_expire_deadline.execute(ticket_id, identity.max_user_id)
+    return _out(view, identity, services)

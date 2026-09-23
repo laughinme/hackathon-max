@@ -408,6 +408,37 @@ async def scenario_overdue_and_complaint(sim: Simulation, clock: ShiftedClock) -
     clock.offset = timedelta(0)
 
 
+async def scenario_demo_expire(sim: Simulation) -> None:
+    """A checker walks overdue -> complaint in seconds with the demo button."""
+
+    print("\n=== Сценарий 7: демо-кнопка «срок истёк» → жалоба за секунды ===")
+
+    from application.tickets.create_ticket import CreateTicketCommand
+
+    ticket = await sim.services.create_ticket.execute(
+        CreateTicketCommand(USER_ID, CHAT_ID, "light", False, "Не горит лампа, 3 этаж")
+    )
+    await sim.click("my")
+    await sim.click(f"item:{ticket.id}")
+    check(f"dexp:{ticket.id}" in sim.buttons, "в карточке есть демо-кнопка")
+
+    documents_before = len(sim.bot.documents)
+    await sim.click(f"dexp:{ticket.id}")
+    check("Демо-режим" in sim.screen_text, "сдвиг срока виден в истории заявки")
+    check(f"esc:{ticket.id}" in sim.buttons, "сразу появилась кнопка жалобы")
+    while await sim.deliver.execute():
+        pass
+    texts_sent = [m.body.text or "" for m in sim.bot.messages.values() if m.body]
+    check(
+        any(f"№ {ticket.number}: нормативный срок истёк" in t for t in texts_sent),
+        "уведомление о просрочке пришло без ожидания проверки",
+    )
+
+    await sim.click(f"esc:{ticket.id}")
+    await sim.deliver.execute()
+    check(len(sim.bot.documents) == documents_before + 1, "PDF пришёл в чат")
+
+
 async def scenario_llm_service(sim: Simulation) -> None:
     """Бот работает поверх ответов модели, а не заглушки.
 
@@ -524,6 +555,7 @@ async def main() -> None:
     await scenario_llm_service(sim)
     await scenario_dispatcher_and_resident(sim)
     await scenario_overdue_and_complaint(sim, clock)
+    await scenario_demo_expire(sim)
 
     print("\n🎉 Все сценарии пройдены")
 

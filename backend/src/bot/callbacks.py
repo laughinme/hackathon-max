@@ -28,6 +28,7 @@ QUEUE_SKIP_COMMENT = "dsc"
 CONFIRM_FIXED = "ok"
 CONFIRM_REOPEN = "reopen"
 ESCALATE = "esc"
+DEMO_EXPIRE = "dexp"
 NOOP = "noop"
 
 SEPARATOR = ":"

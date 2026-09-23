@@ -10,3 +10,10 @@ class TicketNotFoundError(DomainError):
 
     def __init__(self) -> None:
         super().__init__("Ticket not found")
+
+
+class DemoActionNotAllowedError(DomainError):
+    code = "demo_action_not_allowed"
+
+    def __init__(self, reason: str) -> None:
+        super().__init__(reason)

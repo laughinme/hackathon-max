@@ -7,6 +7,7 @@ import { StatusBadge } from '@/entities/ticket/StatusBadge'
 import { Timeline } from '@/entities/ticket/Timeline'
 import { ChangeStatusActions } from '@/features/change-status/ChangeStatusActions'
 import { ConfirmResolution } from '@/features/confirm-resolution/ConfirmResolution'
+import { DemoExpireButton } from '@/features/demo-expire/DemoExpireButton'
 import { EscalateCard } from '@/features/escalate/EscalateCard'
 import { formatMoment } from '@/shared/lib/format'
 import { ErrorView, Loading } from '@/shared/ui/StateView'
@@ -17,7 +18,6 @@ export function TicketPage({ id }: { id: string }) {
   if (error) return <ErrorView error={error} onRetry={() => void refetch()} />
 
   const { emoji, title } = category(ticket.category_code)
-  const residentCanConfirm = ticket.available_statuses.includes('confirmed')
 
   return (
     <div className="page">
@@ -36,7 +36,7 @@ export function TicketPage({ id }: { id: string }) {
       </header>
 
       <EscalateCard ticket={ticket} />
-      {residentCanConfirm ? <ConfirmResolution ticket={ticket} /> : <ChangeStatusActions ticket={ticket} />}
+      {ticket.can_confirm ? <ConfirmResolution ticket={ticket} /> : <ChangeStatusActions ticket={ticket} />}
 
       <DeadlineCard ticket={ticket} />
 
@@ -50,6 +50,8 @@ export function TicketPage({ id }: { id: string }) {
         <Typography.Title variant="small-strong">История</Typography.Title>
         <Timeline events={ticket.events} />
       </section>
+
+      <DemoExpireButton ticket={ticket} />
     </div>
   )
 }

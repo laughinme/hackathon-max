@@ -123,6 +123,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/tickets/{ticket_id}/demo/expire-deadline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** DEMO_MODE only: move the reporter's deadline into the past, so the overdue notice and the complaint can be checked without waiting */
+        post: operations["demo_expire_deadline_api_v1_tickets__ticket_id__demo_expire_deadline_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -309,6 +326,16 @@ export interface components {
              * @description The current user (the reporter) may ask for the complaint now
              */
             can_escalate: boolean;
+            /**
+             * Can Confirm
+             * @description The current user (the reporter) may confirm or reopen now
+             */
+            can_confirm: boolean;
+            /**
+             * Demo Can Expire
+             * @description DEMO_MODE: the reporter may move the deadline into the past
+             */
+            demo_can_expire: boolean;
         };
         /**
          * TicketStatus
@@ -555,6 +582,39 @@ export interface operations {
         responses: {
             /** @description Successful Response */
             202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TicketOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    demo_expire_deadline_api_v1_tickets__ticket_id__demo_expire_deadline_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                ticket_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };

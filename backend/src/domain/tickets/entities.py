@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from datetime import datetime
+from dataclasses import dataclass, field, replace
+from datetime import datetime, timedelta
 from uuid import UUID, uuid4
 
 from domain.tickets.enums import ActorRole, ResponsibleParty, TicketStatus
@@ -11,6 +11,11 @@ from domain.tickets.exceptions import NotTicketReporterError, TicketNotOverdueEr
 from domain.tickets.responsibility import Responsibility
 from domain.tickets.sla import Deadlines
 from domain.tickets.state_machine import OPEN, ensure_transition
+
+DEMO_EXPIRED_AGO = timedelta(minutes=1)
+DEMO_EXPIRED_COMMENT = (
+    "Демо-режим: срок устранения перенесён в прошлое, чтобы показать эскалацию"
+)
 
 
 def format_ticket_number(year: int, sequence: int) -> str:
@@ -137,6 +142,32 @@ class Ticket:
             return False
         self.overdue_notified_at = now
         return True
+
+    def expire_deadline_for_demo(self, now: datetime) -> None:
+        """Move the deadline a minute into the past (demo mode only).
+
+        Checkers cannot wait a day for a lift deadline. The shift is written
+        to the timeline as a system event, so the card and the complaint PDF
+        say openly that the deadline was moved. The caller guards demo mode.
+        """
+
+        expired = now - DEMO_EXPIRED_AGO
+        react_by = self.deadlines.react_by
+        self.deadlines = replace(
+            self.deadlines,
+            resolve_by=expired,
+            react_by=min(react_by, expired) if react_by else None,
+        )
+        self.updated_at = now
+        self.events.append(
+            TicketEvent(
+                status=self.status,
+                actor_role=ActorRole.SYSTEM,
+                actor_id=None,
+                at=now,
+                comment=DEMO_EXPIRED_COMMENT,
+            )
+        )
 
     def can_escalate(self, now: datetime) -> bool:
         return self.is_overdue(now)

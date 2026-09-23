@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from datetime import datetime
 from typing import Literal
 from uuid import UUID
@@ -10,7 +11,16 @@ from pydantic import BaseModel, Field
 
 from application.tickets.dto import TicketView
 from domain.tickets.enums import ActorRole, ResponsibleParty, TicketStatus
-from domain.tickets.state_machine import next_statuses
+from domain.tickets.state_machine import OPEN, next_statuses
+
+
+@dataclass(frozen=True, slots=True)
+class Viewer:
+    """Who is looking: `role` picks the statuses, `user_id` the reporter flags."""
+
+    user_id: int
+    role: ActorRole
+    demo_mode: bool
 
 
 class TicketEventOut(BaseModel):
@@ -47,9 +57,16 @@ class TicketOut(BaseModel):
     can_escalate: bool = Field(
         description="The current user (the reporter) may ask for the complaint now"
     )
+    can_confirm: bool = Field(
+        description="The current user (the reporter) may confirm or reopen now"
+    )
+    demo_can_expire: bool = Field(
+        description="DEMO_MODE: the reporter may move the deadline into the past"
+    )
 
     @classmethod
-    def from_view(cls, view: TicketView, role: ActorRole) -> TicketOut:
+    def from_view(cls, view: TicketView, viewer: Viewer) -> TicketOut:
+        is_reporter = view.reporter_id == viewer.user_id
         return cls(
             id=view.id,
             number=view.number,
@@ -76,9 +93,14 @@ class TicketOut(BaseModel):
                 )
                 for event in view.events
             ],
-            available_statuses=next_statuses(view.status, role),
+            available_statuses=next_statuses(view.status, viewer.role),
             escalated_at=view.escalated_at,
-            can_escalate=view.can_escalate and role is ActorRole.RESIDENT,
+            can_escalate=is_reporter and view.can_escalate,
+            can_confirm=is_reporter and view.status is TicketStatus.DONE,
+            demo_can_expire=viewer.demo_mode
+            and is_reporter
+            and view.status in OPEN
+            and not view.is_overdue,
         )
 
 

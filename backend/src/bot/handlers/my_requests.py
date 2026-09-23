@@ -50,7 +50,10 @@ async def on_request_card(
         return
 
     await render(
-        event, context, texts.request_card(ticket), keyboards.request_card(ticket)
+        event,
+        context,
+        texts.request_card(ticket),
+        keyboards.request_card(ticket, demo_mode=services.config.demo_mode),
     )
 
 
@@ -75,7 +78,7 @@ async def on_escalate(
             event,
             context,
             texts.request_card(ticket),
-            keyboards.request_card(ticket),
+            keyboards.request_card(ticket, demo_mode=services.config.demo_mode),
             notification="Жалоба возможна только после истечения срока",
         )
         return
@@ -83,8 +86,32 @@ async def on_escalate(
         event,
         context,
         texts.request_card(ticket),
-        keyboards.request_card(ticket),
+        keyboards.request_card(ticket, demo_mode=services.config.demo_mode),
         notification="Готовлю жалобу — PDF придёт следующим сообщением",
+    )
+
+
+@router.message_callback(callbacks.has_action(callbacks.DEMO_EXPIRE))
+async def on_demo_expire(
+    event: MessageCallback, context: BaseContext, services: Services
+) -> None:
+    """Demo: the deadline passes now; the overdue notice follows in seconds."""
+
+    user_id = sender_id(event)
+    _, raw_id = callbacks.unpack(event.callback.payload)
+    ticket_id = UUID(raw_id or "")
+    try:
+        ticket = await services.demo_expire_deadline.execute(ticket_id, user_id)
+        notification = "Срок перенесён в прошлое — уведомление о просрочке уже летит"
+    except DomainError:
+        ticket = await services.get_ticket.execute(ticket_id, user_id)
+        notification = "Для этой заявки демо-просрочка недоступна"
+    await render(
+        event,
+        context,
+        texts.request_card(ticket),
+        keyboards.request_card(ticket, demo_mode=services.config.demo_mode),
+        notification=notification,
     )
 
 
@@ -137,6 +164,6 @@ async def _resident_answer(
         event,
         context,
         texts.request_card(ticket),
-        keyboards.request_card(ticket),
+        keyboards.request_card(ticket, demo_mode=services.config.demo_mode),
         notification=notification,
     )

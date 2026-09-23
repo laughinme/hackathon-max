@@ -10,7 +10,7 @@ export function ConfirmResolution({ ticket }: { ticket: Ticket }) {
   const mutation = useConfirmResolution(ticket.id)
   const [reopening, setReopening] = useState(false)
   const [comment, setComment] = useState('')
-  if (!ticket.available_statuses.includes('confirmed')) return null
+  if (!ticket.can_confirm) return null
 
   const send = (resolved: boolean) => {
     haptic.tap()

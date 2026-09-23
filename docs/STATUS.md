@@ -10,7 +10,7 @@
 
 **Тестовый деплой:** `https://domovoy-test.fly.dev` (fly.io, [D-009](DECISIONS.md)), бот подписан на вебхук, база и демо-данные подняты. Проверено: HTTPS, 403 без секрета, 200 и фоновая обработка с секретом, подписка на стороне MAX. Не проверено: живое сообщение от человека в MAX. Пока вебхук на fly активен, локальный `polling` событий не получает.
 
-Проверки: `cd backend && uv run pytest` (85 unit, 6 сценариев симулятора; +3 integration с `TEST_DATABASE_URL`), `PYTHONPATH=src uv run python -m scripts.simulate_flow` (6 сценариев), `ruff` и `pyright` чистые.
+Проверки: `cd backend && uv run pytest` (89 unit, 7 сценариев симулятора; +3 integration с `TEST_DATABASE_URL`), `PYTHONPATH=src uv run python -m scripts.simulate_flow` (7 сценариев), `ruff` и `pyright` чистые.
 
 Классификатор переключается `CLASSIFIER=catboost|llm|rules`, сравнение — `scripts/compare_classifiers.py` (Q-18). Экран бота после текстового сообщения переезжает под него; в группах бот пока молчит.
 

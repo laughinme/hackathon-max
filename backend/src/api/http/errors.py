@@ -5,7 +5,7 @@ from __future__ import annotations
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
-from application.errors import TicketNotFoundError
+from application.errors import DemoActionNotAllowedError, TicketNotFoundError
 from domain.errors import DomainError
 from domain.housing.exceptions import (
     BuildingNotFoundError,
@@ -27,6 +27,7 @@ STATUS_BY_ERROR: dict[type[DomainError], int] = {
     NotTicketReporterError: 403,
     TicketNotOverdueError: 409,
     TicketNotFoundError: 404,
+    DemoActionNotAllowedError: 403,
     BuildingNotFoundError: 404,
     IllegalTransitionError: 409,
     ResidentNotBoundError: 409,

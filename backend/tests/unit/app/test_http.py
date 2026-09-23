@@ -189,3 +189,31 @@ def test_escalation_after_the_deadline_only(world):
 
     queue = client.get("/api/v1/dispatcher/queue", headers=tma(world, DISPATCHER))
     assert queue.json()[0]["can_escalate"] is False  # only the reporter sees it
+
+
+def test_reporter_who_also_dispatches_keeps_resident_actions(world):
+    world.add_dispatcher(RESIDENT)  # a checker who pressed "become dispatcher"
+    client = client_for(world)
+    [ticket] = client.get("/api/v1/tickets", headers=tma(world, RESIDENT)).json()
+    assert ticket["demo_can_expire"] is True
+
+    expired = client.post(
+        f"/api/v1/tickets/{ticket['id']}/demo/expire-deadline",
+        headers=tma(world, RESIDENT),
+    )
+    assert expired.status_code == 200
+    card = client.get(f"/api/v1/tickets/{ticket['id']}", headers=tma(world, RESIDENT))
+    body = card.json()
+    assert body["can_escalate"] is True  # reporter flag despite dispatcher role
+    assert "acknowledged" in body["available_statuses"]  # and dispatcher actions
+    assert body["demo_can_expire"] is False
+
+
+def test_demo_expire_is_forbidden_outside_demo_mode():
+    world = make_world(demo_mode=False)
+    client = client_for(world)
+    response = client.post(
+        "/api/v1/tickets/00000000-0000-0000-0000-000000000000/demo/expire-deadline",
+        headers=tma(world, RESIDENT),
+    )
+    assert response.status_code == 403

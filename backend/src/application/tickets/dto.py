@@ -8,6 +8,7 @@ from uuid import UUID
 
 from domain.tickets.entities import Ticket
 from domain.tickets.enums import ActorRole, ResponsibleParty, TicketStatus
+from domain.tickets.state_machine import OPEN
 
 
 @dataclass(frozen=True, slots=True)
@@ -43,6 +44,10 @@ class TicketView:
     escalated_at: datetime | None = None
     #: The reporter may ask for the complaint now (open past the deadline).
     can_escalate: bool = False
+
+    @property
+    def is_open(self) -> bool:
+        return self.status in OPEN
 
 
 def to_view(ticket: Ticket, now: datetime, building_address: str) -> TicketView:

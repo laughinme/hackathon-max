@@ -25,7 +25,7 @@ export function useTicket(id: string) {
   return useQuery({ queryKey: ticketKeys.one(id), queryFn: () => api<Ticket>(`/tickets/${id}`) })
 }
 
-/** Both mutations return the fresh ticket; lists refetch in the background. */
+/** Mutations return the fresh ticket; lists refetch in the background. */
 function useTicketMutation<Body>(id: string, path: string) {
   const client = useQueryClient()
   return useMutation({
@@ -49,4 +49,9 @@ export function useConfirmResolution(id: string) {
 /** The bot sends the complaint PDF to the reporter's chat (202, no body needed). */
 export function useEscalate(id: string) {
   return useTicketMutation<Record<string, never>>(id, 'escalation')
+}
+
+/** DEMO_MODE: the deadline passes now; the overdue notice arrives in seconds. */
+export function useDemoExpire(id: string) {
+  return useTicketMutation<Record<string, never>>(id, 'demo/expire-deadline')
 }

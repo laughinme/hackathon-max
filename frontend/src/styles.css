@@ -223,6 +223,18 @@ a {
   gap: 8px;
 }
 
+.demo-action {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 4px 8px 0;
+  text-align: center;
+}
+
+.demo-action p {
+  margin: 0;
+}
+
 /* Dispatcher */
 
 .queue-head {

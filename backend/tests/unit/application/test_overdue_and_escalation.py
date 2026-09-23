@@ -4,6 +4,7 @@ from typing import Any, cast
 
 import pytest
 
+from application.errors import DemoActionNotAllowedError, TicketNotFoundError
 from application.tickets.create_ticket import CreateTicketCommand
 from bot.notifications import MaxNotificationSender, render
 from domain.notifications.entities import Notification, NotificationKind
@@ -134,3 +135,34 @@ def test_every_notification_kind_has_a_text():
             kind=kind, ticket_number="2026-00001", status="in_progress", comment=None
         )
         assert render(cast(Notification, note))
+
+
+async def test_demo_expire_notifies_right_away_and_unlocks_the_complaint():
+    world, ticket = await _world_with_ticket()
+
+    view = await world.services.demo_expire_deadline.execute(ticket.id, REPORTER)
+
+    assert view.is_overdue and view.can_escalate
+    assert view.events[-1].actor_role.value == "system"
+    assert "Демо-режим" in (view.events[-1].comment or "")
+    kinds = sorted(n.kind for n in _outbox(world))
+    assert kinds == [
+        NotificationKind.TICKET_OVERDUE,
+        NotificationKind.TICKET_OVERDUE_DISPATCHER,
+        NotificationKind.TICKET_OVERDUE_DISPATCHER,
+    ]
+    assert await world.services.detect_overdue.execute() == 0  # already reported
+
+
+async def test_demo_expire_is_refused_when_it_makes_no_sense():
+    world, ticket = await _world_with_ticket()
+    with pytest.raises(TicketNotFoundError):  # somebody else's ticket
+        await world.services.demo_expire_deadline.execute(ticket.id, 99)
+
+    await world.services.demo_expire_deadline.execute(ticket.id, REPORTER)
+    with pytest.raises(DemoActionNotAllowedError):  # already overdue
+        await world.services.demo_expire_deadline.execute(ticket.id, REPORTER)
+
+    production = make_world(demo_mode=False)
+    with pytest.raises(DemoActionNotAllowedError):
+        await production.services.demo_expire_deadline.execute(ticket.id, REPORTER)

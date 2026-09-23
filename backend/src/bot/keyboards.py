@@ -150,12 +150,22 @@ def emergency_question() -> AttachmentButton:
     return builder.as_markup()
 
 
-def request_card(ticket: TicketView | None = None) -> AttachmentButton:
-    """Карточка обращения; у просроченной — жалоба в жилинспекцию."""
+def request_card(
+    ticket: TicketView | None = None, *, demo_mode: bool = False
+) -> AttachmentButton:
+    """Карточка обращения; у просроченной — жалоба в жилинспекцию, в демо —
+    кнопка, которая сразу «просрочивает» заявку, чтобы не ждать сутки."""
 
     builder = InlineKeyboardBuilder()
     if ticket is not None and ticket.can_escalate:
         builder.row(escalate_button(ticket.id))
+    elif ticket is not None and demo_mode and ticket.is_open and not ticket.is_overdue:
+        builder.row(
+            CallbackButton(
+                text="⏩ Демо: срок истёк",
+                payload=callbacks.pack(callbacks.DEMO_EXPIRE, str(ticket.id)),
+            )
+        )
     builder.row(
         CallbackButton(
             text="⬅️ К списку заявок",
