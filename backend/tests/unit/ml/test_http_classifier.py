@@ -8,7 +8,7 @@
 
 from __future__ import annotations
 
-from collections.abc import AsyncIterator
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
 import pytest
@@ -21,7 +21,7 @@ UNREACHABLE_URL = "http://127.0.0.1:1"
 
 
 @asynccontextmanager
-async def _running_server(app: web.Application) -> AsyncIterator[str]:
+async def _running_server(app: web.Application) -> AsyncGenerator[str]:
     """Поднимает локальный aiohttp-сервер и отдаёт его base_url."""
 
     server = TestServer(app)

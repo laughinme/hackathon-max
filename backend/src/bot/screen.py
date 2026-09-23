@@ -4,11 +4,14 @@
 сообщениями, а перерисовывается на месте.
 
 - нажатие inline-кнопки → редактируем сообщение через callback-ответ;
-- сообщение пользователя → редактируем последнее «экранное» сообщение
-  бота по сохранённому message_id.
+- сообщение пользователя → удаляем прежний экран и присылаем новый под
+  сообщением пользователя. Редактировать старый экран здесь нельзя: он
+  уезжает вверх, и ответ бота оказывается выше того, на что он отвечает.
+  Удалить сообщение пользователя в диалоге бот не может (API разрешает
+  удалять только свои), поэтому экран «следует» за пользователем.
 
-Если сообщение отредактировать нельзя (удалено, устарело, сбой API),
-мы отправляем новое и запоминаем его как текущий экран — тупиков нет.
+Если старый экран удалить не удалось (уже удалён, сбой API), это не
+мешает: новый экран всё равно отправляется — тупиков нет.
 """
 
 from __future__ import annotations
@@ -78,7 +81,7 @@ async def _render_message(
     text: str,
     keyboard: AttachmentButton,
 ) -> None:
-    """Перерисовывает последний экран бота после сообщения пользователя."""
+    """Переносит экран бота под последнее сообщение пользователя."""
 
     data = await context.get_data()
     message_id = data.get(SCREEN_KEY)
@@ -86,15 +89,9 @@ async def _render_message(
     if message_id:
         bot: Bot = event._ensure_bot()  # noqa: SLF001
         try:
-            await bot.edit_message(
-                message_id=message_id,
-                text=text,
-                attachments=[keyboard],
-            )
+            await bot.delete_message(message_id=message_id)
         except (MaxError, ValueError) as exc:
-            logger.warning("Экран %s недоступен: %s", message_id, exc)
-        else:
-            return
+            logger.info("Прежний экран %s не удалён: %s", message_id, exc)
 
     await _send_new(event, context, text, keyboard)
 

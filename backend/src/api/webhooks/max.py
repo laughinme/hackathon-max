@@ -59,6 +59,7 @@ class WebhookReceiver:
 
     async def _process(self, payload: dict[str, Any]) -> None:
         update_type = payload.get("update_type")
+        logger.info("Update %s %s", update_type, _where(payload))
         try:
             event = await process_update_webhook(event_json=payload, bot=self._bot)
             if event is None:
@@ -67,3 +68,15 @@ class WebhookReceiver:
             await self._dispatcher.handle(event)
         except Exception:  # noqa: BLE001 - never let one update kill the receiver
             logger.exception("Failed to process update %s", update_type)
+
+
+def _where(payload: dict[str, Any]) -> str:
+    """Chat id and type of an update for the log; never the message text."""
+
+    message = payload.get("message") or {}
+    recipient = message.get("recipient") or {}
+    chat_id = recipient.get("chat_id", payload.get("chat_id"))
+    chat_type = recipient.get(
+        "chat_type", "channel" if payload.get("is_channel") else "?"
+    )
+    return f"chat_id={chat_id} chat_type={chat_type}"

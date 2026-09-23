@@ -10,7 +10,7 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import logging
-from collections.abc import AsyncIterator
+from collections.abc import AsyncGenerator
 from typing import Any
 
 import uvicorn
@@ -30,7 +30,7 @@ from app.services import Services, build_services
 from application.notifications.deliver import DeliverNotifications
 from bot.errors import on_error
 from bot.handlers import create, dispatcher, fallback, my_requests, start
-from bot.middleware import ServicesMiddleware
+from bot.middleware import DialogOnlyMiddleware, ServicesMiddleware
 from bot.notifications import MaxNotificationSender
 from infrastructure.clock import SystemClock
 from infrastructure.db.dialog_context import PostgresDialogContext
@@ -71,6 +71,7 @@ def build_dispatcher(
         else Dispatcher()
     )
     dp.errors(ExceptionTypeFilter(Exception))(on_error)
+    dp.register_outer_middleware(DialogOnlyMiddleware())
     dp.register_outer_middleware(ServicesMiddleware(services))
     dp.include_routers(
         start.router,
@@ -145,7 +146,7 @@ def create_app(config: Config) -> FastAPI:
     )
 
     @contextlib.asynccontextmanager
-    async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+    async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
         await set_commands(bot)
         relay = asyncio.create_task(run_relay(deliver))
         polling: asyncio.Task[None] | None = None

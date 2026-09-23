@@ -105,6 +105,10 @@ class FakeBot:
             raise ValueError(f"Сообщение {message_id} не найдено")
         self.messages[message_id] = self._build_message(message_id, text, attachments)
 
+    async def delete_message(self, message_id: str) -> None:
+        if self.messages.pop(message_id, None) is None:
+            raise ValueError(f"Сообщение {message_id} не найдено")
+
     async def send_callback(
         self,
         callback_id: str,
@@ -206,7 +210,7 @@ class Simulation:
         body = self.bot.messages[screen_id].body
         if body is None or not body.attachments:
             return []
-        keyboard = body.attachments[0]
+        keyboard: Any = body.attachments[0]  # always our inline keyboard
         return [
             str(button.payload) for row in keyboard.payload.buttons for button in row
         ]
@@ -265,8 +269,9 @@ async def scenario_quick_button(sim: Simulation) -> None:
     check("История" in sim.screen_text, "карточка с историей")
 
     await sim.click("menu")
-    check(sim.screen_id == screen_id, "вся навигация в ОДНОМ сообщении")
-    check(sim.bot.sent_count == 1, "новых сообщений в чат не отправлялось")
+    check(sim.screen_id != screen_id, "после текста экран переехал вниз")
+    check(len(sim.bot.messages) == 1, "в чате всегда один экран бота")
+    check(sim.bot.sent_count == 3, "новый экран только на сообщения, не на кнопки")
 
 
 async def scenario_free_text(sim: Simulation) -> None:
