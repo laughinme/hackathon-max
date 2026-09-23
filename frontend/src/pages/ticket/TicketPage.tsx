@@ -7,6 +7,7 @@ import { StatusBadge } from '@/entities/ticket/StatusBadge'
 import { Timeline } from '@/entities/ticket/Timeline'
 import { ChangeStatusActions } from '@/features/change-status/ChangeStatusActions'
 import { ConfirmResolution } from '@/features/confirm-resolution/ConfirmResolution'
+import { EscalateCard } from '@/features/escalate/EscalateCard'
 import { formatMoment } from '@/shared/lib/format'
 import { ErrorView, Loading } from '@/shared/ui/StateView'
 
@@ -30,9 +31,11 @@ export function TicketPage({ id }: { id: string }) {
         <div className="ticket-head__badges">
           <StatusBadge status={ticket.status} />
           {ticket.is_emergency && <span className="badge badge--emergency">⚠️ Авария</span>}
+          {ticket.escalated_at && <span className="badge badge--escalated">📨 Жалоба в жилинспекцию</span>}
         </div>
       </header>
 
+      <EscalateCard ticket={ticket} />
       {residentCanConfirm ? <ConfirmResolution ticket={ticket} /> : <ChangeStatusActions ticket={ticket} />}
 
       <DeadlineCard ticket={ticket} />

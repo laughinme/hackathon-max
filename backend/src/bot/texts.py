@@ -148,9 +148,14 @@ def request_card(ticket: TicketView) -> str:
     deadline = _deadline_lines(
         ticket.resolve_by, ticket.react_by, ticket.deadline_basis
     )
+    escalated = (
+        f"\n📨 Жалоба в жилинспекцию подготовлена {format_moment(ticket.escalated_at)}"
+        if ticket.escalated_at
+        else ""
+    )
     return (
         f"📄 <b>Заявка № {ticket.number}</b>\n\n"
-        f"Статус: {STATUS_LABELS[ticket.status]}{overdue}\n"
+        f"Статус: {STATUS_LABELS[ticket.status]}{overdue}{escalated}\n"
         f"Категория: {category_title(ticket.category_code)}\n"
         f"Срочность: {urgency_label(ticket.is_emergency)}\n"
         f"Отвечает: {PARTY_LABELS[ticket.responsible_party]}\n"

@@ -7,7 +7,7 @@ from datetime import datetime
 from uuid import UUID, uuid4
 
 from domain.tickets.enums import ActorRole, ResponsibleParty, TicketStatus
-from domain.tickets.exceptions import NotTicketReporterError
+from domain.tickets.exceptions import NotTicketReporterError, TicketNotOverdueError
 from domain.tickets.responsibility import Responsibility
 from domain.tickets.sla import Deadlines
 from domain.tickets.state_machine import OPEN, ensure_transition
@@ -50,6 +50,10 @@ class Ticket:
     created_at: datetime
     updated_at: datetime
     events: list[TicketEvent] = field(default_factory=list)
+    #: When the resident and dispatchers were told the deadline had passed.
+    overdue_notified_at: datetime | None = None
+    #: When the reporter first asked for a complaint to the housing inspection.
+    escalated_at: datetime | None = None
 
     @classmethod
     def register(
@@ -125,3 +129,29 @@ class Ticket:
 
     def is_overdue(self, now: datetime) -> bool:
         return self.is_open and now > self.deadlines.resolve_by
+
+    def mark_overdue_notified(self, now: datetime) -> bool:
+        """True once per ticket: the moment to tell people the deadline passed."""
+
+        if self.overdue_notified_at is not None or not self.is_overdue(now):
+            return False
+        self.overdue_notified_at = now
+        return True
+
+    def can_escalate(self, now: datetime) -> bool:
+        return self.is_overdue(now)
+
+    def escalate(self, actor_id: int, now: datetime) -> None:
+        """The reporter asks for a complaint to the housing inspection.
+
+        Allowed only while the ticket is open past its legal deadline: before
+        that the company has not broken anything yet. Repeating it is fine
+        (the resident may need the document again); the first time is kept.
+        """
+
+        if actor_id != self.reporter_id:
+            raise NotTicketReporterError()
+        if not self.can_escalate(now):
+            raise TicketNotOverdueError()
+        if self.escalated_at is None:
+            self.escalated_at = now

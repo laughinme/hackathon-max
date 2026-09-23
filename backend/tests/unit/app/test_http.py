@@ -170,3 +170,22 @@ def test_polling_mode_has_no_webhook_route():
     client = TestClient(create_app(CONFIG))
     assert client.post(WEBHOOK_PATH, json={}).status_code == 404
     assert client.get("/health").json() == {"status": "ok", "bot_mode": "polling"}
+
+
+def test_escalation_after_the_deadline_only(world):
+    client = client_for(world)
+    [ticket] = client.get("/api/v1/tickets", headers=tma(world, RESIDENT)).json()
+    assert ticket["can_escalate"] is False and ticket["escalated_at"] is None
+    url = f"/api/v1/tickets/{ticket['id']}/escalation"
+
+    early = client.post(url, headers=tma(world, RESIDENT))
+    assert early.status_code == 409
+    assert early.json()["error_code"] == "ticket_not_overdue"
+
+    world.clock.advance(timedelta(days=2))
+    late = client.post(url, headers=tma(world, RESIDENT))
+    assert late.status_code == 202
+    assert late.json()["escalated_at"] is not None
+
+    queue = client.get("/api/v1/dispatcher/queue", headers=tma(world, DISPATCHER))
+    assert queue.json()[0]["can_escalate"] is False  # only the reporter sees it

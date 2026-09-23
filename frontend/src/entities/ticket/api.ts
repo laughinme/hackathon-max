@@ -45,3 +45,8 @@ export function useChangeStatus(id: string) {
 export function useConfirmResolution(id: string) {
   return useTicketMutation<Confirmation>(id, 'confirmation')
 }
+
+/** The bot sends the complaint PDF to the reporter's chat (202, no body needed). */
+export function useEscalate(id: string) {
+  return useTicketMutation<Record<string, never>>(id, 'escalation')
+}

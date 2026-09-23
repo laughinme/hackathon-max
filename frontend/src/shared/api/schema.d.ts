@@ -106,6 +106,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/tickets/{ticket_id}/escalation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reporter asks for a complaint to the housing inspection; the bot sends the PDF to the reporter's chat */
+        post: operations["escalate_api_v1_tickets__ticket_id__escalation_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -282,6 +299,16 @@ export interface components {
              * @description Statuses the current user may move this ticket to
              */
             available_statuses: components["schemas"]["TicketStatus"][];
+            /**
+             * Escalated At
+             * @description When the reporter asked for a complaint to the housing inspection
+             */
+            escalated_at: string | null;
+            /**
+             * Can Escalate
+             * @description The current user (the reporter) may ask for the complaint now
+             */
+            can_escalate: boolean;
         };
         /**
          * TicketStatus
@@ -495,6 +522,39 @@ export interface operations {
         responses: {
             /** @description Successful Response */
             200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TicketOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    escalate_api_v1_tickets__ticket_id__escalation_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                ticket_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            202: {
                 headers: {
                     [name: string]: unknown;
                 };

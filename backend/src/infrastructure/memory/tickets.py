@@ -74,6 +74,15 @@ class InMemoryTicketRepository:
             raise LookupError(f"Ticket {ticket.id} is not persisted")
         self._pending.put("tickets", ticket.id, ticket)
 
+    async def list_overdue_unnotified(self, now: datetime, limit: int) -> list[Ticket]:
+        due = [
+            t
+            for t in self._store.tickets.values()
+            if t.is_overdue(now) and t.overdue_notified_at is None
+        ]
+        due.sort(key=lambda t: t.deadlines.resolve_by)
+        return [copy.deepcopy(t) for t in due[:limit]]
+
 
 class InMemoryHousingRepository:
     def __init__(self, store: InMemoryStore, pending: _Pending) -> None:
@@ -111,6 +120,12 @@ class InMemoryHousingRepository:
 
     async def save_dispatcher(self, dispatcher: Dispatcher) -> None:
         self._pending.put("dispatchers", dispatcher.max_user_id, dispatcher)
+
+    async def list_dispatchers(self, company_id: UUID) -> list[Dispatcher]:
+        found = [
+            d for d in self._store.dispatchers.values() if d.company_id == company_id
+        ]
+        return sorted(found, key=lambda d: d.joined_at)
 
 
 class InMemoryOutbox:

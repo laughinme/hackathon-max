@@ -19,8 +19,11 @@ from application.ports.classifier import Classifier
 from application.ports.clock import Clock
 from application.ports.ticket_queries import TicketQueries
 from application.ports.unit_of_work import UnitOfWorkFactory
+from application.tickets.build_escalation_document import BuildEscalationDocument
 from application.tickets.change_status import ChangeTicketStatus
 from application.tickets.create_ticket import CreateTicket
+from application.tickets.detect_overdue import DetectOverdueTickets
+from application.tickets.escalate_ticket import EscalateTicket
 from application.tickets.queries import (
     GetTicketForUser,
     ListDispatcherQueue,
@@ -34,6 +37,7 @@ from infrastructure.llm.client import LLMClient, LLMSettings
 from infrastructure.llm.service import LLMAIService
 from infrastructure.ml.http_classifier import HttpClassifier
 from infrastructure.ml.rule_based import RuleBasedClassifier
+from infrastructure.pdf.escalation import PdfEscalationRenderer
 
 logger = logging.getLogger(__name__)
 
@@ -51,6 +55,9 @@ class Services:
     list_tickets: ListReporterTickets
     get_ticket: GetTicketForUser
     list_queue: ListDispatcherQueue
+    escalate: EscalateTicket
+    escalation_document: BuildEscalationDocument
+    detect_overdue: DetectOverdueTickets
     identify: IdentifyUser
     bind_resident: BindResident
     become_demo_dispatcher: BecomeDemoDispatcher
@@ -147,6 +154,11 @@ def build_services(
         list_tickets=ListReporterTickets(queries, clock),
         get_ticket=GetTicketForUser(uow_factory, queries, clock),
         list_queue=ListDispatcherQueue(uow_factory, queries, clock),
+        escalate=EscalateTicket(uow_factory, queries, clock),
+        escalation_document=BuildEscalationDocument(
+            uow_factory, queries, PdfEscalationRenderer(), clock
+        ),
+        detect_overdue=DetectOverdueTickets(uow_factory, clock),
         identify=IdentifyUser(uow_factory),
         bind_resident=BindResident(uow_factory, clock),
         become_demo_dispatcher=BecomeDemoDispatcher(uow_factory, clock),

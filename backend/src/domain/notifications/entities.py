@@ -1,5 +1,5 @@
-"""Notifications to residents, written to the outbox in the same transaction
-as the change that caused them and delivered later by a relay."""
+"""Notifications to residents and dispatchers, written to the outbox in the same
+transaction as the change that caused them and delivered later by a relay."""
 
 from __future__ import annotations
 
@@ -11,6 +11,12 @@ from uuid import UUID, uuid4
 
 class NotificationKind(StrEnum):
     TICKET_STATUS_CHANGED = "ticket_status_changed"
+    #: To the reporter: the legal deadline passed, a complaint is possible.
+    TICKET_OVERDUE = "ticket_overdue"
+    #: To every dispatcher of the company: the deadline passed.
+    TICKET_OVERDUE_DISPATCHER = "ticket_overdue_dispatcher"
+    #: To the reporter: the complaint to the housing inspection as a PDF.
+    ESCALATION_DOCUMENT = "escalation_document"
 
 
 @dataclass(frozen=True, slots=True)

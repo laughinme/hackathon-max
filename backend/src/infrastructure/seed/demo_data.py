@@ -108,6 +108,9 @@ def _ticket(
     )
     ticket.id = _id(f"ticket-{sequence}")
     _advance(rng, ticket, now)
+    if ticket.is_overdue(now):
+        # Old news at seed time: the overdue watcher only reports fresh ones.
+        ticket.overdue_notified_at = ticket.deadlines.resolve_by
     return ticket
 
 

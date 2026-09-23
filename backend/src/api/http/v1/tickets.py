@@ -94,3 +94,17 @@ async def confirm(
         )
     )
     return TicketOut.from_view(view, ActorRole.RESIDENT)
+
+
+@router.post(
+    "/tickets/{ticket_id}/escalation",
+    response_model=TicketOut,
+    status_code=202,
+    summary="Reporter asks for a complaint to the housing inspection; "
+    "the bot sends the PDF to the reporter's chat",
+)
+async def escalate(
+    ticket_id: UUID, identity: IdentityDep, services: ServicesDep
+) -> TicketOut:
+    view = await services.escalate.execute(ticket_id, identity.max_user_id)
+    return TicketOut.from_view(view, ActorRole.RESIDENT)

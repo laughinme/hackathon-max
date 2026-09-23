@@ -27,6 +27,7 @@ QUEUE_SET = "ds"
 QUEUE_SKIP_COMMENT = "dsc"
 CONFIRM_FIXED = "ok"
 CONFIRM_REOPEN = "reopen"
+ESCALATE = "esc"
 NOOP = "noop"
 
 SEPARATOR = ":"

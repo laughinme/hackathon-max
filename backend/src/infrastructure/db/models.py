@@ -52,12 +52,16 @@ class TicketRow(Base):
     description: Mapped[str] = mapped_column(Text)
     responsible_party: Mapped[str] = mapped_column(String(32))
     responsibility_basis: Mapped[str] = mapped_column(Text)
-    resolve_by: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    resolve_by: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
     react_by: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     deadline_basis: Mapped[str] = mapped_column(Text)
     status: Mapped[str] = mapped_column(String(32), index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    overdue_notified_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True)
+    )
+    escalated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     events: Mapped[list[TicketEventRow]] = relationship(
         back_populates="ticket",

@@ -14,7 +14,7 @@
 | `Ticket` (заявка) | id, number (`<год>-<seq>` или `<код дома>-<seq>`), building_id, reporter_id, category, subcategory, responsible_party, is_emergency, description, description_source (`resident` / `llm_dialog`), ai_photo_summary, classification_confidence, photos[], status, created_at, react_by, resolve_by, legal_basis, closed_at, chat_message_mid (сообщение-карточка в чате), source (`chat` / `dialog` / `miniapp`) | Агрегат; переходы только через `state_machine`. `is_emergency` — выход ML-классификатора, не ручной ввод; ML-поля — см. §7 |
 | `TicketSupport` | ticket_id, resident_id, created_at | «Я тоже»; уникальность (ticket, resident) |
 | `TicketEvent` | ticket_id, type, actor (resident / dispatcher / system), payload, created_at | Таймлайн: created, acknowledged, in_progress, comment, done, confirmed, reopened, overdue, escalated |
-| `Escalation` | ticket_id, target (`gzhi`), document_url, created_at, created_by | PDF с историей заявки |
+| `Escalation` | реализовано полями заявки `overdue_notified_at`, `escalated_at` ([D-012](DECISIONS.md)) | PDF собирается при отправке из текущей истории, не хранится |
 | `InboxEvent` | dedup_key, update_type, payload, received_at, processed_at, error | Идемпотентность вебхука |
 | `OutboxMessage` | id, target (user_id / chat_id), body, dedup_key, status, attempts, mid, next_attempt_at | Транзакционный outbox |
 | `DialogState` | max_user_id, chat_id, flow, step, data, updated_at | Состояние пошаговых форм в БД |

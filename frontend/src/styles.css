@@ -143,8 +143,13 @@ a {
 }
 
 .badge--rejected,
-.badge--emergency {
+.badge--emergency,
+.badge--escalated {
   color: var(--negative);
+}
+
+.escalate {
+  border-left: 4px solid var(--negative);
 }
 
 .deadline {

@@ -5,7 +5,7 @@ import pytest
 
 from domain.tickets.entities import Ticket
 from domain.tickets.enums import ActorRole, TicketStatus
-from domain.tickets.exceptions import NotTicketReporterError
+from domain.tickets.exceptions import NotTicketReporterError, TicketNotOverdueError
 from domain.tickets.responsibility import responsibility_for
 from domain.tickets.sla import SlaPolicy
 
@@ -81,3 +81,24 @@ def test_overdue_only_while_open():
         TicketStatus.DONE, actor_role=ActorRole.DISPATCHER, actor_id=7, now=NOW
     )
     assert not ticket.is_overdue(after_deadline)
+
+
+def test_overdue_is_marked_once_and_only_after_the_deadline():
+    ticket = make_ticket()
+    before = ticket.deadlines.resolve_by
+    assert not ticket.mark_overdue_notified(before)
+    after = before + timedelta(minutes=1)
+    assert ticket.mark_overdue_notified(after)
+    assert not ticket.mark_overdue_notified(after + timedelta(hours=1))
+    assert ticket.overdue_notified_at == after
+
+
+def test_closed_ticket_is_never_overdue_nor_escalatable():
+    ticket = make_ticket()
+    later = ticket.deadlines.resolve_by + timedelta(days=1)
+    ticket.change_status(
+        TicketStatus.REJECTED, actor_role=ActorRole.DISPATCHER, actor_id=7, now=later
+    )
+    assert not ticket.mark_overdue_notified(later)
+    with pytest.raises(TicketNotOverdueError):
+        ticket.escalate(ticket.reporter_id, later)

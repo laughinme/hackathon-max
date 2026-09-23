@@ -27,7 +27,7 @@ from api.http.app import mount_api
 from api.http.miniapp import mount_miniapp
 from api.webhooks.max import WebhookReceiver
 from app.config import Config, load_config
-from app.relay import run_relay
+from app.relay import run_overdue_watch, run_relay
 from app.services import Services, build_services
 from application.notifications.deliver import DeliverNotifications
 from bot.errors import on_error
@@ -144,13 +144,16 @@ def create_app(config: Config) -> FastAPI:
     )
     receiver = WebhookReceiver(dp, bot, config.webhook_secret or "")
     deliver = DeliverNotifications(
-        SqlOutboxReader(session_factory), MaxNotificationSender(bot), clock
+        SqlOutboxReader(session_factory),
+        MaxNotificationSender(bot, services.escalation_document),
+        clock,
     )
 
     @contextlib.asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
         await set_commands(bot)
         relay = asyncio.create_task(run_relay(deliver))
+        overdue = asyncio.create_task(run_overdue_watch(services.detect_overdue))
         polling: asyncio.Task[None] | None = None
         try:
             if config.bot_mode == "webhook":
@@ -164,6 +167,7 @@ def create_app(config: Config) -> FastAPI:
                 yield
         finally:
             relay.cancel()
+            overdue.cancel()
             if polling is not None:
                 await dp.stop_polling()
             await services.close()

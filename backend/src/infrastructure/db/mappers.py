@@ -30,6 +30,8 @@ def ticket_to_domain(row: TicketRow) -> Ticket:
         created_at=row.created_at,
         updated_at=row.updated_at,
         events=[event_to_domain(event) for event in row.events],
+        overdue_notified_at=row.overdue_notified_at,
+        escalated_at=row.escalated_at,
     )
 
 
@@ -67,6 +69,8 @@ def apply_ticket(row: TicketRow, ticket: Ticket) -> None:
     row.status = ticket.status.value
     row.created_at = ticket.created_at
     row.updated_at = ticket.updated_at
+    row.overdue_notified_at = ticket.overdue_notified_at
+    row.escalated_at = ticket.escalated_at
 
     stored = len(row.events) if row.events else 0
     for position, event in enumerate(ticket.events[stored:], start=stored):

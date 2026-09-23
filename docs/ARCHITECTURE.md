@@ -134,15 +134,15 @@ frontend/src/
 - Транзакционный outbox вместо прямых HTTP-вызовов из сервисов (в шаблоне есть `outbox_dispatcher.py` для ML — идея верная, обобщаем).
 - `import-linter` и `pyright` в CI, чтобы правила слоёв держались не на дисциплине.
 
-## 7. Текущее состояние кода (23.09, после шагов 2 и 4)
+## 7. Текущее состояние кода (23.09, после шагов 2, 4 и 5)
 
 Сделано ([D-008](DECISIONS.md), [D-010](DECISIONS.md)):
 
 | Слой | Что есть |
 |---|---|
 | `domain/` | `tickets/` (агрегат, переходы по ролям, SLA, календарь, ответственность), `housing/` (УО, дом, житель, диспетчер), `notifications/` |
-| `application/` | порты `unit_of_work`, `tickets`, `housing`, `outbox`, `ticket_queries`, `clock`, `classifier`, `ai`; use case'ы `tickets/` (triage, create, change_status, queries с правами), `housing/` (identity, bind_resident, demo), `notifications/deliver` |
-| `infrastructure/` | `db/` (ORM, мапперы, репозитории, UoW, SQL-запросы, outbox с арендой, состояние диалога, миграции 0001–0002), `memory/` (те же порты для тестов), `max/init_data.py`, `seed/` (демо-данные), `ml/`, `llm/`, `ai/` |
+| `application/` | порты `unit_of_work`, `tickets`, `housing`, `outbox`, `ticket_queries`, `clock`, `classifier`, `ai`; use case'ы `tickets/` (triage, create, change_status, queries с правами), `housing/` (identity, bind_resident, demo), `notifications/deliver`; `tickets/detect_overdue`, `escalate_ticket`, `build_escalation_document` (шаг 5) |
+| `infrastructure/` | `db/` (ORM, мапперы, репозитории, UoW, SQL-запросы, outbox с арендой, состояние диалога, миграции 0001–0002), `memory/` (те же порты для тестов), `max/init_data.py`, `seed/` (демо-данные), `ml/`, `llm/`, `ai/`, `pdf/` (жалоба в жилинспекцию) |
 | `api/` | `http/` (REST `/api/v1`, авторизация `tma`, ошибки RFC 7807), `webhooks/max.py` (200 сразу, обработка в фоне) |
 | `bot/` | хендлеры `start`, `create`, `my_requests`, `dispatcher`, `fallback`; `views.py`, тексты и клавиатуры по ролям, `notifications.py` (отправка из outbox), `errors.py` |
 | `app/` | `main.py` (FastAPI, вебхук или polling, relay уведомлений, раздача мини-приложения по `/`), `services.py` (сборка, выбор классификатора), `relay.py`, `config.py` |
@@ -151,7 +151,6 @@ frontend/src/
 | Ещё не сделано | Шаг ([STATUS.md](STATUS.md)) |
 |---|---|
 | групповые чаты: реестр, подсказка, карточка, «Я тоже» | 3 |
-| планировщик просрочек, эскалация в ГЖИ | 5 |
 | дедупликация повторных событий вебхука (inbox) | 3 |
 | прогон сравнения классификаторов на жалобах от людей | Q-18 |
 

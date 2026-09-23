@@ -41,6 +41,12 @@ class TicketOut(BaseModel):
     available_statuses: list[TicketStatus] = Field(
         description="Statuses the current user may move this ticket to"
     )
+    escalated_at: datetime | None = Field(
+        description="When the reporter asked for a complaint to the housing inspection"
+    )
+    can_escalate: bool = Field(
+        description="The current user (the reporter) may ask for the complaint now"
+    )
 
     @classmethod
     def from_view(cls, view: TicketView, role: ActorRole) -> TicketOut:
@@ -71,6 +77,8 @@ class TicketOut(BaseModel):
                 for event in view.events
             ],
             available_statuses=next_statuses(view.status, role),
+            escalated_at=view.escalated_at,
+            can_escalate=view.can_escalate and role is ActorRole.RESIDENT,
         )
 
 

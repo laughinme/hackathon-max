@@ -16,6 +16,7 @@ from domain.tickets.exceptions import (
     ActionNotAllowedError,
     IllegalTransitionError,
     NotTicketReporterError,
+    TicketNotOverdueError,
 )
 from infrastructure.max.init_data import InvalidInitDataError
 
@@ -24,6 +25,7 @@ STATUS_BY_ERROR: dict[type[DomainError], int] = {
     NotADispatcherError: 403,
     ActionNotAllowedError: 403,
     NotTicketReporterError: 403,
+    TicketNotOverdueError: 409,
     TicketNotFoundError: 404,
     BuildingNotFoundError: 404,
     IllegalTransitionError: 409,

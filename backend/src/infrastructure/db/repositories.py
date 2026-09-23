@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+from datetime import datetime
 from uuid import UUID
 
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from domain.tickets.entities import Ticket
+from domain.tickets.state_machine import OPEN
 from infrastructure.db.mappers import apply_ticket, ticket_to_domain, ticket_to_row
 from infrastructure.db.models import TICKET_NUMBER_SEQ, TicketRow
 
@@ -32,3 +35,17 @@ class SqlTicketRepository:
         if row is None:
             raise LookupError(f"Ticket {ticket.id} is not persisted")
         apply_ticket(row, ticket)
+
+    async def list_overdue_unnotified(self, now: datetime, limit: int) -> list[Ticket]:
+        rows = await self._session.scalars(
+            select(TicketRow)
+            .where(
+                TicketRow.status.in_([status.value for status in OPEN]),
+                TicketRow.resolve_by < now,
+                TicketRow.overdue_notified_at.is_(None),
+            )
+            .order_by(TicketRow.resolve_by)
+            .limit(limit)
+            .with_for_update(skip_locked=True)
+        )
+        return [ticket_to_domain(row) for row in rows]

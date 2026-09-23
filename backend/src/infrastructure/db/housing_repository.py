@@ -89,3 +89,11 @@ class SqlHousingRepository:
                 joined_at=dispatcher.joined_at,
             )
         )
+
+    async def list_dispatchers(self, company_id: UUID) -> list[Dispatcher]:
+        rows = await self._session.scalars(
+            select(DispatcherRow)
+            .where(DispatcherRow.company_id == company_id)
+            .order_by(DispatcherRow.joined_at)
+        )
+        return [dispatcher_to_domain(row) for row in rows]

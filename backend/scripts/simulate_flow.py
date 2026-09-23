@@ -16,12 +16,14 @@ import asyncio
 import logging
 import os
 import sys
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from maxapi.enums.chat_type import ChatType
 from maxapi.enums.parse_mode import ParseMode
 from maxapi.methods.types.sended_message import SendedMessage
 from maxapi.types.callback import Callback
+from maxapi.types.input_media import InputMediaBuffer
 from maxapi.types.message import Message, MessageBody, Recipient
 from maxapi.types.updates.bot_started import BotStarted
 from maxapi.types.updates.message_callback import MessageCallback
@@ -37,7 +39,6 @@ from app.main import build_dispatcher  # noqa: E402
 from app.services import Services, build_services  # noqa: E402
 from application.notifications.deliver import DeliverNotifications  # noqa: E402
 from bot.notifications import MaxNotificationSender  # noqa: E402
-from infrastructure.clock import SystemClock  # noqa: E402
 from infrastructure.memory.tickets import (  # noqa: E402
     InMemoryOutboxReader,
     InMemoryStore,
@@ -47,6 +48,17 @@ from infrastructure.memory.tickets import (  # noqa: E402
 from infrastructure.ml.rule_based import RuleBasedClassifier  # noqa: E402
 from infrastructure.seed.demo_data import build_demo_dataset  # noqa: E402
 from infrastructure.seed.loaders import load_into_memory  # noqa: E402
+
+
+class ShiftedClock:
+    """Real time plus an offset: lets a scenario jump past a legal deadline."""
+
+    def __init__(self) -> None:
+        self.offset = timedelta(0)
+
+    def now(self) -> datetime:
+        return datetime.now(UTC) + self.offset
+
 
 CHAT_ID = 1000
 USER_ID = 42
@@ -73,6 +85,7 @@ class FakeBot:
         self.messages: dict[str, Message] = {}
         self.callback_targets: dict[str, str] = {}
         self.notifications: list[str] = []
+        self.documents: list[tuple[str, bytes]] = []
         self.sent_count = 0
         self._seq = 0
 
@@ -90,7 +103,10 @@ class FakeBot:
         self._seq += 1
         self.sent_count += 1
         mid = f"mid-{self._seq}"
-        message = self._build_message(mid, text, attachments)
+        files = [a for a in attachments or [] if isinstance(a, InputMediaBuffer)]
+        self.documents += [(file.filename or "", file.buffer) for file in files]
+        keyboards = [a for a in attachments or [] if a not in files]
+        message = self._build_message(mid, text, keyboards)
         self.messages[mid] = message
         return SendedMessage(message=message)
 
@@ -355,6 +371,43 @@ async def scenario_dispatcher_and_resident(sim: Simulation) -> None:
     )
 
 
+async def scenario_overdue_and_complaint(sim: Simulation, clock: ShiftedClock) -> None:
+    """The deadline passes: both sides are told, the resident gets the PDF."""
+
+    print("\n=== Сценарий 6: просрочка → жалоба в жилинспекцию ===")
+
+    from application.tickets.create_ticket import CreateTicketCommand
+
+    ticket = await sim.services.create_ticket.execute(
+        CreateTicketCommand(USER_ID, CHAT_ID, "lift", False, "Лифт стоит на 5 этаже")
+    )
+    check(not ticket.can_escalate, "до истечения срока жалобы нет")
+
+    clock.offset = timedelta(days=8)
+    found = await sim.services.detect_overdue.execute()
+    check(found >= 1, "просрочка обнаружена")
+    check(await sim.services.detect_overdue.execute() == 0, "повторно не сообщаем")
+    while await sim.deliver.execute():  # demo tickets ran out too: several batches
+        pass
+    texts_sent = [m.body.text or "" for m in sim.bot.messages.values() if m.body]
+    check(
+        any(f"№ {ticket.number}: нормативный срок истёк" in t for t in texts_sent),
+        "жителю пришло уведомление о просрочке",
+    )
+    check(
+        any(f"Просрочена заявка № {ticket.number}" in t for t in texts_sent),
+        "диспетчеру УО пришло уведомление",
+    )
+
+    await sim.click(f"esc:{ticket.id}")
+    check("Готовлю жалобу" in " ".join(sim.bot.notifications), "житель нажал «Жалоба»")
+    await sim.deliver.execute()
+    [(filename, content)] = sim.bot.documents
+    check(content.startswith(b"%PDF"), "PDF с жалобой пришёл в чат")
+    check(ticket.number in filename, f"файл назван по заявке: {filename}")
+    clock.offset = timedelta(0)
+
+
 async def scenario_llm_service(sim: Simulation) -> None:
     """Бот работает поверх ответов модели, а не заглушки.
 
@@ -445,7 +498,7 @@ async def scenario_llm_service(sim: Simulation) -> None:
 
 async def main() -> None:
     logging.basicConfig(level=logging.WARNING)
-    clock = SystemClock()
+    clock = ShiftedClock()
     store = InMemoryStore()
     load_into_memory(store, build_demo_dataset(clock.now()))
     services = build_services(
@@ -459,7 +512,10 @@ async def main() -> None:
     sim = Simulation(services)
     sim.deliver = DeliverNotifications(
         InMemoryOutboxReader(store),
-        MaxNotificationSender(sim.bot),  # type: ignore[arg-type]
+        MaxNotificationSender(
+            sim.bot,  # type: ignore[arg-type]
+            services.escalation_document,
+        ),
         clock,
     )
     await scenario_quick_button(sim)
@@ -467,6 +523,7 @@ async def main() -> None:
     await scenario_storage_failure(sim)
     await scenario_llm_service(sim)
     await scenario_dispatcher_and_resident(sim)
+    await scenario_overdue_and_complaint(sim, clock)
 
     print("\n🎉 Все сценарии пройдены")
 

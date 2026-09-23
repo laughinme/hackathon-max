@@ -22,7 +22,7 @@ export function TicketCell({ ticket, onOpen, showAddress = false }: Props) {
       as="button"
       onClick={() => onOpen(ticket.id)}
       before={<span className="cell-emoji">{emoji}</span>}
-      overline={`№ ${ticket.number}${ticket.is_emergency ? ' · ⚠️ авария' : ''}`}
+      overline={`№ ${ticket.number}${ticket.is_emergency ? ' · ⚠️ авария' : ''}${ticket.escalated_at ? ' · 📨 жалоба' : ''}`}
       title={showAddress ? ticket.building_address : title}
       subtitle={
         <span className={ticket.is_overdue ? 'text-negative' : undefined}>

@@ -15,6 +15,7 @@ from bot import callbacks, keyboards, texts
 from bot.screen import render, sender_id
 from domain.errors import DomainError
 from domain.tickets.enums import ActorRole, TicketStatus
+from domain.tickets.exceptions import TicketNotOverdueError
 
 router = Router(router_id="my_requests")
 
@@ -48,7 +49,43 @@ async def on_request_card(
         )
         return
 
-    await render(event, context, texts.request_card(ticket), keyboards.request_card())
+    await render(
+        event, context, texts.request_card(ticket), keyboards.request_card(ticket)
+    )
+
+
+@router.message_callback(callbacks.has_action(callbacks.ESCALATE))
+async def on_escalate(
+    event: MessageCallback, context: BaseContext, services: Services
+) -> None:
+    """Queue the complaint PDF; the relay sends it as a separate message."""
+
+    user_id = sender_id(event)
+    _, raw_id = callbacks.unpack(event.callback.payload)
+    try:
+        ticket = await services.escalate.execute(UUID(raw_id or ""), user_id)
+    except (ValueError, TicketNotFoundError):
+        await render(
+            event, context, texts.request_not_found(), keyboards.request_card()
+        )
+        return
+    except TicketNotOverdueError:
+        ticket = await services.get_ticket.execute(UUID(raw_id or ""), user_id)
+        await render(
+            event,
+            context,
+            texts.request_card(ticket),
+            keyboards.request_card(ticket),
+            notification="Жалоба возможна только после истечения срока",
+        )
+        return
+    await render(
+        event,
+        context,
+        texts.request_card(ticket),
+        keyboards.request_card(ticket),
+        notification="Готовлю жалобу — PDF придёт следующим сообщением",
+    )
 
 
 @router.message_callback(callbacks.has_action(callbacks.CONFIRM_FIXED))
@@ -100,6 +137,6 @@ async def _resident_answer(
         event,
         context,
         texts.request_card(ticket),
-        keyboards.request_card(),
+        keyboards.request_card(ticket),
         notification=notification,
     )

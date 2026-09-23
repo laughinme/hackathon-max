@@ -29,3 +29,13 @@ class NotTicketReporterError(DomainError):
 
     def __init__(self) -> None:
         super().__init__("Only the reporter can confirm or reopen the ticket")
+
+
+class TicketNotOverdueError(DomainError):
+    code = "ticket_not_overdue"
+
+    def __init__(self) -> None:
+        super().__init__(
+            "A complaint to the housing inspection is possible only after the "
+            "legal deadline has passed and the ticket is still open"
+        )

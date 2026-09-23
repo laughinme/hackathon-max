@@ -10,7 +10,7 @@ from maxapi.types.attachments.buttons.attachment_button import AttachmentButton
 from maxapi.utils.inline_keyboard import InlineKeyboardBuilder
 
 from application.tickets.dto import TicketView
-from bot import callbacks
+from bot import callbacks, keyboards
 from bot.presenters import format_moment, short_description
 from domain.tickets.enums import ActorRole, TicketStatus
 from domain.tickets.state_machine import next_statuses
@@ -109,6 +109,29 @@ def notification(ticket_id: UUID, status: TicketStatus) -> AttachmentButton:
         CallbackButton(
             text="📄 Открыть заявку",
             payload=callbacks.pack(callbacks.MY_ITEM, str(ticket_id)),
+        )
+    )
+    return builder.as_markup()
+
+
+def overdue_for_resident(ticket_id: UUID) -> AttachmentButton:
+    builder = InlineKeyboardBuilder()
+    builder.row(keyboards.escalate_button(ticket_id))
+    builder.row(
+        CallbackButton(
+            text="📄 Открыть заявку",
+            payload=callbacks.pack(callbacks.MY_ITEM, str(ticket_id)),
+        )
+    )
+    return builder.as_markup()
+
+
+def overdue_for_dispatcher(ticket_id: UUID) -> AttachmentButton:
+    builder = InlineKeyboardBuilder()
+    builder.row(
+        CallbackButton(
+            text="🗂 Открыть карточку",
+            payload=callbacks.pack(callbacks.QUEUE_ITEM, str(ticket_id)),
         )
     )
     return builder.as_markup()

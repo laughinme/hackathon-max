@@ -44,6 +44,7 @@ Payload callback-кнопок (≤ 1024 символов, ASCII): `<ns>:<action>
 | GET | `/api/v1/dispatcher/queue?include_closed=false` | диспетчер | заявки УО: открытые первыми, по сроку `resolve_by`, до 50 |
 | POST | `/api/v1/tickets/{id}/status` | диспетчер УО дома | тело `{status: acknowledged\|in_progress\|done\|rejected, comment?}`; жителю уходит уведомление |
 | POST | `/api/v1/tickets/{id}/confirmation` | автор | тело `{resolved: bool, comment?}`: `true` → `confirmed`, `false` → `in_progress` |
+| POST | `/api/v1/tickets/{id}/escalation` | автор просроченной открытой заявки | `202 TicketOut`; бот присылает PDF жалобы в чат; до срока — `409 ticket_not_overdue` |
 
 `TicketOut`: `id, number, building_id, building_address, category_code, is_emergency, description, responsible_party, responsibility_basis, status, resolve_by, react_by, deadline_basis, is_overdue, created_at, updated_at, events[{status, actor_role, at, comment}], available_statuses[]` — последнее поле говорит фронтенду, какие кнопки показать текущему пользователю.
 

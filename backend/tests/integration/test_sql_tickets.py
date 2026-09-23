@@ -142,3 +142,32 @@ async def test_dialog_state_survives_a_new_context_object(world):
     assert await restarted.get_data() == {"draft": "Течёт кран", "category": "water"}
     await restarted.clear()
     assert await first.get_state() is None
+
+
+async def test_overdue_watch_and_escalation_on_postgres(world):
+    services, clock, session_factory = world
+    ticket = await services.create_ticket.execute(
+        CreateTicketCommand(RESIDENT, RESIDENT, "lift", False, "Лифт не работает")
+    )
+    clock.advance(timedelta(days=2))
+
+    # Ours plus seeded ones that ran out during these two days; tickets already
+    # overdue at seed time are not reported again.
+    assert await services.detect_overdue.execute() >= 1
+    assert await services.detect_overdue.execute() == 0
+
+    view = await services.escalate.execute(ticket.id, RESIDENT)
+    assert view.escalated_at == clock.now()
+    document = await services.escalation_document.execute(ticket.id)
+    assert document.content.startswith(b"%PDF")
+
+    reader = SqlOutboxReader(session_factory)
+    pending = await reader.claim_batch(50, clock.now())
+    kinds = [
+        p.notification.kind for p in pending if p.notification.ticket_id == ticket.id
+    ]
+    assert sorted(kinds) == [
+        "escalation_document",
+        "ticket_overdue",
+        "ticket_overdue_dispatcher",
+    ]

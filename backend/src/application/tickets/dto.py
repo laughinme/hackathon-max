@@ -39,6 +39,10 @@ class TicketView:
     created_at: datetime
     updated_at: datetime
     events: tuple[TicketEventView, ...]
+    #: When the reporter asked for a complaint to the housing inspection.
+    escalated_at: datetime | None = None
+    #: The reporter may ask for the complaint now (open past the deadline).
+    can_escalate: bool = False
 
 
 def to_view(ticket: Ticket, now: datetime, building_address: str) -> TicketView:
@@ -70,4 +74,6 @@ def to_view(ticket: Ticket, now: datetime, building_address: str) -> TicketView:
             )
             for event in ticket.events
         ),
+        escalated_at=ticket.escalated_at,
+        can_escalate=ticket.can_escalate(now),
     )

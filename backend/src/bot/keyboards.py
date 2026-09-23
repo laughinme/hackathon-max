@@ -6,6 +6,8 @@
 
 from __future__ import annotations
 
+from uuid import UUID
+
 from maxapi.enums.intent import Intent
 from maxapi.types.attachments.buttons import CallbackButton
 from maxapi.types.attachments.buttons.attachment_button import (
@@ -148,10 +150,12 @@ def emergency_question() -> AttachmentButton:
     return builder.as_markup()
 
 
-def request_card() -> AttachmentButton:
-    """Карточка обращения."""
+def request_card(ticket: TicketView | None = None) -> AttachmentButton:
+    """Карточка обращения; у просроченной — жалоба в жилинспекцию."""
 
     builder = InlineKeyboardBuilder()
+    if ticket is not None and ticket.can_escalate:
+        builder.row(escalate_button(ticket.id))
     builder.row(
         CallbackButton(
             text="⬅️ К списку заявок",
@@ -160,6 +164,14 @@ def request_card() -> AttachmentButton:
     )
     builder.row(_back_to_menu())
     return builder.as_markup()
+
+
+def escalate_button(ticket_id: UUID) -> CallbackButton:
+    return CallbackButton(
+        text="📄 Жалоба в жилинспекцию",
+        payload=callbacks.pack(callbacks.ESCALATE, str(ticket_id)),
+        intent=Intent.NEGATIVE,
+    )
 
 
 def menu_only() -> AttachmentButton:

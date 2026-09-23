@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Protocol
 from uuid import UUID
 
@@ -18,3 +19,8 @@ class TicketRepository(Protocol):
     async def get(self, ticket_id: UUID) -> Ticket | None: ...
 
     async def save(self, ticket: Ticket) -> None: ...
+
+    async def list_overdue_unnotified(self, now: datetime, limit: int) -> list[Ticket]:
+        """Open tickets past their deadline that nobody was told about yet,
+        locked for this transaction so two watchers never notify twice."""
+        ...
