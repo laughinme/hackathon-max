@@ -213,6 +213,29 @@ a {
   font-size: 15px;
 }
 
+.photos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 8px;
+}
+
+.photos__item {
+  padding: 0;
+  border: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  aspect-ratio: 1;
+  background: var(--background-secondary, #f2f3f5);
+  cursor: pointer;
+}
+
+.photos__item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
 .actions {
   gap: 12px;
 }

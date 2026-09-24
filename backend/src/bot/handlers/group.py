@@ -20,7 +20,7 @@ from app.services import Services
 from application.chats.bind_chat import ChatBinding
 from application.chats.file_from_chat import FileFromChatCommand
 from application.chats.spot_complaint import KnownProblem
-from bot import callbacks, extras_texts, group_keyboards, group_texts
+from bot import callbacks, extras_texts, group_keyboards, group_texts, media
 from bot.scopes import GroupScope
 from bot.screen import user_message_text
 from domain.errors import DomainError
@@ -62,7 +62,11 @@ async def on_message(event: MessageCreated, services: Services) -> None:
     if not text:
         return
     spotted = await services.spot_complaint.execute(
-        chat_id, message.sender.user_id, message.body.mid, text
+        chat_id,
+        message.sender.user_id,
+        message.body.mid,
+        text,
+        tuple(media.message_photos(event)),
     )
     if spotted is None:
         return

@@ -65,7 +65,19 @@ def _deadline_lines(resolve_by, react_by, basis: str) -> str:
     )
 
 
-def draft(text: str, triage: TriageResult) -> str:
+def _photos_line(count: int) -> str:
+    return f"📷 Фото: {count}\n" if count else ""
+
+
+def photo_added(count: int) -> str:
+    return (
+        f"📷 <b>Фото получил ({count})</b>\n\n"
+        "Теперь опишите словами, что случилось и где: например, «течёт труба "
+        "в подвале, второй подъезд». Фото приложу к заявке."
+    )
+
+
+def draft(text: str, triage: TriageResult, photos: int = 0) -> str:
     """Draft screen with the responsible party and the legal deadline."""
 
     deadlines = triage.deadlines_preview
@@ -80,8 +92,10 @@ def draft(text: str, triage: TriageResult) -> str:
         f"Срочность: {urgency_label(triage.is_emergency)}\n"
         f"Отвечает: {PARTY_LABELS[triage.responsibility.party]} "
         f"<i>({triage.responsibility.legal_basis})</i>\n"
-        f"{deadline}\n\n"
-        "Если что-то не так, <b>напишите в чат, что поправить</b>. "
+        f"{deadline}\n"
+        f"{_photos_line(photos)}\n"
+        "Если что-то не так, <b>напишите в чат, что поправить</b>. Можно "
+        "прислать фото. "
         "Когда всё верно, нажмите «Отправить»."
     )
 
@@ -160,7 +174,8 @@ def request_card(ticket: TicketView) -> str:
         f"Срочность: {urgency_label(ticket.is_emergency)}\n"
         f"Отвечает: {PARTY_LABELS[ticket.responsible_party]}\n"
         f"{deadline}\n"
-        f"Создана: {format_moment(ticket.created_at)}\n\n"
+        f"Создана: {format_moment(ticket.created_at)}\n"
+        f"{_photos_line(len(ticket.photos))}\n"
         "<b>Описание</b>\n"
         f"{ticket.description}\n\n"
         "<b>История</b>\n"

@@ -342,6 +342,11 @@ export interface components {
              */
             from_house_chat: boolean;
             /**
+             * Photo Urls
+             * @description Photos the resident attached
+             */
+            photo_urls: string[];
+            /**
              * Demo Can Expire
              * @description DEMO_MODE: the reporter may move the deadline into the past
              */

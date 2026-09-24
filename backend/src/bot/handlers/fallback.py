@@ -13,8 +13,13 @@ from maxapi.context.base import BaseContext
 from maxapi.types.updates.message_created import MessageCreated
 
 from app.services import Services
-from bot import keyboards, texts
-from bot.handlers.create import TURNS, analyze_and_render, reset_scenario
+from bot import keyboards, media, texts
+from bot.handlers.create import (
+    TURNS,
+    analyze_and_render,
+    remember_photos,
+    reset_scenario,
+)
 from bot.scopes import DialogScope
 from bot.screen import render, sender_id, user_message_text
 from bot.states import CreateRequest
@@ -35,7 +40,17 @@ async def on_free_text(
     """Пользователь описал проблему своими словами вне сценария."""
 
     text = user_message_text(event)
-    if not text or text.startswith("/"):
+    if text.startswith("/"):
+        return
+    if not text:
+        if media.message_photos(event):  # a photo first, words later
+            await reset_scenario(context)
+            await context.update_data(**{TURNS: []})
+            await context.set_state(CreateRequest.collecting)
+            count = await remember_photos(event, context)
+            await render(
+                event, context, texts.photo_added(count), keyboards.collecting()
+            )
         return
 
     if len(text) < MIN_PROBLEM_LENGTH:
@@ -46,6 +61,7 @@ async def on_free_text(
     await reset_scenario(context)
     await context.update_data(**{TURNS: [{"role": "user", "text": text}]})
     await context.set_state(CreateRequest.collecting)
+    await remember_photos(event, context)
 
     user_id = sender_id(event)
     identity = await services.identify.execute(user_id)

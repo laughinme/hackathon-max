@@ -10,6 +10,7 @@ from application.ports.unit_of_work import UnitOfWorkFactory
 from application.tickets.dto import TicketView
 from application.tickets.registration import NewTicket, register_ticket
 from domain.housing.exceptions import BuildingNotFoundError, ResidentNotBoundError
+from domain.tickets.entities import TicketPhoto
 from domain.tickets.sla import SlaPolicy
 
 
@@ -20,6 +21,7 @@ class CreateTicketCommand:
     category_code: str
     is_emergency: bool
     description: str
+    photos: tuple[TicketPhoto, ...] = ()
 
 
 class CreateTicket:
@@ -55,6 +57,7 @@ class CreateTicket:
                     category_code=command.category_code,
                     is_emergency=command.is_emergency,
                     description=command.description,
+                    photos=command.photos,
                 ),
                 now,
             )

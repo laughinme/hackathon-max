@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from domain.tickets.entities import Ticket, TicketEvent, TicketSupport
+from domain.tickets.entities import Ticket, TicketEvent, TicketPhoto, TicketSupport
 from domain.tickets.enums import ActorRole, ResponsibleParty, TicketStatus
 from domain.tickets.sla import Deadlines
 from infrastructure.db.models import TicketEventRow, TicketRow, TicketSupportRow
@@ -37,6 +37,7 @@ def ticket_to_domain(row: TicketRow) -> Ticket:
             for support in row.supports
         ],
         chat_card_mid=row.chat_card_mid,
+        photos=[TicketPhoto(**photo) for photo in row.photos or []],
     )
 
 
@@ -77,6 +78,7 @@ def apply_ticket(row: TicketRow, ticket: Ticket) -> None:
     row.overdue_notified_at = ticket.overdue_notified_at
     row.escalated_at = ticket.escalated_at
     row.chat_card_mid = ticket.chat_card_mid
+    row.photos = [{"token": p.token, "url": p.url} for p in ticket.photos]
 
     stored_supporters = {support.user_id for support in row.supports or []}
     for support in ticket.supporters:

@@ -14,7 +14,7 @@ from maxapi.types.updates.message_created import MessageCreated
 
 from app.services import Services
 from application.errors import TicketNotFoundError
-from bot import callbacks, home_keyboards, home_texts, keyboards, texts
+from bot import callbacks, home_keyboards, home_texts, keyboards, media, texts
 from bot.handlers.create import TURNS, analyze_and_render
 from bot.scopes import DialogScope
 from bot.screen import render, sender_id
@@ -132,5 +132,6 @@ async def _show_ticket(
         context,
         texts.request_card(ticket),
         keyboards.request_card(ticket, demo_mode=services.config.demo_mode),
+        media=media.photo_attachments(ticket.photos),
     )
     return True

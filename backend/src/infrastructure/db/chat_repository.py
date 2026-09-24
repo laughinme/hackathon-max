@@ -8,6 +8,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from domain.chats.entities import ChatHint, HouseChat
+from domain.tickets.entities import TicketPhoto
 from infrastructure.db.models import ChatHintRow, HouseChatRow
 
 
@@ -33,6 +34,7 @@ def _hint(row: ChatHintRow) -> ChatHint:
         needs_emergency_confirmation=row.needs_emergency_confirmation,
         created_at=row.created_at,
         ticket_id=row.ticket_id,
+        photos=tuple(TicketPhoto(**photo) for photo in row.photos or []),
     )
 
 
@@ -68,6 +70,7 @@ class SqlChatRepository:
                 needs_emergency_confirmation=hint.needs_emergency_confirmation,
                 created_at=hint.created_at,
                 ticket_id=hint.ticket_id,
+                photos=[{"token": p.token, "url": p.url} for p in hint.photos],
             )
         )
 

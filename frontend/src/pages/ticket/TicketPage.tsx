@@ -1,6 +1,7 @@
 import { Typography } from '@maxhub/max-ui'
 
 import { DeadlineCard } from '@/entities/ticket/DeadlineCard'
+import { Photos } from '@/entities/ticket/Photos'
 import { useTicket } from '@/entities/ticket/api'
 import { category } from '@/entities/ticket/labels'
 import { StatusBadge } from '@/entities/ticket/StatusBadge'
@@ -49,6 +50,8 @@ export function TicketPage({ id }: { id: string }) {
         <p className="prewrap">{ticket.description}</p>
         <p className="muted small">📍 {ticket.building_address}</p>
       </section>
+
+      <Photos urls={ticket.photo_urls} />
 
       <section className="card">
         <Typography.Title variant="small-strong">История</Typography.Title>

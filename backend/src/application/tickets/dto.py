@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from uuid import UUID
 
-from domain.tickets.entities import Ticket
+from domain.tickets.entities import Ticket, TicketPhoto
 from domain.tickets.enums import ActorRole, ResponsibleParty, TicketStatus
 from domain.tickets.state_machine import OPEN
 
@@ -49,6 +49,7 @@ class TicketView:
     #: The house chat where the ticket card lives, if it was filed there.
     chat_id: int | None = None
     chat_card_mid: str | None = None
+    photos: tuple[TicketPhoto, ...] = ()
 
     @property
     def supporters_count(self) -> int:
@@ -93,4 +94,5 @@ def to_view(ticket: Ticket, now: datetime, building_address: str) -> TicketView:
         supporter_ids=tuple(support.user_id for support in ticket.supporters),
         chat_id=ticket.chat_id,
         chat_card_mid=ticket.chat_card_mid,
+        photos=tuple(ticket.photos),
     )

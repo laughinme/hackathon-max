@@ -20,6 +20,7 @@ from application.tickets.dto import TicketView
 from domain.chats.complaint_signals import sounds_like_complaint
 from domain.chats.entities import ChatHint
 from domain.housing.entities import Building
+from domain.tickets.entities import TicketPhoto
 from domain.tickets.sla import Deadlines, SlaPolicy
 
 OTHER_CATEGORY = "other"
@@ -62,7 +63,12 @@ class SpotComplaint:
         self._binding = GetChatBinding(uow_factory)
 
     async def execute(
-        self, chat_id: int, author_id: int, message_mid: str, text: str
+        self,
+        chat_id: int,
+        author_id: int,
+        message_mid: str,
+        text: str,
+        photos: tuple[TicketPhoto, ...] = (),
     ) -> Spotted | None:
         text = text.strip()
         if len(text) < MIN_LENGTH or text.startswith("/"):
@@ -103,6 +109,7 @@ class SpotComplaint:
             is_emergency=result.is_emergency or unsure,
             needs_emergency_confirmation=unsure,
             created_at=now,
+            photos=photos,
         )
         async with self._uow_factory() as uow:
             await uow.chats.add_hint(hint)

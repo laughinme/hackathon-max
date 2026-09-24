@@ -16,7 +16,7 @@ from maxapi.types.updates.message_created import MessageCreated
 from app.services import Services
 from application.errors import TicketNotFoundError
 from application.tickets.change_status import ChangeStatusCommand
-from bot import callbacks, dispatcher_keyboards, dispatcher_texts, keyboards
+from bot import callbacks, dispatcher_keyboards, dispatcher_texts, keyboards, media
 from bot.presenters import STATUS_LABELS
 from bot.scopes import DialogScope
 from bot.screen import render, sender_id, user_message_text
@@ -145,4 +145,5 @@ async def show_card(
         dispatcher_texts.card(ticket),
         dispatcher_keyboards.card(ticket),
         notification=notification,
+        media=media.photo_attachments(ticket.photos),
     )

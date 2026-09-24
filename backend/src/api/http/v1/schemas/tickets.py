@@ -64,6 +64,7 @@ class TicketOut(BaseModel):
         description='Neighbours who pressed "me too" in the house chat'
     )
     from_house_chat: bool = Field(description="Filed from a house chat card")
+    photo_urls: list[str] = Field(description="Photos the resident attached")
     demo_can_expire: bool = Field(
         description="DEMO_MODE: the reporter may move the deadline into the past"
     )
@@ -103,6 +104,7 @@ class TicketOut(BaseModel):
             can_confirm=is_reporter and view.status is TicketStatus.DONE,
             supporters_count=view.supporters_count,
             from_house_chat=view.chat_card_mid is not None,
+            photo_urls=[photo.url for photo in view.photos],
             demo_can_expire=viewer.demo_mode
             and is_reporter
             and view.status in OPEN

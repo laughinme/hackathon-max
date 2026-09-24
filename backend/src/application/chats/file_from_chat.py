@@ -82,6 +82,7 @@ class FileFromChat:
                         category_code=hint.category_code,
                         is_emergency=emergency,
                         description=hint.text,
+                        photos=hint.photos,
                     ),
                     now,
                 )

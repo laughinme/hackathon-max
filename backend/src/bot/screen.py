@@ -17,6 +17,7 @@
 from __future__ import annotations
 
 import logging
+from typing import Any
 
 from maxapi import Bot
 from maxapi.context.base import BaseContext
@@ -41,21 +42,26 @@ async def render(
     keyboard: AttachmentButton,
     *,
     notification: str | None = None,
+    media: list[Any] | None = None,
 ) -> None:
-    """Показывает экран, переиспользуя текущее сообщение бота."""
+    """Показывает экран, переиспользуя текущее сообщение бота.
 
+    `media` — фото заявки, они идут над кнопками в том же сообщении.
+    """
+
+    attachments = [*(media or []), keyboard]
     if isinstance(event, MessageCallback):
-        await _render_callback(event, context, text, keyboard, notification)
+        await _render_callback(event, context, text, attachments, notification)
         return
 
-    await _render_message(event, context, text, keyboard)
+    await _render_message(event, context, text, attachments)
 
 
 async def _render_callback(
     event: MessageCallback,
     context: BaseContext,
     text: str,
-    keyboard: AttachmentButton,
+    attachments: list[Any],
     notification: str | None,
 ) -> None:
     """Перерисовывает сообщение, на кнопку которого нажали."""
@@ -63,12 +69,12 @@ async def _render_callback(
     try:
         await event.edit(
             text=text,
-            attachments=[keyboard],
+            attachments=attachments,
             notification=notification,
         )
     except (MaxError, ValueError) as exc:
         logger.warning("Не удалось отредактировать экран: %s", exc)
-        await _send_new(event, context, text, keyboard)
+        await _send_new(event, context, text, attachments)
         return
 
     if event.message is not None and event.message.body is not None:
@@ -79,7 +85,7 @@ async def _render_message(
     event: BaseUpdate,
     context: BaseContext,
     text: str,
-    keyboard: AttachmentButton,
+    attachments: list[Any],
 ) -> None:
     """Переносит экран бота под последнее сообщение пользователя."""
 
@@ -93,14 +99,14 @@ async def _render_message(
         except (MaxError, ValueError) as exc:
             logger.info("Прежний экран %s не удалён: %s", message_id, exc)
 
-    await _send_new(event, context, text, keyboard)
+    await _send_new(event, context, text, attachments)
 
 
 async def _send_new(
     event: BaseUpdate,
     context: BaseContext,
     text: str,
-    keyboard: AttachmentButton,
+    attachments: list[Any],
 ) -> None:
     """Отправляет новое сообщение и делает его текущим экраном."""
 
@@ -111,7 +117,7 @@ async def _send_new(
         chat_id=chat_id,
         user_id=None if chat_id else user_id,
         text=text,
-        attachments=[keyboard],
+        attachments=attachments,
     )
 
     if sended is not None and sended.message.body is not None:

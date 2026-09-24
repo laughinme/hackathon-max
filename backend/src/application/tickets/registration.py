@@ -7,7 +7,7 @@ from datetime import datetime
 
 from application.ports.unit_of_work import UnitOfWork
 from domain.housing.entities import Building
-from domain.tickets.entities import Ticket
+from domain.tickets.entities import Ticket, TicketPhoto
 from domain.tickets.responsibility import responsibility_for
 from domain.tickets.sla import SlaPolicy
 
@@ -19,6 +19,7 @@ class NewTicket:
     category_code: str
     is_emergency: bool
     description: str
+    photos: tuple[TicketPhoto, ...] = ()
 
 
 async def register_ticket(
@@ -27,7 +28,7 @@ async def register_ticket(
     """Builds the ticket with a fresh number. The caller finishes it (support,
     chat card) and only then adds it: repositories snapshot on `add`."""
 
-    return Ticket.register(
+    ticket = Ticket.register(
         sequence=await uow.tickets.next_sequence(),
         building_id=building.id,
         company_id=building.company_id,
@@ -40,3 +41,5 @@ async def register_ticket(
         deadlines=sla.deadlines(new.category_code, new.is_emergency, now),
         now=now,
     )
+    ticket.attach_photos(list(new.photos))
+    return ticket

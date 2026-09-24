@@ -44,6 +44,18 @@ class TicketEvent:
 
 
 @dataclass(frozen=True, slots=True)
+class TicketPhoto:
+    """A photo the resident attached in MAX: `token` re-sends it, `url` shows it."""
+
+    token: str
+    url: str
+
+
+#: Enough to show the problem; more photos only slow down the dispatcher.
+MAX_PHOTOS = 5
+
+
+@dataclass(frozen=True, slots=True)
 class TicketSupport:
     """A neighbour pressed "me too": the same problem affects them."""
 
@@ -79,6 +91,7 @@ class Ticket:
     supporters: list[TicketSupport] = field(default_factory=list)
     #: The card message in the house chat, edited on every change.
     chat_card_mid: str | None = None
+    photos: list[TicketPhoto] = field(default_factory=list)
 
     @classmethod
     def register(
@@ -154,6 +167,15 @@ class Ticket:
 
     def is_overdue(self, now: datetime) -> bool:
         return self.is_open and now > self.deadlines.resolve_by
+
+    def attach_photos(self, photos: list[TicketPhoto]) -> None:
+        known = {photo.token for photo in self.photos}
+        for photo in photos:
+            if len(self.photos) >= MAX_PHOTOS:
+                break
+            if photo.token not in known:
+                self.photos.append(photo)
+                known.add(photo.token)
 
     def support(self, user_id: int, now: datetime) -> bool:
         """True if this neighbour is counted now; the reporter and repeats are

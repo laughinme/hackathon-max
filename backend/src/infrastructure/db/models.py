@@ -63,6 +63,7 @@ class TicketRow(Base):
     )
     escalated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     chat_card_mid: Mapped[str | None] = mapped_column(String(64))
+    photos: Mapped[list[dict]] = mapped_column(JSON, default=list)
 
     events: Mapped[list[TicketEventRow]] = relationship(
         back_populates="ticket",
@@ -132,6 +133,7 @@ class ChatHintRow(Base):
     needs_emergency_confirmation: Mapped[bool] = mapped_column(Boolean)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     ticket_id: Mapped[UUID | None] = mapped_column(ForeignKey("tickets.id"))
+    photos: Mapped[list[dict]] = mapped_column(JSON, default=list)
 
 
 class ManagementCompanyRow(Base):

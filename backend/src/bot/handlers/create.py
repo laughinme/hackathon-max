@@ -20,13 +20,14 @@ from application.ports.ai import Analysis, DialogTurn
 from application.tickets.create_ticket import CreateTicketCommand
 from application.tickets.dto import TicketView
 from application.tickets.triage_complaint import TriageResult
-from bot import callbacks, keyboards, texts
+from bot import callbacks, keyboards, media, texts
 from bot.scopes import DialogScope
 from bot.screen import render, sender_id, user_message_text
 from bot.states import CreateRequest
 from bot.views import show_building_choice
 from domain.housing.exceptions import ResidentNotBoundError
 from domain.tickets.catalog import get_category
+from domain.tickets.entities import MAX_PHOTOS
 
 logger = logging.getLogger(__name__)
 router = Router(router_id="create")
@@ -38,7 +39,8 @@ CATEGORY = "category"
 DRAFT = "draft"
 IS_EMERGENCY = "is_emergency"
 TICKET_ID = "ticket_id"
-SCENARIO_KEYS = (TURNS, CATEGORY, DRAFT, IS_EMERGENCY, TICKET_ID)
+PHOTOS = "photos"
+SCENARIO_KEYS = (TURNS, CATEGORY, DRAFT, IS_EMERGENCY, TICKET_ID, PHOTOS)
 
 
 @router.message_callback(callbacks.is_action(callbacks.NEW))
@@ -80,7 +82,12 @@ async def on_collecting_message(
     event: MessageCreated, context: BaseContext, services: Services
 ) -> None:
     text = user_message_text(event)
+    photos = await remember_photos(event, context)
     if not text:
+        if photos:
+            await render(
+                event, context, texts.photo_added(photos), keyboards.collecting()
+            )
         return
     await append_turn(context, "user", text)
     await analyze_and_render(event, context, services)
@@ -99,7 +106,12 @@ async def on_emergency_answer(
     await context.update_data(**{IS_EMERGENCY: is_emergency})
     await context.set_state(CreateRequest.editing_draft)
     triage = services.triage.preview(data[CATEGORY], is_emergency)
-    await render(event, context, texts.draft(data[DRAFT], triage), keyboards.draft())
+    await render(
+        event,
+        context,
+        texts.draft(data[DRAFT], triage, len(data.get(PHOTOS) or [])),
+        keyboards.draft(),
+    )
 
 
 @router.message_created(CreateRequest.editing_draft)
@@ -107,15 +119,20 @@ async def on_draft_comment(
     event: MessageCreated, context: BaseContext, services: Services
 ) -> None:
     comment = user_message_text(event)
-    if not comment:
+    photos = await remember_photos(event, context)
+    if not comment and not photos:
         return
 
     data = await context.get_data()
-    updated = await services.ai.refine(data.get(DRAFT, ""), comment)
-    await context.update_data(**{DRAFT: updated})
+    updated = data.get(DRAFT, "")
+    if comment:
+        updated = await services.ai.refine(updated, comment)
+        await context.update_data(**{DRAFT: updated})
 
     triage = services.triage.preview(data[CATEGORY], data[IS_EMERGENCY])
-    await render(event, context, texts.draft(updated, triage), keyboards.draft())
+    await render(
+        event, context, texts.draft(updated, triage, photos), keyboards.draft()
+    )
 
 
 @router.message_callback(callbacks.is_action(callbacks.DRAFT_RESTART))
@@ -214,7 +231,9 @@ async def show_draft_or_confirmation(
         return
 
     await context.set_state(CreateRequest.editing_draft)
-    await render(event, context, texts.draft(draft, triage), keyboards.draft())
+    data = await context.get_data()
+    photos = len(data.get(PHOTOS) or [])
+    await render(event, context, texts.draft(draft, triage, photos), keyboards.draft())
 
 
 async def register_once(
@@ -234,10 +253,25 @@ async def register_once(
             category_code=data[CATEGORY],
             is_emergency=bool(data[IS_EMERGENCY]),
             description=data[DRAFT],
+            photos=tuple(media.from_dicts(data.get(PHOTOS))),
         )
     )
     await context.update_data(**{TICKET_ID: str(ticket.id)})
     return ticket
+
+
+async def remember_photos(event: MessageCreated, context: BaseContext) -> int:
+    """Keep photos of the message for the ticket; returns how many are kept."""
+
+    data = await context.get_data()
+    kept = media.from_dicts(data.get(PHOTOS))
+    new = media.message_photos(event)
+    known = {photo.token for photo in kept}
+    kept += [photo for photo in new if photo.token not in known]
+    kept = kept[:MAX_PHOTOS]
+    if new:
+        await context.update_data(**{PHOTOS: media.to_dicts(kept)})
+    return len(kept)
 
 
 async def append_turn(context: BaseContext, role: str, text: str) -> None:

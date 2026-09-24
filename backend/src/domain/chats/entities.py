@@ -6,6 +6,8 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from uuid import UUID, uuid4
 
+from domain.tickets.entities import TicketPhoto
+
 
 @dataclass(slots=True)
 class HouseChat:
@@ -55,6 +57,7 @@ class ChatHint:
     created_at: datetime
     id: UUID = field(default_factory=uuid4)
     ticket_id: UUID | None = None
+    photos: tuple[TicketPhoto, ...] = ()
 
     @property
     def is_filed(self) -> bool:

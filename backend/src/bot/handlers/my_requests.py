@@ -11,7 +11,7 @@ from maxapi.types.updates.message_callback import MessageCallback
 from app.services import Services
 from application.errors import TicketNotFoundError
 from application.tickets.change_status import ChangeStatusCommand
-from bot import callbacks, keyboards, texts
+from bot import callbacks, keyboards, media, texts
 from bot.scopes import DialogScope
 from bot.screen import render, sender_id
 from domain.errors import DomainError
@@ -56,6 +56,7 @@ async def on_request_card(
         context,
         texts.request_card(ticket),
         keyboards.request_card(ticket, demo_mode=services.config.demo_mode),
+        media=media.photo_attachments(ticket.photos),
     )
 
 
@@ -81,6 +82,7 @@ async def on_escalate(
             context,
             texts.request_card(ticket),
             keyboards.request_card(ticket, demo_mode=services.config.demo_mode),
+            media=media.photo_attachments(ticket.photos),
             notification="Жалоба возможна только после истечения срока",
         )
         return
@@ -89,6 +91,7 @@ async def on_escalate(
         context,
         texts.request_card(ticket),
         keyboards.request_card(ticket, demo_mode=services.config.demo_mode),
+        media=media.photo_attachments(ticket.photos),
         notification="Готовлю жалобу — PDF придёт следующим сообщением",
     )
 
@@ -113,6 +116,7 @@ async def on_demo_expire(
         context,
         texts.request_card(ticket),
         keyboards.request_card(ticket, demo_mode=services.config.demo_mode),
+        media=media.photo_attachments(ticket.photos),
         notification=notification,
     )
 
@@ -167,5 +171,6 @@ async def _resident_answer(
         context,
         texts.request_card(ticket),
         keyboards.request_card(ticket, demo_mode=services.config.demo_mode),
+        media=media.photo_attachments(ticket.photos),
         notification=notification,
     )

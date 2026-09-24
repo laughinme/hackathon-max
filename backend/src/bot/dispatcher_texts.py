@@ -37,10 +37,14 @@ def card(ticket: TicketView) -> str:
         f"{urgency_label(ticket.is_emergency)}\n"
         f"Срок устранения: до <b>{format_moment(ticket.resolve_by)}</b>\n"
         f"<i>{ticket.deadline_basis}</i>\n"
-        f"{_neighbours(ticket)}\n"
+        f"{_neighbours(ticket)}{_photos(ticket)}\n"
         f"<b>Описание</b>\n{ticket.description}\n\n"
         f"<b>История</b>\n{history}"
     )
+
+
+def _photos(ticket: TicketView) -> str:
+    return f"📷 Фото от жителя: {len(ticket.photos)}\n" if ticket.photos else ""
 
 
 def _neighbours(ticket: TicketView) -> str:
