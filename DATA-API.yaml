@@ -1,0 +1,219 @@
+# Обязательные проверки API «Домового» (требование кейса для решений со своим API).
+# Живая схема OpenAPI 3.x: {base_url}/api/openapi.json, Swagger: {base_url}/api/docs.
+# Все данные тестовые (синтетика), см. README.md → «Тестовые данные».
+
+version: 1
+base_url: https://domovoy-test.fly.dev   # адрес на период проверки — на слайде 1 презентации
+openapi: /api/openapi.json
+
+auth:
+  scheme: "Authorization: tma <initData>"
+  description: >
+    Мини-приложение авторизуется подписанными данными запуска MAX (WebApp.initData,
+    проверка HMAC по токену бота, auth_date не старше 1 часа). Для проверки без MAX
+    заголовок выдаёт скрипт (токен бота берётся из окружения и не печатается):
+      cd backend && MAX_TOKEN=<токен со слайда 1> PYTHONPATH=src \
+        uv run python -m scripts.sign_init_data --user-id -100
+    Все проверки ниже одной командой (нужен токен бота для подписи):
+      cd backend && MAX_TOKEN=<токен> PYTHONPATH=src \
+        uv run python -m scripts.check_api https://domovoy-test.fly.dev
+  roles: "resident | dispatcher | stranger — подписанный initData с user_id из accounts; none — без заголовка; forged — подпись испорчена" 
+  errors: application/problem+json с полем error_code (RFC 7807)
+
+accounts:
+  resident:
+    user_id: -100
+    description: житель дома psk001 («г. Псков, ул. Гагарина, д. 101 (демо)»)
+  dispatcher:
+    user_id: -200
+    description: диспетчер демо-УО «Комфорт», видит очередь по 50 домам
+  stranger:
+    user_id: -300
+    description: пользователь без дома и ролей
+
+fixtures:
+  # Заявки тестового жителя с фиксированными id (создаются сидом при старте).
+  ticket_open: c2ca3b8a-f8c3-562c-adab-689c9447db9f      # «Уборка», registered
+  ticket_done: 2928e9eb-f54e-5f88-a686-c4ee121cc9de      # «Нет света», done — ждёт подтверждения
+  ticket_overdue: 1808a125-182e-58a1-b67b-ca06278cdd7f   # «Лифт», acknowledged, срок истёк
+  ticket_missing: 00000000-0000-0000-0000-000000000000
+  reset: >
+    Проверки 15, 18 и 19 меняют статусы. Перед повторным прогоном:
+    docker compose exec bot python -m scripts.seed_demo --reset-test-accounts
+
+checks:
+  - id: 1
+    title: Сервис жив
+    method: GET
+    path: /health
+    role: none
+    expect: {status: 200, body: {status: ok, bot_mode: "webhook|polling"}}
+
+  - id: 2
+    title: База доступна
+    method: GET
+    path: /ready
+    role: none
+    expect: {status: 200, body: {database: ok}}
+
+  - id: 3
+    title: Схема OpenAPI
+    method: GET
+    path: /api/openapi.json
+    role: none
+    expect: {status: 200, body: "OpenAPI 3.x, пути /api/v1/*"}
+
+  - id: 4
+    title: Без авторизации — отказ
+    method: GET
+    path: /api/v1/me
+    role: none
+    expect: {status: 401, error_code: invalid_init_data}
+
+  - id: 5
+    title: Подделанная подпись — отказ
+    method: GET
+    path: /api/v1/me
+    role: forged   # житель, но в initData изменён символ после подписи
+    expect: {status: 401, error_code: invalid_init_data}
+
+  - id: 6
+    title: Профиль жителя
+    method: GET
+    path: /api/v1/me
+    role: resident
+    expect:
+      status: 200
+      body: {max_user_id: -100, residency: {building_code: psk001, address: "...", company_name: "...", company_phone: "..."}, dispatcher: null, demo_mode: true}
+
+  - id: 7
+    title: Профиль диспетчера
+    method: GET
+    path: /api/v1/me
+    role: dispatcher
+    expect: {status: 200, body: {max_user_id: -200, dispatcher: {company_id: "uuid", company_name: "УО «Комфорт» (демо)"}}}
+
+  - id: 8
+    title: Мои заявки
+    method: GET
+    path: /api/v1/tickets
+    role: resident
+    expect:
+      status: 200
+      body: >
+        массив TicketOut, новые сверху, не меньше 3 элементов; у каждой заявки
+        number, status, resolve_by, deadline_basis (пункт нормы), responsible_party,
+        events[]; у ticket_done can_confirm=true, у ticket_overdue can_escalate=true
+
+  - id: 9
+    title: Чужой не видит заявку
+    method: GET
+    path: /api/v1/tickets/{ticket_open}
+    role: stranger
+    expect: {status: 404, error_code: ticket_not_found}
+
+  - id: 10
+    title: Диспетчер видит заявку своего дома и доступные действия
+    method: GET
+    path: /api/v1/tickets/{ticket_open}
+    role: dispatcher
+    expect: {status: 200, body: {available_statuses: [acknowledged, in_progress, done, rejected]}}
+
+  - id: 11
+    title: Несуществующая заявка
+    method: GET
+    path: /api/v1/tickets/{ticket_missing}
+    role: resident
+    expect: {status: 404, error_code: ticket_not_found}
+
+  - id: 12
+    title: Очередь недоступна жителю
+    method: GET
+    path: /api/v1/dispatcher/queue
+    role: resident
+    expect: {status: 403, error_code: not_a_dispatcher}
+
+  - id: 13
+    title: Очередь диспетчера по сроку
+    method: GET
+    path: /api/v1/dispatcher/queue
+    params: {include_closed: false}
+    role: dispatcher
+    expect:
+      status: 200
+      body: >
+        до 50 открытых заявок УО, отсортированы по resolve_by по возрастанию;
+        есть is_overdue=true (демо-история содержит просрочки), supporters_count
+
+  - id: 14
+    title: Житель не может менять статус за диспетчера
+    method: POST
+    path: /api/v1/tickets/{ticket_open}/status
+    role: resident
+    body: {status: acknowledged}
+    expect: {status: 403, error_code: not_a_dispatcher}
+
+  - id: 15
+    title: Диспетчер принимает заявку с комментарием
+    method: POST
+    path: /api/v1/tickets/{ticket_open}/status
+    role: dispatcher
+    body: {status: acknowledged, comment: "Мастер придёт завтра к 10:00"}
+    expect:
+      status: 200
+      body: {status: acknowledged, events: "последнее событие acknowledged с комментарием"}
+    side_effect: жителю ставится уведомление в outbox (синтетическому id бот не пишет)
+
+  - id: 16
+    title: Недопустимый статус отклоняется схемой
+    method: POST
+    path: /api/v1/tickets/{ticket_open}/status
+    role: dispatcher
+    body: {status: confirmed}
+    expect: {status: 422}
+
+  - id: 17
+    title: Жалоба в жилинспекцию до истечения срока — нельзя
+    method: POST
+    path: /api/v1/tickets/{ticket_open}/escalation
+    role: resident
+    expect: {status: 409, error_code: ticket_not_overdue}
+
+  - id: 18
+    title: Жалоба в жилинспекцию по просроченной заявке
+    method: POST
+    path: /api/v1/tickets/{ticket_overdue}/escalation
+    role: resident
+    expect: {status: 202, body: {escalated_at: "дата-время", can_escalate: true}}
+    side_effect: бот ставит в outbox PDF жалобы для жителя
+
+  - id: 19
+    title: Житель подтверждает выполнение
+    method: POST
+    path: /api/v1/tickets/{ticket_done}/confirmation
+    role: resident
+    body: {resolved: true}
+    expect: {status: 200, body: {status: confirmed, can_confirm: false}}
+
+  - id: 20
+    title: Повторное подтверждение — конфликт
+    method: POST
+    path: /api/v1/tickets/{ticket_done}/confirmation
+    role: resident
+    body: {resolved: true}
+    expect: {status: 409, error_code: illegal_transition}
+
+  - id: 21
+    title: Демо-перемотка срока — только автору
+    method: POST
+    path: /api/v1/tickets/{ticket_open}/demo/expire-deadline
+    role: dispatcher
+    expect: {status: 404, error_code: ticket_not_found}
+
+  - id: 22
+    title: Вебхук MAX без секрета
+    method: POST
+    path: /webhooks/max
+    role: none     # без заголовка X-Max-Bot-Api-Secret
+    body: {}
+    expect: {status: 403}

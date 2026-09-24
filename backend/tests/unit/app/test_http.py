@@ -217,3 +217,24 @@ def test_demo_expire_is_forbidden_outside_demo_mode():
         headers=tma(world, RESIDENT),
     )
     assert response.status_code == 403
+
+
+async def test_test_accounts_cover_every_resident_action():
+    from infrastructure.seed.test_accounts import (
+        TEST_DISPATCHER_ID,
+        TEST_RESIDENT_ID,
+        ensure_test_accounts,
+    )
+
+    world = make_world()
+    assert await ensure_test_accounts(world.uow, world.clock) == 3
+    assert await ensure_test_accounts(world.uow, world.clock) == 0  # idempotent
+
+    client = client_for(world)
+    mine = client.get("/api/v1/tickets", headers=tma(world, TEST_RESIDENT_ID)).json()
+    assert {t["status"] for t in mine} == {"registered", "done", "acknowledged"}
+    assert any(t["can_confirm"] for t in mine)
+    assert any(t["can_escalate"] for t in mine)
+    dispatcher = tma(world, TEST_DISPATCHER_ID)
+    queue = client.get("/api/v1/dispatcher/queue", headers=dispatcher)
+    assert queue.status_code == 200 and len(queue.json()) == 2
