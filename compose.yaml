@@ -2,6 +2,8 @@
 # Production on the VPS: `docker compose --profile prod up -d --build`
 # with BOT_MODE=webhook, WEBHOOK_URL, WEBHOOK_SECRET in backend/.env and
 # DOMAIN in the shell or a root .env file.
+# Yandex Cloud VM: images come prebuilt from Container Registry
+# (IMAGE_REPO, IMAGE_TAG in the root .env), see infra/yc/deploy.sh.
 
 services:
   db:
@@ -25,7 +27,7 @@ services:
     build:
       context: .
       dockerfile: backend/Dockerfile
-    image: domovoy-backend:latest
+    image: ${IMAGE_REPO:-}domovoy-backend:${IMAGE_TAG:-latest}
     container_name: domovoy-bot
     restart: unless-stopped
     env_file:
@@ -46,7 +48,7 @@ services:
 
   ml:
     build: ./ml
-    image: domovoy-ml:latest
+    image: ${IMAGE_REPO:-}domovoy-ml:${IMAGE_TAG:-latest}
     container_name: domovoy-ml
     restart: unless-stopped
     env_file:

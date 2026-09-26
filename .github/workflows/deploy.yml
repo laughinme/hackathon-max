@@ -1,0 +1,94 @@
+# Push to main → tests → images to Yandex Container Registry → restart the
+# stack on the Yandex Cloud VM (DECISIONS D-009). Manual run: Actions → deploy.
+# Repo variables: YC_REGISTRY_ID, DEPLOY_HOST, DEPLOY_DOMAIN. Secrets: YC_SA_JSON_KEY
+# (github-deployer, images.pusher), DEPLOY_SSH_KEY, DEPLOY_KNOWN_HOSTS.
+name: deploy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - backend/**
+      - frontend/**
+      - ml/**
+      - compose.yaml
+      - infra/caddy/**
+      - infra/yc/**
+      - .github/workflows/deploy.yml
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: false
+
+env:
+  IMAGE_REPO: cr.yandex/${{ vars.YC_REGISTRY_ID }}/
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@bec219d24cd3e171d82865faccec33120bb574f4 # v10.1.0
+        with:
+          working-directory: backend
+          enable-cache: true
+      - run: uv sync --frozen
+      - run: uv run ruff check .
+      # Integration tests skip themselves without TEST_DATABASE_URL.
+      - run: uv run pytest -q
+
+  images:
+    needs: test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - name: domovoy-backend
+            context: .
+            file: backend/Dockerfile
+          - name: domovoy-ml
+            context: ml
+            file: ml/Dockerfile
+    steps:
+      - uses: actions/checkout@v5
+      - uses: docker/setup-buildx-action@v4
+      - uses: docker/login-action@v4
+        with:
+          registry: cr.yandex
+          username: json_key
+          password: ${{ secrets.YC_SA_JSON_KEY }}
+      - uses: docker/build-push-action@v7
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.file }}
+          push: true
+          tags: |
+            ${{ env.IMAGE_REPO }}${{ matrix.name }}:${{ github.sha }}
+            ${{ env.IMAGE_REPO }}${{ matrix.name }}:latest
+          cache-from: type=gha,scope=${{ matrix.name }}
+          cache-to: type=gha,scope=${{ matrix.name }},mode=max
+
+  deploy:
+    needs: images
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v5
+      - name: SSH key
+        run: |
+          install -m 700 -d ~/.ssh
+          echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          echo "${{ secrets.DEPLOY_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+      - name: Copy compose, Caddyfile, deploy script, ML models
+        run: |
+          tar czf - compose.yaml infra/caddy infra/yc ml/models \
+            | ssh deploy@${{ vars.DEPLOY_HOST }} 'tar xzf - -C /opt/domovoy'
+      - name: Pull images and restart
+        run: ssh deploy@${{ vars.DEPLOY_HOST }} "sh /opt/domovoy/infra/yc/deploy.sh ${{ github.sha }}"
+      - name: Public health check
+        run: curl -sf --retry 5 --retry-delay 5 https://${{ vars.DEPLOY_DOMAIN }}/ready
