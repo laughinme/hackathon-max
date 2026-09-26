@@ -66,6 +66,9 @@ jobs:
           context: ${{ matrix.context }}
           file: ${{ matrix.file }}
           push: true
+          # Yandex Container Registry rejects attestation manifests.
+          provenance: false
+          sbom: false
           tags: |
             ${{ env.IMAGE_REPO }}${{ matrix.name }}:${{ github.sha }}
             ${{ env.IMAGE_REPO }}${{ matrix.name }}:latest
