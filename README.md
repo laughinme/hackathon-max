@@ -11,8 +11,8 @@
 | Что | Адрес |
 |---|---|
 | Бот в MAX | [@t446_hakaton_max_bot](https://max.ru/t446_hakaton_max_bot) — мобильная и веб-версия MAX |
-| Мини-приложение | кнопка запуска в чате с ботом; сейчас задеплоено на `https://domovoy-test.fly.dev/` |
-| API (OpenAPI 3.x) | `https://domovoy-test.fly.dev/api/openapi.json`, Swagger — `/api/docs` |
+| Мини-приложение | кнопка запуска в чате с ботом; задеплоено на `https://domovoy.prooood.ru/` (Yandex Cloud) |
+| API (OpenAPI 3.x) | `https://domovoy.prooood.ru/api/openapi.json`, Swagger — `/api/docs` |
 | Обязательные проверки API | [`DATA-API.yaml`](DATA-API.yaml) (22 проверки, прогон одной командой) |
 | Версия для проверки | тег и commit hash — на слайде 1 презентации |
 

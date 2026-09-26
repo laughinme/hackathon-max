@@ -32,7 +32,7 @@ Payload callback-кнопок (≤ 1024 символов, ASCII): `<ns>:<action>
 
 ## 3. REST для мини-приложения (v1)
 
-**Реализовано (шаг 2), клиент — мини-приложение `frontend/` (шаг 4), которое бэкенд отдаёт по `/` того же домена.** Типы фронтенда генерируются из схемы: `npm run api:types`. Живая схема: `GET /api/openapi.json`, Swagger — `/api/docs` (на тесте: `https://domovoy-test.fly.dev/api/docs`). Код — `backend/src/api/http/v1/`, тесты — `backend/tests/unit/app/test_http.py`.
+**Реализовано (шаг 2), клиент — мини-приложение `frontend/` (шаг 4), которое бэкенд отдаёт по `/` того же домена.** Типы фронтенда генерируются из схемы: `npm run api:types`. Живая схема: `GET /api/openapi.json`, Swagger — `/api/docs` (стенд: `https://domovoy.prooood.ru/api/docs`). Код — `backend/src/api/http/v1/`, тесты — `backend/tests/unit/app/test_http.py`.
 
 Авторизация: `Authorization: tma <WebApp.initData>`; подпись HMAC по токену бота, `auth_date` не старше 1 часа, пользователь — `user.id`. Для работы фронтенда вне MAX: `Authorization: dev <max_user_id>`, только при `DEV_AUTH_ENABLED=true` на бэкенде. Ошибки — `application/problem+json` с `error_code`: `invalid_init_data` 401, `not_a_dispatcher` / `action_not_allowed` / `not_ticket_reporter` 403, `ticket_not_found` / `building_not_found` 404, `illegal_transition` / `resident_not_bound` 409.
 

@@ -26,7 +26,7 @@ npm ci
 npm run dev          # http://localhost:5173, /api проксируется на localhost:8080
 npm run lint && npm run typecheck && npm test
 npm run build        # dist/ — его и отдаёт бэкенд (MINIAPP_DIR)
-API_SCHEMA_URL=https://domovoy-test.fly.dev/api/openapi.json npm run api:types
+API_SCHEMA_URL=https://domovoy.prooood.ru/api/openapi.json npm run api:types
 ```
 
 Вне MAX подписанного `initData` нет. Для разработки в браузере: на бэкенде `DEV_AUTH_ENABLED=true`, во `frontend/.env` — `VITE_DEV_USER_ID=<ваш MAX user_id>` (запросы уйдут с `Authorization: dev <id>`). В проде `DEV_AUTH_ENABLED` выключен.

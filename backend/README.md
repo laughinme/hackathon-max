@@ -25,14 +25,14 @@ PYTHONPATH=src uv run python -m app.main
 
 Продакшен (вебхук, HTTPS 443): в `backend/.env` задать `BOT_MODE=webhook`, `WEBHOOK_URL=https://<домен>/webhooks/max`, `WEBHOOK_SECRET`; на сервере `DOMAIN=<домен> docker compose --profile prod up -d --build`. Caddy сам получает сертификат Let's Encrypt. Бот переподписывается на вебхук при каждом старте.
 
-Тестовый деплой на fly.io (из корня, D-009):
+Стенд — ВМ в Yandex Cloud, `https://domovoy.prooood.ru` (D-009). Деплой автоматический: push в `main` (изменения в `backend/`, `frontend/`, `ml/`, `compose.yaml`, `infra/`) → GitHub Actions `deploy` гоняет ruff и pytest, собирает образы в Container Registry и запускает `infra/yc/deploy.sh` на ВМ. Вручную — Actions → deploy → Run workflow. Откат и логи:
 
 ```bash
-R=$(pwd); fly deploy "$R/backend" -c "$R/infra/fly/backend.toml" --dockerfile "$R/backend/Dockerfile" --ha=false --remote-only
-fly logs -a domovoy-test
+ssh deploy@93.77.189.35 'sh /opt/domovoy/infra/yc/deploy.sh <sha старого коммита>'
+ssh deploy@93.77.189.35 'cd /opt/domovoy && docker compose logs -f --tail 100 bot'
 ```
 
-Пока там активен вебхук, локальный `polling` событий не получает (в логе будет ошибка с адресом вебхука).
+Пока на стенде активен вебхук, локальный `polling` событий не получает (в логе будет ошибка с адресом вебхука). Старый тест на fly.io (`infra/fly/`) остановлен 27.09.
 
 REST для мини-приложения: `/api/v1/*`, Swagger — `/api/docs`, контракт — [`../docs/CONTRACTS.md`](../docs/CONTRACTS.md) §3.
 

@@ -3,7 +3,7 @@
 # Все данные тестовые (синтетика), см. README.md → «Тестовые данные».
 
 version: 1
-base_url: https://domovoy-test.fly.dev   # адрес на период проверки — на слайде 1 презентации
+base_url: https://domovoy.prooood.ru   # адрес на период проверки — на слайде 1 презентации
 openapi: /api/openapi.json
 
 auth:
@@ -16,7 +16,7 @@ auth:
         uv run python -m scripts.sign_init_data --user-id -100
     Все проверки ниже одной командой (нужен токен бота для подписи):
       cd backend && MAX_TOKEN=<токен> PYTHONPATH=src \
-        uv run python -m scripts.check_api https://domovoy-test.fly.dev
+        uv run python -m scripts.check_api https://domovoy.prooood.ru
   roles: "resident | dispatcher | stranger — подписанный initData с user_id из accounts; none — без заголовка; forged — подпись испорчена" 
   errors: application/problem+json с полем error_code (RFC 7807)
 
