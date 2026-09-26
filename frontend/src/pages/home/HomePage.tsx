@@ -16,6 +16,12 @@ export function HomePage() {
   const { data: me, error, refetch, isPending } = useMe()
   const [tab, setTab] = useState<Tab>('queue')
 
+  const toBot = (
+    <Button size="large" onClick={() => openMaxLink(BOT_URL)}>
+      Открыть чат с ботом
+    </Button>
+  )
+
   if (isPending) return <Loading />
   if (error instanceof NoAuthError) {
     return (
@@ -23,16 +29,11 @@ export function HomePage() {
         icon="🔒"
         title="Откройте приложение в MAX"
         text="Приложение работает только из чата с ботом: так мы знаем, чьи это заявки, без логинов и паролей."
+        action={toBot}
       />
     )
   }
   if (error) return <ErrorView error={error} onRetry={() => void refetch()} />
-
-  const toBot = (
-    <Button size="large" onClick={() => openMaxLink(BOT_URL)}>
-      Открыть чат с ботом
-    </Button>
-  )
 
   if (me.dispatcher && me.residency) {
     return (
