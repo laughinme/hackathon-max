@@ -24,6 +24,7 @@ interface MaxWebApp {
   }
   openMaxLink?(url: string): void
   openLink?(url: string): void
+  downloadFile?(url: string, fileName: string): Promise<{ status: 'downloading' | 'cancelled' }>
 }
 
 declare global {
@@ -79,4 +80,25 @@ export function openMaxLink(url: string): void {
   const app = webApp()
   if (app?.openMaxLink) app.openMaxLink(url)
   else window.open(url, '_blank', 'noopener')
+}
+
+/**
+ * Saves a file from an https link. Inside MAX only `downloadFile` works (an
+ * `<a href download>` is ignored), so the link must not need auth headers.
+ */
+export async function downloadFile(url: string, fileName: string): Promise<void> {
+  const absolute = new URL(url, window.location.origin).toString()
+  const app = webApp()
+  // The bridge script defines WebApp in a plain browser too, but its calls go
+  // nowhere there: only signed launch data means we are inside MAX.
+  if (isInsideMax() && app?.downloadFile) {
+    await app.downloadFile(absolute, fileName)
+    return
+  }
+  // Plain browser: a download link, not window.open, which is blocked as a
+  // popup once the click has passed through an async handler.
+  const link = document.createElement('a')
+  link.href = absolute
+  link.download = fileName
+  link.click()
 }

@@ -2,12 +2,15 @@ import { Button } from '@maxhub/max-ui'
 import { useState } from 'react'
 
 import { useMe } from '@/entities/user/api'
+import { BuildingPicker } from '@/pages/buildings/BuildingPicker'
 import { MyTicketsPage } from '@/pages/resident/MyTicketsPage'
 import { QueuePage } from '@/pages/dispatcher/QueuePage'
 import { NoAuthError } from '@/shared/api/client'
 import { openMaxLink } from '@/shared/lib/bridge'
 import { BOT_URL } from '@/shared/config'
 import { ErrorView, Loading, Message } from '@/shared/ui/StateView'
+
+import { HomeMenu } from './HomeMenu'
 
 type Tab = 'queue' | 'mine'
 
@@ -35,8 +38,9 @@ export function HomePage() {
   }
   if (error) return <ErrorView error={error} onRetry={() => void refetch()} />
 
+  let content
   if (me.dispatcher && me.residency) {
-    return (
+    content = (
       <>
         <div className="segmented" role="tablist">
           <SegmentButton active={tab === 'queue'} onClick={() => setTab('queue')}>
@@ -53,17 +57,28 @@ export function HomePage() {
         )}
       </>
     )
+  } else if (me.dispatcher) {
+    content = <QueuePage companyName={me.dispatcher.company_name} />
+  } else if (me.residency) {
+    content = <MyTicketsPage residency={me.residency} />
+  } else {
+    content = (
+      <>
+        <Message
+          icon="🏠"
+          title="Сначала выберите дом"
+          text="Я регистрирую заявки по дому: вы описываете проблему обычными словами, а я определяю, кто за неё отвечает, и показываю срок устранения по нормативу."
+        />
+        <BuildingPicker />
+      </>
+    )
   }
-  if (me.dispatcher) return <QueuePage companyName={me.dispatcher.company_name} />
-  if (me.residency) return <MyTicketsPage residency={me.residency} />
 
   return (
-    <Message
-      icon="🏠"
-      title="Сначала выберите дом"
-      text="Отсканируйте QR-код в подъезде или выберите дом в чате с ботом. После этого здесь появятся ваши заявки."
-      action={toBot}
-    />
+    <div className="page">
+      {content}
+      <HomeMenu me={me} />
+    </div>
   )
 }
 

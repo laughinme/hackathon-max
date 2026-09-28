@@ -5,8 +5,6 @@ import { useMyTickets } from '@/entities/ticket/api'
 import { CLOSED_STATUSES } from '@/entities/ticket/labels'
 import { TicketCell } from '@/entities/ticket/TicketCell'
 import type { Me } from '@/shared/api/client'
-import { openMaxLink } from '@/shared/lib/bridge'
-import { BOT_URL } from '@/shared/config'
 import { ErrorView, Loading, Message } from '@/shared/ui/StateView'
 
 type Residency = NonNullable<Me['residency']>
@@ -24,7 +22,7 @@ export function MyTicketsPage({ residency }: { residency: Residency }) {
         <span className="muted small">
           {residency.company_name} · <a href={`tel:${residency.company_phone}`}>{residency.company_phone}</a>
         </span>
-        <Button stretched size="large" onClick={() => openMaxLink(BOT_URL)}>
+        <Button stretched size="large" onClick={() => push({ name: 'new-ticket' })}>
           📝 Сообщить о проблеме
         </Button>
       </section>
@@ -35,7 +33,7 @@ export function MyTicketsPage({ residency }: { residency: Residency }) {
         <Message
           icon="📭"
           title="Заявок пока нет"
-          text="Опишите проблему боту своими словами — он оформит заявку и назовёт нормативный срок."
+          text="Опишите проблему своими словами — я оформлю заявку и назову нормативный срок. Можно и в чате с ботом."
         />
       )}
       {tickets && tickets.length > 0 && (

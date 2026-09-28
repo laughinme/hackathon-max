@@ -20,6 +20,14 @@ export function NavigationProvider({ initial, children }: { initial: Screen[]; c
     window.scrollTo(0, 0)
   }, [])
   const pop = useCallback(() => setStack((current) => (current.length > 1 ? current.slice(0, -1) : current)), [])
+  const replace = useCallback((screen: Screen) => {
+    setStack((current) => [...current.slice(0, -1), screen])
+    window.scrollTo(0, 0)
+  }, [])
+  const home = useCallback(() => {
+    setStack([HOME])
+    window.scrollTo(0, 0)
+  }, [])
 
   const canGoBack = stack.length > 1
   useEffect(() => {
@@ -33,6 +41,6 @@ export function NavigationProvider({ initial, children }: { initial: Screen[]; c
   }, [canGoBack, pop])
 
   const current = stack.at(-1) ?? HOME
-  const value = useMemo(() => ({ current, push, pop }), [current, push, pop])
+  const value = useMemo(() => ({ current, push, pop, replace, home }), [current, push, pop, replace, home])
   return <NavigationContext.Provider value={value}>{children}</NavigationContext.Provider>
 }
