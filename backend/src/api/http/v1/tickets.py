@@ -7,6 +7,7 @@ from uuid import UUID
 from fastapi import APIRouter, Query
 
 from api.http.deps import IdentityDep, ServicesDep
+from api.http.v1.schemas.intake import TicketCreateIn
 from api.http.v1.schemas.tickets import (
     ConfirmationIn,
     StatusChangeIn,
@@ -16,7 +17,9 @@ from api.http.v1.schemas.tickets import (
 from app.services import Services
 from application.housing.identity import Identity
 from application.tickets.change_status import ChangeStatusCommand
+from application.tickets.create_ticket import CreateTicketCommand
 from application.tickets.dto import TicketView
+from domain.tickets.catalog import get_category
 from domain.tickets.enums import ActorRole, TicketStatus
 
 router = APIRouter(tags=["tickets"])
@@ -49,6 +52,27 @@ async def list_my_tickets(
 ) -> list[TicketOut]:
     views = await services.list_tickets.execute(identity.max_user_id)
     return [_out(view, identity, services, ActorRole.RESIDENT) for view in views]
+
+
+@router.post(
+    "/tickets",
+    response_model=TicketOut,
+    status_code=201,
+    summary="Register the resident's ticket from the confirmed draft",
+)
+async def create_ticket(
+    body: TicketCreateIn, identity: IdentityDep, services: ServicesDep
+) -> TicketOut:
+    view = await services.create_ticket.execute(
+        CreateTicketCommand(
+            reporter_id=identity.max_user_id,
+            chat_id=None,
+            category_code=get_category(body.category_code).code,
+            is_emergency=body.is_emergency,
+            description=body.description.strip(),
+        )
+    )
+    return _out(view, identity, services, ActorRole.RESIDENT)
 
 
 @router.get(

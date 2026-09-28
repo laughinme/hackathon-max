@@ -13,6 +13,10 @@ from domain.housing.exceptions import BuildingNotFoundError
 BUILDING_LINK_PREFIX = "h_"
 
 
+def leaflet_filename(building_code: str) -> str:
+    return f"domovoy-{building_code}.pdf"
+
+
 class BuildLeaflet:
     def __init__(
         self, uow_factory: UnitOfWorkFactory, renderer: LeafletRenderer, bot_link: str
@@ -37,6 +41,6 @@ class BuildLeaflet:
             is_demo=building.is_demo,
         )
         return RenderedDocument(
-            filename=f"domovoy-{building.code}.pdf",
+            filename=leaflet_filename(building.code),
             content=self._renderer.render(leaflet),
         )
