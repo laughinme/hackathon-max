@@ -10,7 +10,7 @@ import logging
 from dataclasses import dataclass, field
 from typing import Any
 
-from app.config import Config
+from app.config import LLM_CLASSIFIERS, Config
 from application.chats.bind_chat import BindChat, GetChatBinding
 from application.chats.file_from_chat import FileFromChat
 from application.chats.register_chat import LeaveChat, RegisterChat
@@ -45,6 +45,7 @@ from infrastructure.ai.stub import StubAIService
 from infrastructure.llm.classifier import LlmClassifier
 from infrastructure.llm.client import LLMClient, LLMSettings
 from infrastructure.llm.service import LLMAIService
+from infrastructure.ml.double_check import DoubleCheckClassifier, Unavailable
 from infrastructure.ml.http_classifier import HttpClassifier
 from infrastructure.ml.rule_based import RuleBasedClassifier
 from infrastructure.pdf.escalation import PdfEscalationRenderer
@@ -95,7 +96,7 @@ class Services:
 def build_llm_client(config: Config) -> LLMClient | None:
     """One client for the dialog layer and the classifier; None when unused."""
 
-    if not (config.llm_enabled or config.classifier == "llm"):
+    if not (config.llm_enabled or config.classifier in LLM_CLASSIFIERS):
         return None
     return LLMClient(
         LLMSettings(
@@ -133,6 +134,23 @@ def build_classifier(
     if config.classifier == "rules":
         logger.info("Classifier: keyword rules")
         return RuleBasedClassifier(), None
+    if config.classifier == "catboost+llm" and client is not None:
+        logger.info(
+            "Classifier: CatBoost at %s, emergencies double-checked by LLM %s",
+            config.ml_service_url,
+            config.llm_model,
+        )
+        http = HttpClassifier(
+            base_url=config.ml_service_url,
+            timeout_sec=config.ml_service_timeout_sec,
+            fallback=Unavailable(),
+        )
+        double_check = DoubleCheckClassifier(
+            http,
+            LlmClassifier(client, fallback=Unavailable()),
+            threshold=config.ml_confidence_threshold,
+        )
+        return double_check, http
     logger.info("Classifier: CatBoost at %s, fallback rules", config.ml_service_url)
     http = HttpClassifier(
         base_url=config.ml_service_url,

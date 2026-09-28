@@ -78,7 +78,7 @@ cd backend
 uv run pytest                                            # unit (домен, use case'ы, REST, initData)
 TEST_DATABASE_URL=postgresql+asyncpg://… uv run pytest   # + integration на реальном Postgres (БД очищается)
 PYTHONPATH=src uv run python -m scripts.simulate_flow   # 5 сценариев бота, включая диспетчера и уведомления
-PYTHONPATH=src uv run python -m scripts.compare_classifiers eval.csv   # сравнение классификаторов (CLASSIFIER=catboost|llm|rules)
+PYTHONPATH=src uv run python -m scripts.compare_classifiers eval.csv   # сравнение классификаторов (CLASSIFIER=catboost|llm|rules|catboost+llm)
 DATABASE_URL=… PYTHONPATH=src uv run python -m scripts.seed_demo   # демо-данные вручную
 uv run ruff check src tests scripts && uv run pyright src
 ```

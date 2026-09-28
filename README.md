@@ -121,7 +121,7 @@ curl http://localhost:8080/ready   # {"database":"ok"}
 | `DATABASE_URL` | переопределяется в compose | PostgreSQL (asyncpg) |
 | `DEMO_MODE` | `true` | демо-кнопки: «стать диспетчером», «срок истёк» |
 | `SEED_DEMO` | `true` | загружать демо-данные при старте (повторно безопасно) |
-| `CLASSIFIER` | `catboost` | `catboost` (ML-сервис) / `llm` / `rules`; при сбое — правила |
+| `CLASSIFIER` | `catboost` | `catboost` (ML-сервис) / `llm` / `rules` / `catboost+llm` (категория от CatBoost, аварийность перепроверяет LLM); при сбое — правила |
 | `ML_CONFIDENCE_THRESHOLD` | `0.6` | ниже — бот переспрашивает про аварию |
 | `LLM_ENABLED`, `LLM_MODEL`, `LLM_API_KEY`, `LLM_BASE_URL` | выкл. | LLM по API (Yandex AI Studio, OpenAI-совместимый) — уточняющие вопросы и классификация |
 | `BOT_LINK` | `https://max.ru/t446_hakaton_max_bot` | ссылки в QR и карточках |

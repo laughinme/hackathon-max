@@ -9,7 +9,10 @@ same rows:
 
 - rules    always;
 - catboost when the ml/ service answers at ML_SERVICE_URL;
-- llm      when LLM_MODEL and LLM_API_KEY are set.
+- llm      when LLM_MODEL and LLM_API_KEY are set;
+- catboost+llm  both of the above, the LLM double-checking emergencies
+  (`CLASSIFIER=catboost+llm`, DoubleCheckClassifier). It calls the LLM
+  again, so the run costs twice the tokens of `llm` alone.
 
 The key metric is emergency recall: a missed emergency gets a 7-day deadline
 instead of 30 minutes. Fallbacks are switched off, so a dead service shows
@@ -30,6 +33,7 @@ from pathlib import Path
 from application.ports.classifier import Classification, Classifier
 from infrastructure.llm.classifier import LlmClassifier
 from infrastructure.llm.client import LLMClient, LLMSettings
+from infrastructure.ml.double_check import DoubleCheckClassifier, Unavailable
 from infrastructure.ml.http_classifier import HttpClassifier
 from infrastructure.ml.rule_based import RuleBasedClassifier
 
@@ -139,6 +143,12 @@ async def main(path: Path) -> None:
         )
         candidates["llm"] = LlmClassifier(client, fallback=NoFallback())
         closeables.append(client)
+        candidates["cb+llm"] = DoubleCheckClassifier(
+            catboost,
+            LlmClassifier(client, fallback=Unavailable()),
+            threshold=float(os.getenv("ML_CONFIDENCE_THRESHOLD") or 0.6),
+            fallback=NoFallback(),
+        )
 
     print(
         f"{'name':<9}{'category':>9}{'em.recall':>11}{'em.precision':>14}"

@@ -49,7 +49,7 @@ backend/src/
   infrastructure/      адаптеры
     db/  engine.py, uow.py, models/<aggregate>.py (ORM), repositories/<aggregate>.py, mappers/<aggregate>.py, migrations/
     max/ client.py (httpx + CA Минцифры + retry), gateway.py (реализация порта), schemas.py (типы Update из OpenAPI)
-    ml/  http_classifier.py (HTTP-клиент сервиса ml/, порт `classifier.py`), rule_based.py (fallback без ML)
+    ml/  http_classifier.py (HTTP-клиент сервиса ml/, порт `classifier.py`), rule_based.py (fallback без ML), double_check.py (`CLASSIFIER=catboost+llm`: категория от CatBoost, аварийность перепроверяет LLM — Q-18)
     llm/ клиент хостингового провайдера (GigaChat/YandexGPT) — описание по фото и fallback-диалог, порт `ai.py`
     outbox/ publisher.py (worker), rate_limiter.py (2 msg/s на чат)
     scheduler/ sla_watchdog.py, digest.py

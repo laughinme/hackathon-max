@@ -8,9 +8,12 @@ from typing import Literal
 
 BotMode = Literal["polling", "webhook"]
 #: Who classifies complaints (DECISIONS Q-18): the CatBoost service in `ml/`,
-#: the hosted LLM, or keyword rules. All three sit behind one port.
-ClassifierKind = Literal["catboost", "llm", "rules"]
-CLASSIFIER_KINDS: tuple[str, ...] = ("catboost", "llm", "rules")
+#: the hosted LLM, keyword rules, or CatBoost with the LLM double-checking
+#: emergencies. All of them sit behind one port.
+ClassifierKind = Literal["catboost", "llm", "rules", "catboost+llm"]
+CLASSIFIER_KINDS: tuple[str, ...] = ("catboost", "llm", "rules", "catboost+llm")
+#: The kinds that call the hosted LLM.
+LLM_CLASSIFIERS: tuple[str, ...] = ("llm", "catboost+llm")
 
 
 def _env_bool(name: str, default: bool = False) -> bool:
@@ -101,9 +104,13 @@ def load_config() -> Config:
 
     classifier = _env_str("CLASSIFIER", "catboost").lower()
     if classifier not in CLASSIFIER_KINDS:
-        raise RuntimeError("CLASSIFIER must be 'catboost', 'llm' or 'rules'.")
-    if classifier == "llm" and not _env_str("LLM_MODEL"):
-        raise RuntimeError("CLASSIFIER=llm requires LLM_MODEL (and LLM_API_KEY).")
+        raise RuntimeError(
+            "CLASSIFIER must be 'catboost', 'llm', 'rules' or 'catboost+llm'."
+        )
+    if classifier in LLM_CLASSIFIERS and not _env_str("LLM_MODEL"):
+        raise RuntimeError(
+            f"CLASSIFIER={classifier} requires LLM_MODEL (and LLM_API_KEY)."
+        )
 
     return Config(
         bot_token=token,
