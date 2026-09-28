@@ -39,8 +39,7 @@ def _answer(**overrides: Any) -> str:
     verdict = {
         "category": "lift",
         "category_confidence": 0.93,
-        "is_emergency": True,
-        "emergency_confidence": 0.88,
+        "emergency_probability": 0.88,
     }
     return json.dumps({**verdict, **overrides})
 
@@ -57,6 +56,24 @@ async def test_json_in_markdown_fence_is_accepted() -> None:
     assert result.category_code == "lift"
 
 
+async def test_low_emergency_probability_is_a_confident_no() -> None:
+    answer = _answer(category="cleaning", emergency_probability=0.1)
+
+    result = await _classifier(answer).classify("в подъезде давно не мыли полы")
+
+    assert result.is_emergency is False
+    assert result.emergency_confidence == pytest.approx(0.9)
+
+
+async def test_even_odds_leave_emergency_unsure() -> None:
+    answer = _answer(category="water", emergency_probability=0.5)
+
+    result = await _classifier(answer).classify("в подвале что-то капает")
+
+    assert result.is_emergency is True
+    assert result.emergency_confidence == pytest.approx(0.5)
+
+
 async def test_unknown_category_maps_to_other_with_zero_confidence() -> None:
     result = await _classifier(_answer(category="gas")).classify("пахнет газом")
 
@@ -71,9 +88,23 @@ async def test_unknown_category_maps_to_other_with_zero_confidence() -> None:
         "не знаю",
         _answer(category_confidence=1.7),
         json.dumps({"category": "lift"}),
+        json.dumps(
+            {
+                "category": "lift",
+                "category_confidence": 0.9,
+                "is_emergency": True,
+                "emergency_confidence": 0.9,
+            }
+        ),
         LLMUnavailableError("timeout"),
     ],
-    ids=["not-json", "confidence-out-of-range", "missing-fields", "unavailable"],
+    ids=[
+        "not-json",
+        "confidence-out-of-range",
+        "missing-fields",
+        "old-format-without-probability",
+        "unavailable",
+    ],
 )
 async def test_any_failure_falls_back(answer: str | Exception) -> None:
     result = await _classifier(answer).classify("течёт труба")
