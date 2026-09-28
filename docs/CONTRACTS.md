@@ -46,10 +46,24 @@ Payload callback-кнопок (≤ 1024 символов, ASCII): `<ns>:<action>
 | POST | `/api/v1/tickets/{id}/confirmation` | автор | тело `{resolved: bool, comment?}`: `true` → `confirmed`, `false` → `in_progress` |
 | POST | `/api/v1/tickets/{id}/demo/expire-deadline` | автор, только `DEMO_MODE` и заявки демо-УО | `200 TicketOut`: срок сдвинут в прошлое, уведомления о просрочке уже в очереди; иначе `403 demo_action_not_allowed` |
 | POST | `/api/v1/tickets/{id}/escalation` | автор просроченной открытой заявки | `202 TicketOut`; бот присылает PDF жалобы в чат; до срока — `409 ticket_not_overdue` |
+| GET | `/api/v1/buildings/demo?limit=3` | все | `[{code, address}]` — демо-дома для выбора (в жизни дом задаёт QR) |
+| PUT | `/api/v1/me/residency` | все | тело `{building_code}` → `MeOut`; неизвестный код — `404 building_not_found` |
+| POST | `/api/v1/me/demo-dispatcher` | все, только `DEMO_MODE` | `MeOut` с ролью диспетчера демо-УО; иначе `403 demo_action_not_allowed` |
+| DELETE | `/api/v1/me` | все | `{detached_tickets}`: снять дом и роли, отвязать заявки (как `/privacy` в боте, но без черновика диалога) |
+| GET | `/api/v1/me/building` | житель | `{building_code, address, company_name, company_phone, pulse, leaflet_path, leaflet_filename}`; без дома — `409 resident_not_bound` |
+| GET | `/api/v1/buildings/{id}/leaflet.pdf?sig=…` | по подписанной ссылке, **без** `Authorization` | PDF листовки с QR; неверная подпись — `404` |
+| POST | `/api/v1/intake/analyze` | житель | тело `{turns: [{role: user\|bot, text}], category_code?}` → `{ready, explanation, question, draft, triage}`; `triage = {category_code, is_emergency, needs_emergency_confirmation, responsible_party, responsibility_basis, resolve_by, react_by, deadline_basis}` |
+| POST | `/api/v1/intake/preview` | житель | тело `{category_code, is_emergency}` → `triage` после ответа «Это авария?» |
+| POST | `/api/v1/intake/refine` | житель | тело `{draft, comment}` → `{draft}` |
+| POST | `/api/v1/tickets` | житель | тело `{category_code, is_emergency, description}` → `201 TicketOut` |
+| GET | `/api/v1/reference/categories` | без авторизации | быстрые сценарии с первым уточняющим вопросом, «другое» последним |
+| GET | `/api/v1/reference/responsibility` | без авторизации | навигатор «кто за что отвечает» |
+
+Диалог создания заявки на сервере без состояния: мини-приложение хранит переписку и присылает её целиком ([D-015](DECISIONS.md)).
 
 `TicketOut`: `id, number, building_id, building_address, category_code, is_emergency, description, responsible_party, responsibility_basis, status, resolve_by, react_by, deadline_basis, is_overdue, created_at, updated_at, events[{status, actor_role, at, comment}], available_statuses[]` — последнее поле говорит фронтенду, какие кнопки показать текущему пользователю.
 
-**Планируется:** создание заявки из мини-приложения с фото, карточка дома и «пульс дома», справочники `reference/sla` и `reference/responsibility`.
+**Планируется:** фото к заявке из мини-приложения (загрузка через `/uploads` Bot API), справочник `reference/sla`.
 
 ## 4. Внутренний ML-сервис (классификация жалоб)
 
