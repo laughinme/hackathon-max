@@ -17,6 +17,15 @@ export type TicketStatus = Schemas['TicketStatus']
 export type Me = Schemas['MeOut']
 export type StatusChange = Schemas['StatusChangeIn']
 export type Confirmation = Schemas['ConfirmationIn']
+export type Building = Schemas['BuildingOut']
+export type House = Schemas['HouseOut']
+export type Pulse = Schemas['PulseOut']
+export type CategoryRef = Schemas['CategoryOut']
+export type GuideEntry = Schemas['GuideEntryOut']
+export type Turn = Schemas['TurnIn']
+export type DraftStep = Schemas['DraftStepOut']
+export type Triage = Schemas['TriageOut']
+export type TicketCreate = Schemas['TicketCreateIn']
 
 export class ApiError extends Error {
   readonly status: number
@@ -43,6 +52,20 @@ function authorization(): string {
   throw new NoAuthError()
 }
 
+/** The server's `detail` is for developers; residents read these. */
+const MESSAGES: Record<string, string> = {
+  resident_not_bound: 'Сначала выберите дом',
+  building_not_found: 'Не нашёл такой дом',
+  ticket_not_found: 'Заявка не найдена',
+  not_a_dispatcher: 'Это доступно только диспетчеру УО',
+  action_not_allowed: 'Это действие вам недоступно',
+  not_ticket_reporter: 'Это может сделать только автор заявки',
+  illegal_transition: 'Статус заявки уже изменился, обновите экран',
+  ticket_not_overdue: 'Жалоба возможна только после истечения срока',
+  demo_action_not_allowed: 'Доступно только в демо-режиме',
+  invalid_init_data: 'Сессия устарела: закройте и снова откройте приложение',
+}
+
 export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
   const response = await fetch(`/api/v1${path}`, {
     ...init,
@@ -63,5 +86,5 @@ export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
   } catch {
     // not a problem+json body: keep the generic message
   }
-  throw new ApiError(response.status, code, message)
+  throw new ApiError(response.status, code, MESSAGES[code] ?? message)
 }

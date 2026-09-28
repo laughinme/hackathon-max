@@ -15,6 +15,92 @@ export interface paths {
         get: operations["get_me_api_v1_me_get"];
         put?: never;
         post?: never;
+        /** Forget me: building, roles and the link to my tickets */
+        delete: operations["forget_me_api_v1_me_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/buildings/demo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Demo buildings to choose from (in real life the QR picks it) */
+        get: operations["demo_buildings_api_v1_buildings_demo_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/residency": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Bind me to a building */
+        put: operations["bind_residency_api_v1_me_residency_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/demo-dispatcher": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** DEMO_MODE only: become a dispatcher of the demo management company */
+        post: operations["become_demo_dispatcher_api_v1_me_demo_dispatcher_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/building": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** My building: pulse for 30 days and the QR leaflet */
+        get: operations["my_building_api_v1_me_building_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/buildings/{building_id}/leaflet.pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Printable leaflet with a QR code to the bot; the link is signed */
+        get: operations["leaflet_api_v1_buildings__building_id__leaflet_pdf_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -31,7 +117,8 @@ export interface paths {
         /** My tickets */
         get: operations["list_my_tickets_api_v1_tickets_get"];
         put?: never;
-        post?: never;
+        /** Register the resident's ticket from the confirmed draft */
+        post: operations["create_ticket_api_v1_tickets_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -140,6 +227,91 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/intake/analyze": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Next clarifying question, or the draft with category and deadline */
+        post: operations["analyze_api_v1_intake_analyze_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/intake/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Deadline after the resident answered whether it is an emergency */
+        post: operations["preview_api_v1_intake_preview_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/intake/refine": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Edit the draft by the resident's remark */
+        post: operations["refine_api_v1_intake_refine_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reference/categories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Quick categories with the first clarifying question; 'other' is last */
+        get: operations["categories_api_v1_reference_categories_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reference/responsibility": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Who answers for what around a building, and where to turn */
+        get: operations["responsibility_api_v1_reference_responsibility_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -184,6 +356,41 @@ export interface components {
          * @enum {string}
          */
         ActorRole: "resident" | "dispatcher" | "system";
+        /** AnalyzeIn */
+        AnalyzeIn: {
+            /** Turns */
+            turns: components["schemas"]["TurnIn"][];
+            /**
+             * Category Code
+             * @description Quick category the resident picked, if any
+             */
+            category_code?: string | null;
+        };
+        /** BuildingOut */
+        BuildingOut: {
+            /** Code */
+            code: string;
+            /** Address */
+            address: string;
+        };
+        /** CategoryCountOut */
+        CategoryCountOut: {
+            /** Category Code */
+            category_code: string;
+            /** Count */
+            count: number;
+        };
+        /** CategoryOut */
+        CategoryOut: {
+            /** Code */
+            code: string;
+            /** Emoji */
+            emoji: string;
+            /** Title */
+            title: string;
+            /** Clarifying Question */
+            clarifying_question: string;
+        };
         /** ConfirmationIn */
         ConfirmationIn: {
             /**
@@ -204,10 +411,66 @@ export interface components {
             /** Company Name */
             company_name: string;
         };
+        /** DraftStepOut */
+        DraftStepOut: {
+            /**
+             * Ready
+             * @description true: `draft` and `triage` are set
+             */
+            ready: boolean;
+            /** Explanation */
+            explanation: string;
+            /** Question */
+            question: string | null;
+            /** Draft */
+            draft: string | null;
+            triage: components["schemas"]["TriageOut"] | null;
+        };
+        /** ForgetOut */
+        ForgetOut: {
+            /**
+             * Detached Tickets
+             * @description Tickets that lost the link to the user
+             */
+            detached_tickets: number;
+        };
+        /** GuideEntryOut */
+        GuideEntryOut: {
+            /** Emoji */
+            emoji: string;
+            /** Situation */
+            situation: string;
+            party: components["schemas"]["ResponsibleParty"] | null;
+            /** Who */
+            who: string;
+            /** Basis */
+            basis: string;
+            /** Where */
+            where: string;
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /** HouseOut */
+        HouseOut: {
+            /** Building Code */
+            building_code: string;
+            /** Address */
+            address: string;
+            /** Company Name */
+            company_name: string;
+            /** Company Phone */
+            company_phone: string;
+            pulse: components["schemas"]["PulseOut"];
+            /**
+             * Leaflet Path
+             * @description Signed path of the printable QR leaflet (PDF), no auth header needed: MAX `downloadFile` cannot send one
+             */
+            leaflet_path: string;
+            /** Leaflet Filename */
+            leaflet_filename: string;
         };
         /** MeOut */
         MeOut: {
@@ -217,6 +480,59 @@ export interface components {
             dispatcher: components["schemas"]["DispatcherOut"] | null;
             /** Demo Mode */
             demo_mode: boolean;
+        };
+        /** PreviewIn */
+        PreviewIn: {
+            /** Category Code */
+            category_code: string;
+            /** Is Emergency */
+            is_emergency: boolean;
+        };
+        /** PulseOut */
+        PulseOut: {
+            /** Period Days */
+            period_days: number;
+            /** Total */
+            total: number;
+            /** Open */
+            open: number;
+            /** Overdue */
+            overdue: number;
+            /** Fixed */
+            fixed: number;
+            /** Fixed On Time */
+            fixed_on_time: number;
+            /**
+             * On Time Share
+             * @description 0..1, null when nothing fixed
+             */
+            on_time_share: number | null;
+            /** Average Fix Hours */
+            average_fix_hours: number | null;
+            /** Top Categories */
+            top_categories: components["schemas"]["CategoryCountOut"][];
+            /** Neighbours Joined */
+            neighbours_joined: number;
+        };
+        /** RefineIn */
+        RefineIn: {
+            /** Draft */
+            draft: string;
+            /** Comment */
+            comment: string;
+        };
+        /** RefineOut */
+        RefineOut: {
+            /** Draft */
+            draft: string;
+        };
+        /** ResidencyIn */
+        ResidencyIn: {
+            /**
+             * Building Code
+             * @description Code from the QR in the entrance
+             */
+            building_code: string;
         };
         /** ResidencyOut */
         ResidencyOut: {
@@ -249,6 +565,15 @@ export interface components {
             status: "acknowledged" | "in_progress" | "done" | "rejected";
             /** Comment */
             comment?: string | null;
+        };
+        /** TicketCreateIn */
+        TicketCreateIn: {
+            /** Category Code */
+            category_code: string;
+            /** Is Emergency */
+            is_emergency: boolean;
+            /** Description */
+            description: string;
         };
         /** TicketEventOut */
         TicketEventOut: {
@@ -358,6 +683,40 @@ export interface components {
          * @enum {string}
          */
         TicketStatus: "registered" | "acknowledged" | "in_progress" | "done" | "confirmed" | "rejected";
+        /** TriageOut */
+        TriageOut: {
+            /** Category Code */
+            category_code: string;
+            /** Is Emergency */
+            is_emergency: boolean;
+            /**
+             * Needs Emergency Confirmation
+             * @description The classifier is unsure: ask the resident whether it is an emergency, then call /intake/preview with the answer
+             */
+            needs_emergency_confirmation: boolean;
+            responsible_party: components["schemas"]["ResponsibleParty"];
+            /** Responsibility Basis */
+            responsibility_basis: string;
+            /**
+             * Resolve By
+             * Format: date-time
+             */
+            resolve_by: string;
+            /** React By */
+            react_by: string | null;
+            /** Deadline Basis */
+            deadline_basis: string;
+        };
+        /** TurnIn */
+        TurnIn: {
+            /**
+             * Role
+             * @enum {string}
+             */
+            role: "user" | "bot";
+            /** Text */
+            text: string;
+        };
         /** ValidationError */
         ValidationError: {
             /** Location */
@@ -411,6 +770,200 @@ export interface operations {
             };
         };
     };
+    forget_me_api_v1_me_delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ForgetOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    demo_buildings_api_v1_buildings_demo_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BuildingOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    bind_residency_api_v1_me_residency_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResidencyIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    become_demo_dispatcher_api_v1_me_demo_dispatcher_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    my_building_api_v1_me_building_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HouseOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    leaflet_api_v1_buildings__building_id__leaflet_pdf_get: {
+        parameters: {
+            query: {
+                sig: string;
+            };
+            header?: never;
+            path: {
+                building_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/pdf": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_my_tickets_api_v1_tickets_get: {
         parameters: {
             query?: never;
@@ -429,6 +982,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TicketOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_ticket_api_v1_tickets_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TicketCreateIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TicketOut"];
                 };
             };
             /** @description Validation Error */
@@ -644,6 +1232,151 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    analyze_api_v1_intake_analyze_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AnalyzeIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DraftStepOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    preview_api_v1_intake_preview_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PreviewIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TriageOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    refine_api_v1_intake_refine_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RefineIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RefineOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    categories_api_v1_reference_categories_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CategoryOut"][];
+                };
+            };
+        };
+    };
+    responsibility_api_v1_reference_responsibility_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuideEntryOut"][];
                 };
             };
         };

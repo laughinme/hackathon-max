@@ -38,6 +38,7 @@ from app.config import load_config  # noqa: E402
 from app.main import build_dispatcher  # noqa: E402
 from app.services import Services, build_services  # noqa: E402
 from application.notifications.deliver import DeliverNotifications  # noqa: E402
+from application.tickets.draft_complaint import DraftComplaint  # noqa: E402
 from bot.notifications import MaxNotificationSender  # noqa: E402
 from infrastructure.memory.tickets import (  # noqa: E402
     InMemoryOutboxReader,
@@ -502,6 +503,7 @@ async def scenario_llm_service(sim: Simulation) -> None:
 
     services = sim.services
     original_ai = services.ai
+    original_drafting = services.draft_complaint
     replies: list[object] = [
         ask.as_training_target(),
         "не json, модель сорвалась",
@@ -509,10 +511,10 @@ async def scenario_llm_service(sim: Simulation) -> None:
         LLMUnavailableError("сервис модели недоступен"),
         LLMUnavailableError("сервис модели недоступен"),
     ]
+    model_ai = LLMAIService(ScriptedClient(replies))  # type: ignore[arg-type]
+    object.__setattr__(services, "ai", model_ai)
     object.__setattr__(
-        services,
-        "ai",
-        LLMAIService(ScriptedClient(replies)),  # type: ignore[arg-type]
+        services, "draft_complaint", DraftComplaint(model_ai, services.triage)
     )
 
     try:
@@ -537,6 +539,7 @@ async def scenario_llm_service(sim: Simulation) -> None:
         )
     finally:
         object.__setattr__(services, "ai", original_ai)
+        object.__setattr__(services, "draft_complaint", original_drafting)
 
 
 async def main() -> None:
