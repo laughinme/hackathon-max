@@ -30,6 +30,7 @@ from application.tickets.change_status import ChangeTicketStatus
 from application.tickets.create_ticket import CreateTicket
 from application.tickets.demo_expire_deadline import DemoExpireDeadline
 from application.tickets.detect_overdue import DetectOverdueTickets
+from application.tickets.draft_complaint import DraftComplaint
 from application.tickets.escalate_ticket import EscalateTicket
 from application.tickets.pulse import GetBuildingPulse
 from application.tickets.queries import (
@@ -60,6 +61,7 @@ class Services:
     clock: Clock
     ai: AIService
     triage: TriageComplaint
+    draft_complaint: DraftComplaint
     create_ticket: CreateTicket
     change_status: ChangeTicketStatus
     list_tickets: ListReporterTickets
@@ -165,11 +167,13 @@ def build_services(
             closeables.append(resource)
 
     sla = SlaPolicy()
+    triage = TriageComplaint(classifier, sla, clock, config.ml_confidence_threshold)
     return Services(
         config=config,
         clock=clock,
         ai=ai,
-        triage=TriageComplaint(classifier, sla, clock, config.ml_confidence_threshold),
+        triage=triage,
+        draft_complaint=DraftComplaint(ai, triage),
         create_ticket=CreateTicket(uow_factory, queries, sla, clock),
         change_status=ChangeTicketStatus(uow_factory, queries, clock),
         list_tickets=ListReporterTickets(queries, clock),

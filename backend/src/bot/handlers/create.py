@@ -16,8 +16,9 @@ from maxapi.types.updates.message_callback import MessageCallback
 from maxapi.types.updates.message_created import MessageCreated
 
 from app.services import Services
-from application.ports.ai import Analysis, DialogTurn
+from application.ports.ai import DialogTurn
 from application.tickets.create_ticket import CreateTicketCommand
+from application.tickets.draft_complaint import DEFAULT_QUESTION
 from application.tickets.dto import TicketView
 from application.tickets.triage_complaint import TriageResult
 from bot import callbacks, keyboards, media, texts
@@ -190,31 +191,28 @@ async def analyze_and_render(
 
     data = await context.get_data()
     turns = [DialogTurn(**turn) for turn in data.get(TURNS, [])]
-    analysis: Analysis = await services.ai.analyze(
-        turns, category_code=data.get(CATEGORY)
-    )
+    step = await services.draft_complaint.execute(turns, data.get(CATEGORY))
 
-    if not analysis.is_ready or not analysis.draft:
-        question = analysis.question or "Расскажите, пожалуйста, подробнее."
+    if step.draft is None or step.triage is None:
+        question = step.question or DEFAULT_QUESTION
         await append_turn(context, "bot", question)
         await render(
             event,
             context,
-            texts.clarifying(question, analysis.explanation),
+            texts.clarifying(question, step.explanation),
             keyboards.collecting(),
         )
         return
 
-    complaint = " ".join(turn.text for turn in turns if turn.role == "user")
-    triage = await services.triage.execute(complaint, category_hint=data.get(CATEGORY))
+    triage = step.triage
     await context.update_data(
         **{
-            DRAFT: analysis.draft,
+            DRAFT: step.draft,
             CATEGORY: triage.category_code,
             IS_EMERGENCY: triage.is_emergency,
         }
     )
-    await show_draft_or_confirmation(event, context, analysis.draft, triage)
+    await show_draft_or_confirmation(event, context, step.draft, triage)
 
 
 async def show_draft_or_confirmation(
