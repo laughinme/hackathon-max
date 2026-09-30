@@ -40,6 +40,8 @@ export function ChangeStatusActions({ ticket }: { ticket: Ticket }) {
     <section className="card actions">
       <Typography.Title variant="small-strong">Действия диспетчера</Typography.Title>
       <Textarea
+        mode="secondary"
+        className="field"
         placeholder="Комментарий жителю"
         value={comment}
         maxLength={500}

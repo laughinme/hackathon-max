@@ -26,6 +26,8 @@ export function ConfirmResolution({ ticket }: { ticket: Ticket }) {
       {reopening ? (
         <>
           <Textarea
+            mode="secondary"
+            className="field"
             placeholder="Что осталось не так?"
             value={comment}
             maxLength={500}

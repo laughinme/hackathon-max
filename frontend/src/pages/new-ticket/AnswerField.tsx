@@ -16,7 +16,14 @@ export function AnswerField({ placeholder, action, busy, onSubmit }: Props) {
 
   return (
     <div className="answer">
-      <Textarea placeholder={placeholder} value={text} maxLength={2000} onChange={(e) => setText(e.target.value)} />
+      <Textarea
+        mode="secondary"
+        className="field"
+        placeholder={placeholder}
+        value={text}
+        maxLength={2000}
+        onChange={(e) => setText(e.target.value)}
+      />
       <Button
         stretched
         size="large"

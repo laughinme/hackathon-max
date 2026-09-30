@@ -258,6 +258,15 @@ a {
   gap: 12px;
 }
 
+.field {
+  box-shadow: inset 0 0 0 1px var(--background-tertiary, rgba(9, 9, 9, 0.05));
+  transition: box-shadow 150ms ease;
+}
+
+.field:focus-within {
+  box-shadow: inset 0 0 0 2px var(--text-themed, #2d81e0);
+}
+
 .actions__buttons {
   display: flex;
   flex-direction: column;
