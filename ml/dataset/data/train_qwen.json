@@ -1,0 +1,2998 @@
+[
+  {
+    "text": "Обнаружено, что входная дверь подъезда №3 заклинила в закрытом состоянии, жильцы не могут войти.",
+    "category": "door",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "заблокированный вход"
+  },
+  {
+    "text": "привет диспетчер дверь не открывается вообще я застрял во дворе холодно",
+    "category": "door",
+    "is_emergency": 1,
+    "style": "voice",
+    "subcategory": "неисправность замка"
+  },
+  {
+    "text": "ломанулся замок на главном входе нужна помощь срочно",
+    "category": "door",
+    "is_emergency": 1,
+    "style": "typo",
+    "subcategory": "повреждение замка"
+  },
+  {
+    "text": "ЭТО ПРЕСТУПЛЕНИЕ!! ПОДЪЕЗД ОПЕРЕЖЕН СТРОЙМАТЕРИАЛАМИ И НИКТО НЕ МОЖЕТ ПРОЙТИ ВНУТРЬ!",
+    "category": "door",
+    "is_emergency": 1,
+    "style": "emotional",
+    "subcategory": "блокировка выхода"
+  },
+  {
+    "text": "Стекло разбито на козырьке входной группы",
+    "category": "door",
+    "is_emergency": 1,
+    "style": "short",
+    "subcategory": "разрушение конструкции"
+  },
+  {
+    "text": "Автоматика открытия двери отказала, требуется механическое вскрытие.",
+    "category": "door",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "автоматический привод"
+  },
+  {
+    "text": "ну где вы ребята дверь в квартиру не открывается ключ сломался",
+    "category": "door",
+    "is_emergency": 1,
+    "style": "voice",
+    "subcategory": "поломка замка"
+  },
+  {
+    "text": "замок на балконе сорван доступ внутрь свободный",
+    "category": "door",
+    "is_emergency": 1,
+    "style": "typo",
+    "subcategory": "взлом"
+  },
+  {
+    "text": "ВЫ ВСЁ ЕЩЕ СПИТЕ?? ЧЕРЕЗ РАЗБИТЫЙ ДОМОФОН ВХОДИТ НЕПОЗНАННЫЙ!!!",
+    "category": "door",
+    "is_emergency": 1,
+    "style": "emotional",
+    "subcategory": "неисправность домофона"
+  },
+  {
+    "text": "Сигнализация сработала на разбитое стекло",
+    "category": "door",
+    "is_emergency": 1,
+    "style": "short",
+    "subcategory": "безопасность"
+  },
+  {
+    "text": "Здравствуйте, в подъезде уже неделю не убирают мусор.",
+    "category": "cleaning",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "мусоропровод"
+  },
+  {
+    "text": "Привет, убирают подъезд раз в месяц это что вообще?",
+    "category": "cleaning",
+    "is_emergency": 0,
+    "style": "emotional",
+    "subcategory": "уборка подъезда"
+  },
+  {
+    "text": "Добрый день, в подъезде 4 грязно и пахнет.",
+    "category": "cleaning",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "уборка подъезда"
+  },
+  {
+    "text": "Добрый день, двор никем не убирается мусор валяется повсюду.",
+    "category": "cleaning",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "уборка двора"
+  },
+  {
+    "text": "На дворовой территории кошмар мусор кругом!",
+    "category": "cleaning",
+    "is_emergency": 0,
+    "style": "emotional",
+    "subcategory": "уборка двора"
+  },
+  {
+    "text": "Здравствуйте, мусоропровод уже вторую неделю не чистится.",
+    "category": "cleaning",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "мусоропровод"
+  },
+  {
+    "text": "Подъезд 5 как свинарник даже не вымывают!",
+    "category": "cleaning",
+    "is_emergency": 0,
+    "style": "emotional",
+    "subcategory": "уборка подъезда"
+  },
+  {
+    "text": "Здравствуйте, во дворе полная антисанитария мусор не вывозят.",
+    "category": "cleaning",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "уборка двора"
+  },
+  {
+    "text": "Что за беспредел двор не убирают уже месяц!",
+    "category": "cleaning",
+    "is_emergency": 0,
+    "style": "emotional",
+    "subcategory": "уборка двора"
+  },
+  {
+    "text": "Здравствуйте, в квартире слабый напор воды из крана.",
+    "category": "water",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "напор воды"
+  },
+  {
+    "text": "Добрый день, в подвале капает вода из канализационной трубы.",
+    "category": "water",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "утечка воды"
+  },
+  {
+    "text": "Привет, тут канализация слегка засорилась, еле-еле унитаз смывает.",
+    "category": "water",
+    "is_emergency": 0,
+    "style": "voice",
+    "subcategory": "засор канализации"
+  },
+  {
+    "text": "Здравствуйте, в квартире 24 ванная постоянно подтекает.",
+    "category": "water",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "утечка воды"
+  },
+  {
+    "text": "Здравствуйте, на 5 этаже слабый напор холодной воды.",
+    "category": "water",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "напор воды"
+  },
+  {
+    "text": "Слабый напор горячей воды, может посмотретье?",
+    "category": "water",
+    "is_emergency": 0,
+    "style": "voice",
+    "subcategory": "напор воды"
+  },
+  {
+    "text": "Привет, канализация в подвале булькает, подтекает.",
+    "category": "water",
+    "is_emergency": 0,
+    "style": "voice",
+    "subcategory": "утечка воды"
+  },
+  {
+    "text": "Здравствуйте, в квартире 15 из крана льется еле-еле.",
+    "category": "water",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "напор воды"
+  },
+  {
+    "text": "Канализация засорилась, туалет с трудом смывает.",
+    "category": "water",
+    "is_emergency": 0,
+    "style": "voice",
+    "subcategory": "засор канализации"
+  },
+  {
+    "text": "Здравствуйте, в квартире 32 из крана капает вода.",
+    "category": "water",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "утечка воды"
+  },
+  {
+    "text": "Да здравствуйте тут кароче дверь подъезда заело и не открывается люди не могут войти",
+    "category": "door",
+    "is_emergency": 1,
+    "style": "voice",
+    "subcategory": "дверь подъезда"
+  },
+  {
+    "text": "Хэлп дверь грузового лифта застряла и не закрывается на этаже",
+    "category": "door",
+    "is_emergency": 1,
+    "style": "typo",
+    "subcategory": "дверь лифта"
+  },
+  {
+    "text": "Здравствуйте на 2 этаже дверь подвала открыта и не закрывается впустив туда посторонних",
+    "category": "door",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "дверь подвала"
+  },
+  {
+    "text": "Алло млять домофон у нас совсем сломался на входной двери ни набрать ни войти по коду",
+    "category": "door",
+    "is_emergency": 1,
+    "style": "emotional",
+    "subcategory": "домофон"
+  },
+  {
+    "text": "Пожалуйста доводчик на входной двери сломан дверь не закрывается",
+    "category": "door",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "доводчик двери"
+  },
+  {
+    "text": "Что за хрень замок на входной двери не работает ключи не подходят",
+    "category": "door",
+    "is_emergency": 1,
+    "style": "emotional",
+    "subcategory": "замок на входной двери"
+  },
+  {
+    "text": "На 3 этаже доводчик на двери не работает дверь плохо закрывается",
+    "category": "door",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "доводчик двери"
+  },
+  {
+    "text": "Дверь подъезда сломалась и не закрывается людям с улицы доступ в подъезд",
+    "category": "door",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "дверь подъезда"
+  },
+  {
+    "text": "Домофон на 1 этаже совсем сломался не дозвониться и не войти по коду",
+    "category": "door",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "домофон"
+  },
+  {
+    "text": "Такое дело замок на входной двери подъезда сломан ключ не поворачивается",
+    "category": "door",
+    "is_emergency": 1,
+    "style": "voice",
+    "subcategory": "замок на входной двери"
+  },
+  {
+    "text": "Добрый день с фасада осыпаются кирпичи на тротуаре два подъезда",
+    "category": "other",
+    "is_emergency": 1,
+    "style": "voice",
+    "subcategory": "фасад"
+  },
+  {
+    "text": "Здравствуйте на лестничной площадке пятого этажа задымление",
+    "category": "other",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "вентиляция и дымоудаление"
+  },
+  {
+    "text": "Помогите срочно с крыши свисают ледяные сосульки угрожают прохожим четыре подъезд",
+    "category": "other",
+    "is_emergency": 1,
+    "style": "emotional",
+    "subcategory": "кровля и сосульки"
+  },
+  {
+    "text": "Аварийная служба на четвертом этаже третий подъезд идет запах гари",
+    "category": "other",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "вентиляция и дымоудаление"
+  },
+  {
+    "text": "Уважаемая управляющая компания осыпается штукатурка с балкона первого этажа первого подъезда",
+    "category": "other",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "балкон"
+  },
+  {
+    "text": "Третий подъезд блин с крыши течет вода стена мокрая",
+    "category": "other",
+    "is_emergency": 1,
+    "style": "voice",
+    "subcategory": "кровля"
+  },
+  {
+    "text": "Ой подъезд один второй этаж трещина в стене",
+    "category": "other",
+    "is_emergency": 1,
+    "style": "emotional",
+    "subcategory": "нестабильность конструкций"
+  },
+  {
+    "text": "Срочно помогите снизу видны провода на фасаде искрят",
+    "category": "other",
+    "is_emergency": 1,
+    "style": "voice",
+    "subcategory": "электросети фасада"
+  },
+  {
+    "text": "Дверь парадного на первом этаже третий подъезд смытая ветром не могу зайти",
+    "category": "other",
+    "is_emergency": 1,
+    "style": "typo",
+    "subcategory": "входные двери"
+  },
+  {
+    "text": "Помогите быстро крыша протекает вода льет как из ведра",
+    "category": "other",
+    "is_emergency": 1,
+    "style": "short",
+    "subcategory": "кровля"
+  },
+  {
+    "text": "Добрый день, в квартире на 4 этаже батареи еле теплые.",
+    "category": "heating",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "температура батарей"
+  },
+  {
+    "text": "Привет, у нас на 5 этаже батареи холодные вы бы посмотрели.",
+    "category": "heating",
+    "is_emergency": 0,
+    "style": "voice",
+    "subcategory": "температура батарей"
+  },
+  {
+    "text": "Здравствуйте, в подъезде 2 на 1 этаже потек стояк отопления.",
+    "category": "heating",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "течь стояка"
+  },
+  {
+    "text": "да привет у вас там батареи вообще не греют в 3 подъезде",
+    "category": "heating",
+    "is_emergency": 0,
+    "style": "voice",
+    "subcategory": "температура батарей"
+  },
+  {
+    "text": "Здравствуйте, в квартире 15 стояк отопления стал сильно шуметь.",
+    "category": "heating",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "шум в стояке"
+  },
+  {
+    "text": "у нас в квартире 20 батареи как лед это вообще нормально?",
+    "category": "heating",
+    "is_emergency": 0,
+    "style": "emotional",
+    "subcategory": "температура батарей"
+  },
+  {
+    "text": "Привет, у нас на 6 этаже батареи совсем холодные.",
+    "category": "heating",
+    "is_emergency": 0,
+    "style": "voice",
+    "subcategory": "температура батарей"
+  },
+  {
+    "text": "Здравствуйте, в квартире 12 батареи не греют уже неделю.",
+    "category": "heating",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "температура батарей"
+  },
+  {
+    "text": "у вас там в 4 подъезде батареи вообще холодные что за дела?",
+    "category": "heating",
+    "is_emergency": 0,
+    "style": "emotional",
+    "subcategory": "температура батарей"
+  },
+  {
+    "text": "Привет, на 3 этаже батареи почти не греют.",
+    "category": "heating",
+    "is_emergency": 0,
+    "style": "voice",
+    "subcategory": "температура батарей"
+  },
+  {
+    "text": "Добрый день, не работает домофон в подъезде 2.",
+    "category": "door",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "домофон"
+  },
+  {
+    "text": "Здравствуйте, сломалась ручка на входной двери в подвал.",
+    "category": "door",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "дверь подвала"
+  },
+  {
+    "text": "Привет, не закрывается дверь подъезда на 5 этаже.",
+    "category": "door",
+    "is_emergency": 0,
+    "style": "voice",
+    "subcategory": "входная дверь подъезда"
+  },
+  {
+    "text": "Дверь подъезда скрипит и не закрывается нормально.",
+    "category": "door",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "входная дверь подъезда"
+  },
+  {
+    "text": "приветик дверь в подвал заедает помогите",
+    "category": "door",
+    "is_emergency": 0,
+    "style": "typo",
+    "subcategory": "дверь подвала"
+  },
+  {
+    "text": "Добрый вечер, доводчик двери подъезда шумит и мешает.",
+    "category": "door",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "доводчик двери"
+  },
+  {
+    "text": "Здравствуйте, сломалась кнопка вызова лифта у входной двери.",
+    "category": "door",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "входная дверь подъезда"
+  },
+  {
+    "text": "привет на 4 этаже стекло в двери разбито",
+    "category": "door",
+    "is_emergency": 0,
+    "style": "typo",
+    "subcategory": "входная дверь подъезда"
+  },
+  {
+    "text": "Ужас, дверь подъезда не закрывается, жулики могут войти!",
+    "category": "door",
+    "is_emergency": 0,
+    "style": "emotional",
+    "subcategory": "входная дверь подъезда"
+  },
+  {
+    "text": "не работает замок на двери подъезда 3 подъезд",
+    "category": "door",
+    "is_emergency": 0,
+    "style": "typo",
+    "subcategory": "замок на двери подъезда"
+  },
+  {
+    "text": "Да здравствуйте тут кароче прорвало трубу горячей воды на кухне весь пол кипяток",
+    "category": "water",
+    "is_emergency": 1,
+    "style": "voice",
+    "subcategory": "прорыв трубы ГВС"
+  },
+  {
+    "text": "Здравствуйте у нас на 5 этаже залило квартиру сверху течёт из потолка горячая вода",
+    "category": "water",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "прорыв трубы ГВС"
+  },
+  {
+    "text": "У нас на кухне засор канализации и розлив стоков грязь вокруг что делать",
+    "category": "water",
+    "is_emergency": 1,
+    "style": "emotional",
+    "subcategory": "засор канализации"
+  },
+  {
+    "text": "Привет я тут слышу скрип и стук из стены на кухне вода течёт",
+    "category": "water",
+    "is_emergency": 1,
+    "style": "voice",
+    "subcategory": "прорыв трубы"
+  },
+  {
+    "text": "Здравствуйте у нас на 2 этаже прорвало трубу холодной воды полы подтоплены",
+    "category": "water",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "прорыв трубы ХВС"
+  },
+  {
+    "text": "На кухне течёт вода из под раковины пол вода что делать срочно",
+    "category": "water",
+    "is_emergency": 1,
+    "style": "emotional",
+    "subcategory": "прорыв трубы"
+  },
+  {
+    "text": "Здравствуйте у нас на кухне лопнула труба холодной воды",
+    "category": "water",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "прорыв трубы ХВС"
+  },
+  {
+    "text": "У нас на кухне вода хлещет из трубы холодной воды",
+    "category": "water",
+    "is_emergency": 1,
+    "style": "emotional",
+    "subcategory": "прорыв трубы ХВС"
+  },
+  {
+    "text": "Привет у нас на 4 этаже в квартире затопило сверху холодная вода течёт из потолка",
+    "category": "water",
+    "is_emergency": 1,
+    "style": "voice",
+    "subcategory": "прорыв трубы ХВС"
+  },
+  {
+    "text": "Здравствуйте у нас на кухне засорился сток и вода розлилась по полу",
+    "category": "water",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "засор канализации"
+  },
+  {
+    "text": "Добрый день, в лифте на 5 этаже не работает панель вызова.",
+    "category": "lift",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "кнопки вызова"
+  },
+  {
+    "text": "Привет, лифт на первом этаже шумит как будто подводная лодка.",
+    "category": "lift",
+    "is_emergency": 0,
+    "style": "voice",
+    "subcategory": "шум"
+  },
+  {
+    "text": "Здравствуйте, в лифте на 7 этаже не светят лампочки.",
+    "category": "lift",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "освещение"
+  },
+  {
+    "text": "лёл у нас лифт на 4 этаже кнопка не горит",
+    "category": "lift",
+    "is_emergency": 0,
+    "style": "typo",
+    "subcategory": "кнопки вызова"
+  },
+  {
+    "text": "Лифт на 2 этаже шумит и дергается пугает детей!",
+    "category": "lift",
+    "is_emergency": 0,
+    "style": "emotional",
+    "subcategory": "шум"
+  },
+  {
+    "text": "Лифт на 9 этаже не открывается дверь.",
+    "category": "lift",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "дверь"
+  },
+  {
+    "text": "в лифте на 6 этаже кнопки не светятся",
+    "category": "lift",
+    "is_emergency": 0,
+    "style": "typo",
+    "subcategory": "кнопки вызова"
+  },
+  {
+    "text": "Лифт на 3 этаже издаёт странные звуки.",
+    "category": "lift",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "шум"
+  },
+  {
+    "text": "добрый вечер у нас на 1 этаже лифт щёлкает",
+    "category": "lift",
+    "is_emergency": 0,
+    "style": "voice",
+    "subcategory": "шум"
+  },
+  {
+    "text": "Добрый день, лифт на 8 этаже не открывается.",
+    "category": "lift",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "дверь"
+  },
+  {
+    "text": "Здравствуйте, в подъезде искрят розетки вызовите аварийку срочно",
+    "category": "light",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "розетки"
+  },
+  {
+    "text": "да здрасьте тут в подъезде щиток горит и дым идет",
+    "category": "light",
+    "is_emergency": 1,
+    "style": "voice",
+    "subcategory": "щитовой"
+  },
+  {
+    "text": "Привет в подвале пошли искры и запах гари",
+    "category": "light",
+    "is_emergency": 1,
+    "style": "typo",
+    "subcategory": "провода"
+  },
+  {
+    "text": "Что вы творите в подъезде щиток горит вызывайте скорее аварийку",
+    "category": "light",
+    "is_emergency": 1,
+    "style": "emotional",
+    "subcategory": "щитовой"
+  },
+  {
+    "text": "подъезд 4 дым из щитовой",
+    "category": "light",
+    "is_emergency": 1,
+    "style": "short",
+    "subcategory": "щитовой"
+  },
+  {
+    "text": "у нас в подъезде щиток горит все перегорело уже",
+    "category": "light",
+    "is_emergency": 1,
+    "style": "voice",
+    "subcategory": "щитовой"
+  },
+  {
+    "text": "В 5 подъезде щитовое помещение искрит и идет дым",
+    "category": "light",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "щитовой"
+  },
+  {
+    "text": "тут дым идет в подъезде ужас какой то",
+    "category": "light",
+    "is_emergency": 1,
+    "style": "emotional",
+    "subcategory": "щитовой"
+  },
+  {
+    "text": "привет щиток горит вызовите АДС",
+    "category": "light",
+    "is_emergency": 1,
+    "style": "typo",
+    "subcategory": "щитовой"
+  },
+  {
+    "text": "в 3 подъезде щиток горит вызовите аварийку срочно",
+    "category": "light",
+    "is_emergency": 1,
+    "style": "short",
+    "subcategory": "щитовой"
+  },
+  {
+    "text": "Здравствуйте, застрял в лифте на 5 этаже срочно вызовите АДС!",
+    "category": "lift",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "застрял человек"
+  },
+  {
+    "text": "да здравствуйте тут кароче лифт застрял на четвертом этаже уже 20 минут",
+    "category": "lift",
+    "is_emergency": 1,
+    "style": "voice",
+    "subcategory": "застрял человек"
+  },
+  {
+    "text": "лифт не работает на 9 этаже вызовите спецов двери не открываются",
+    "category": "lift",
+    "is_emergency": 1,
+    "style": "typo",
+    "subcategory": "не работает"
+  },
+  {
+    "text": "Лифт застрял на 5 этаже уже 30 минут!!! Немедленно пришлите помощь!",
+    "category": "lift",
+    "is_emergency": 1,
+    "style": "emotional",
+    "subcategory": "застрял человек"
+  },
+  {
+    "text": "Звоню в 3 подъезд лифт застрял на первом этаже",
+    "category": "lift",
+    "is_emergency": 1,
+    "style": "short",
+    "subcategory": "застрял человек"
+  },
+  {
+    "text": "Здравствуйте, в лифте 2 подъезда слышны странные шумы и запах гари.",
+    "category": "lift",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "шумы и запах гари"
+  },
+  {
+    "text": "тут лифт шумит как реактивный самолет и пахнет гари на 7 этаже",
+    "category": "lift",
+    "is_emergency": 1,
+    "style": "voice",
+    "subcategory": "шумы и запах гари"
+  },
+  {
+    "text": "лифт в 1 подъезде шумит и дымит вызовите пожарных",
+    "category": "lift",
+    "is_emergency": 1,
+    "style": "typo",
+    "subcategory": "шумы и запах гари"
+  },
+  {
+    "text": "Лифт в 4 подъезде дымит и горит вызовите пожарных немедленно!",
+    "category": "lift",
+    "is_emergency": 1,
+    "style": "emotional",
+    "subcategory": "шумы и запах гари"
+  },
+  {
+    "text": "дым в лифте 5 подъезд",
+    "category": "lift",
+    "is_emergency": 1,
+    "style": "short",
+    "subcategory": "шумы и запах гари"
+  },
+  {
+    "text": "Здравствуйте, у нас лопнул радиатор в квартире 34 вода течет потоком вызовите аварийную службу срочно.",
+    "category": "heating",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "лопнувший радиатор"
+  },
+  {
+    "text": "да привет у нас в квартире 12 на 5 этаже батарея разошлась водяная срочно помогите тут беда",
+    "category": "heating",
+    "is_emergency": 1,
+    "style": "voice",
+    "subcategory": "разошедшаяся батарея"
+  },
+  {
+    "text": "привет у нас в квартире 21 на 4 этаже прорвало стояк отопления вызовите аварийщиков срочно тут потоп",
+    "category": "heating",
+    "is_emergency": 1,
+    "style": "typo",
+    "subcategory": "прорыв стояка отопления"
+  },
+  {
+    "text": "Добрый вечер, на 3 этаже потекло отопление из стояка, вызовите аварийную службу, у нас потоп!",
+    "category": "heating",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "течение стояка отопления"
+  },
+  {
+    "text": "привет в квартире 15 батарея начала сильно парить вызовите аварийных а то еще лопнет",
+    "category": "heating",
+    "is_emergency": 1,
+    "style": "voice",
+    "subcategory": "парение батареи"
+  },
+  {
+    "text": "Добрый день, в квартире 7 на 2 этаже лопнула батарея, потоп. Пришлите аварийную службу немедленно!",
+    "category": "heating",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "лопнувшая батарея"
+  },
+  {
+    "text": "привет у нас в квартире 33 на 6 этаже прорвало стояк отопления зовите аварийных срочно",
+    "category": "heating",
+    "is_emergency": 1,
+    "style": "typo",
+    "subcategory": "прорыв стояка отопления"
+  },
+  {
+    "text": "Здравствуйте, в квартире 18 на 4 этаже батарея распаялась вода льется срочно вызовите аварийную службу.",
+    "category": "heating",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "распаявшаяся батарея"
+  },
+  {
+    "text": "привет у нас в квартире 10 на 3 этаже разошлась батарея вода льется вызовите аварийных срочно",
+    "category": "heating",
+    "is_emergency": 1,
+    "style": "voice",
+    "subcategory": "разошедшаяся батарея"
+  },
+  {
+    "text": "Добрый день, в квартире 25 на 7 этаже прорвало стояк отопления, вызовите аварийную службу, тут потоп!",
+    "category": "heating",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "прорыв стояка отопления"
+  },
+  {
+    "text": "Здравствуйте, на первом этаже перегорела лампочка в холле.",
+    "category": "light",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "освещение этажа"
+  },
+  {
+    "text": "Здравствуйте, в подъезде на втором этаже не горит лампа.",
+    "category": "light",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "освещение этажа"
+  },
+  {
+    "text": "привет у нас на 5 этаже погасла лампочка в подъездном коридоре",
+    "category": "light",
+    "is_emergency": 0,
+    "style": "voice",
+    "subcategory": "освещение этажа"
+  },
+  {
+    "text": "здрасте там у нас свет в лифтовом холле не работает",
+    "category": "light",
+    "is_emergency": 0,
+    "style": "voice",
+    "subcategory": "освещение этажа"
+  },
+  {
+    "text": "В подъезде на 4 этаже перегорела люстра.",
+    "category": "light",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "освещение этажа"
+  },
+  {
+    "text": "привет лампочка в подъезде на 3 этаже не горит уже неделю",
+    "category": "light",
+    "is_emergency": 0,
+    "style": "voice",
+    "subcategory": "освещение этажа"
+  },
+  {
+    "text": "Здравствуйте, в подъезде на 6 этаже перестала гореть лампочка.",
+    "category": "light",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "освещение этажа"
+  },
+  {
+    "text": "привет от неё там у нас на 7 этаже свет погас",
+    "category": "light",
+    "is_emergency": 0,
+    "style": "voice",
+    "subcategory": "освещение этажа"
+  },
+  {
+    "text": "здрасте перегорела лампочка в подъезде на 2 этаже",
+    "category": "light",
+    "is_emergency": 0,
+    "style": "voice",
+    "subcategory": "освещение этажа"
+  },
+  {
+    "text": "Здравствуйте, в подъезде на 8 этаже не горит лампочка уже несколько дней.",
+    "category": "light",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "освещение этажа"
+  },
+  {
+    "text": "Здравствуйте, в подъезде 2 на 4 этаже упал огромный кусок штукатурки.",
+    "category": "cleaning",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "грязь в подъезде"
+  },
+  {
+    "text": "Привет, у нас в подъезде на ступеньках лед, люди падают, скорее приезжайте!",
+    "category": "cleaning",
+    "is_emergency": 1,
+    "style": "voice",
+    "subcategory": "грязь в подъезде"
+  },
+  {
+    "text": "Добрый день, во дворе у подъезда 3 образовалась огромная лужа с талой водой.",
+    "category": "cleaning",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "чистота двора"
+  },
+  {
+    "text": "Хелп, во дворе у подъезда 4 гора мусора, люди не могут выйти на улицу.",
+    "category": "cleaning",
+    "is_emergency": 1,
+    "style": "emotional",
+    "subcategory": "мусор на дворовой территории"
+  },
+  {
+    "text": "Добрый вечер, во дворе у подъезда 1 образовалась огромная куча мусора.",
+    "category": "cleaning",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "мусор на дворовой территории"
+  },
+  {
+    "text": "Простите, но в мусоропроводе на 5 этаже застрял мусор, армия мух!",
+    "category": "cleaning",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "затор мусоропровода"
+  },
+  {
+    "text": "Эй, у нас в подъезде 2 мусор не вывозят уже неделю, вонь стоит невыносимая.",
+    "category": "cleaning",
+    "is_emergency": 1,
+    "style": "emotional",
+    "subcategory": "мусор в подъезде"
+  },
+  {
+    "text": "Привет, в подъезде у нас подтекает крыша, прямо над входом.",
+    "category": "cleaning",
+    "is_emergency": 1,
+    "style": "voice",
+    "subcategory": "грязь в подъезде"
+  },
+  {
+    "text": "Срочно, на 2 этаже подъезда 3 пролилась канализация, вонь нестерпимая.",
+    "category": "cleaning",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "канализационные стоки в подъезде"
+  },
+  {
+    "text": "Помогите, во дворе у подъезда 4 куча мусора, соседи жалуются на запах.",
+    "category": "cleaning",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "мусор на дворовой территории"
+  },
+  {
+    "text": "Здравствуйте, в квартире слабый напор холодной воды, не хватает для нормального пользования.",
+    "category": "water",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "напор воды"
+  },
+  {
+    "text": "Привет, ванную затопило, но вроде всё под контролем, вызовите сантехника.",
+    "category": "water",
+    "is_emergency": 0,
+    "style": "voice",
+    "subcategory": "затопление"
+  },
+  {
+    "text": "У нас на 4 этаже в ванной еле течёт горячая вода.",
+    "category": "water",
+    "is_emergency": 0,
+    "style": "voice",
+    "subcategory": "напор воды"
+  },
+  {
+    "text": "Привет, в квартире 12 ванная воняет, похоже засор канализации.",
+    "category": "water",
+    "is_emergency": 0,
+    "style": "voice",
+    "subcategory": "засор канализации"
+  },
+  {
+    "text": "Добрый день, в подвале капает из крана, похоже где-то протекает.",
+    "category": "water",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "протечка"
+  },
+  {
+    "text": "эй в кухне из крана воняет канализацией вызовите кого-нибудь",
+    "category": "water",
+    "is_emergency": 0,
+    "style": "typo",
+    "subcategory": "засор канализации"
+  },
+  {
+    "text": "Здравствуйте, в квартире 24 слабый напор горячей воды, помогите пожалуйста.",
+    "category": "water",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "напор воды"
+  },
+  {
+    "text": "привет из крана в квартире 5 течёт холодная вода с ржавчиной",
+    "category": "water",
+    "is_emergency": 0,
+    "style": "typo",
+    "subcategory": "качество воды"
+  },
+  {
+    "text": "Добрый вечер, в квартире 21 из крана течёт ледяная вода, что делать?",
+    "category": "water",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "температура воды"
+  },
+  {
+    "text": "кароче пытаемся смыть в унитазе, а вода вообще не уходит, вызовите сантехника!",
+    "category": "water",
+    "is_emergency": 0,
+    "style": "emotional",
+    "subcategory": "засор канализации"
+  },
+  {
+    "text": "Дверь подъезда заблокирована не могу выйти на улицу срочно нужна помощь",
+    "category": "door",
+    "is_emergency": 1,
+    "style": "emotional",
+    "subcategory": "дверь подъезда"
+  },
+  {
+    "text": "Дверь подъезда застряла не открывается пожалуйста приезжайте срочно",
+    "category": "door",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "дверь подъезда"
+  },
+  {
+    "text": "да здравствуйте тут дверь подъезда не открывается стучу а она не двигается",
+    "category": "door",
+    "is_emergency": 1,
+    "style": "voice",
+    "subcategory": "дверь подъезда"
+  },
+  {
+    "text": "Дверь подъезда сломалась не могу выйти на улицу вызывайте аварийку",
+    "category": "door",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "дверь подъезда"
+  },
+  {
+    "text": "пожалуйста пришлите кого нибудь дверь подъезда не открывается у меня маленький ребенок",
+    "category": "door",
+    "is_emergency": 1,
+    "style": "emotional",
+    "subcategory": "дверь подъезда"
+  },
+  {
+    "text": "Дверь подъезда заела не могу выйти срочно нужна помощь",
+    "category": "door",
+    "is_emergency": 1,
+    "style": "short",
+    "subcategory": "дверь подъезда"
+  },
+  {
+    "text": "Дверь подъезда не поддается не открывается срочно вызывайте мастера",
+    "category": "door",
+    "is_emergency": 1,
+    "style": "emotional",
+    "subcategory": "дверь подъезда"
+  },
+  {
+    "text": "Дверь подъезда не открыть не закрыть срочно нужна помощь",
+    "category": "door",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "дверь подъезда"
+  },
+  {
+    "text": "Дверь подъезда застопорилась не двигается срочно вызывайте аварийную службу",
+    "category": "door",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "дверь подъезда"
+  },
+  {
+    "text": "помогите дверь подъезда не поддается я в панике",
+    "category": "door",
+    "is_emergency": 1,
+    "style": "emotional",
+    "subcategory": "дверь подъезда"
+  },
+  {
+    "text": "Добрый день срочно на 5 этаже осыпаются кирпичи с фасада",
+    "category": "other",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "фасад"
+  },
+  {
+    "text": "алло вы не видите что на чердаке крыша потекла тут все залито!",
+    "category": "other",
+    "is_emergency": 1,
+    "style": "voice",
+    "subcategory": "кровля"
+  },
+  {
+    "text": "Добрый вечер Крыша протекает на 2 этаже срочно приезжайте!",
+    "category": "other",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "кровля"
+  },
+  {
+    "text": "на балконе Si2 течет вода с крыши уже все промокло",
+    "category": "other",
+    "is_emergency": 1,
+    "style": "typo",
+    "subcategory": "кровля"
+  },
+  {
+    "text": "Помогите на 4 этаже балкон провалился частично",
+    "category": "other",
+    "is_emergency": 1,
+    "style": "emotional",
+    "subcategory": "балкон"
+  },
+  {
+    "text": "Кирпичи с фасада падают на тротуар 3 подъезд",
+    "category": "other",
+    "is_emergency": 1,
+    "style": "short",
+    "subcategory": "фасад"
+  },
+  {
+    "text": "Ужас что происходит на крыше течет как из ведра!",
+    "category": "other",
+    "is_emergency": 1,
+    "style": "emotional",
+    "subcategory": "кровля"
+  },
+  {
+    "text": "Добрый день на балконе 4 этажа образовалась большая ледяная сосулька",
+    "category": "other",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "сосульки"
+  },
+  {
+    "text": "Тут на крыше все течет и протекает срочно приезжайте!",
+    "category": "other",
+    "is_emergency": 1,
+    "style": "voice",
+    "subcategory": "кровля"
+  },
+  {
+    "text": "Срочно на 6 этаже фасад разрушается кирпичи летят",
+    "category": "other",
+    "is_emergency": 1,
+    "style": "emotional",
+    "subcategory": "фасад"
+  },
+  {
+    "text": "Добрый день, на 5 этаже шумит доводчик двери.",
+    "category": "door",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "доводчик двери"
+  },
+  {
+    "text": "Привет здравствуйте я тут из 12 квартиры у нас не работает домофон",
+    "category": "door",
+    "is_emergency": 0,
+    "style": "voice",
+    "subcategory": "домофон"
+  },
+  {
+    "text": "У нас на 3 этаже сломалась дверь подвала нужна замена",
+    "category": "door",
+    "is_emergency": 0,
+    "style": "typo",
+    "subcategory": "дверь подвала"
+  },
+  {
+    "text": "Здравствуйте вわけではない но на 7 этаже хлопает дверь от сквозняка",
+    "category": "door",
+    "is_emergency": 0,
+    "style": "emotional",
+    "subcategory": "дверь этажа"
+  },
+  {
+    "text": "на 9 этаже дверь закрывается с усилием",
+    "category": "door",
+    "is_emergency": 0,
+    "style": "short",
+    "subcategory": "дверь этажа"
+  },
+  {
+    "text": "Добрый день, домофон в подъезде не работает, даже кнопки не светятся.",
+    "category": "door",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "домофон"
+  },
+  {
+    "text": "Привет дверь в подвале постоянно заедает",
+    "category": "door",
+    "is_emergency": 0,
+    "style": "voice",
+    "subcategory": "дверь подвала"
+  },
+  {
+    "text": "На 2 этаже отошла панель домофона нужна регулировка",
+    "category": "door",
+    "is_emergency": 0,
+    "style": "typo",
+    "subcategory": "домофон"
+  },
+  {
+    "text": "Да вы чё там у себя у меня домофон уже неделю не работает угрожаю жалобой",
+    "category": "door",
+    "is_emergency": 0,
+    "style": "emotional",
+    "subcategory": "домофон"
+  },
+  {
+    "text": "дверь подвала скрипит",
+    "category": "door",
+    "is_emergency": 0,
+    "style": "short",
+    "subcategory": "дверь подвала"
+  },
+  {
+    "text": "Добрый день, лифт на 4 этаже не работает.",
+    "category": "lift",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "не работает"
+  },
+  {
+    "text": "Привет, у нас на 5 этаже лифт не едет.",
+    "category": "lift",
+    "is_emergency": 0,
+    "style": "voice",
+    "subcategory": "не работает"
+  },
+  {
+    "text": "Да здравствуйте, лифт на 3 этаже не открывает двери.",
+    "category": "lift",
+    "is_emergency": 0,
+    "style": "voice",
+    "subcategory": "не работает"
+  },
+  {
+    "text": "Здравствуйте, лифт шумит на 7 этаже.",
+    "category": "lift",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "шумы"
+  },
+  {
+    "text": "Привет, лифт громко шумит на 9 этаже.",
+    "category": "lift",
+    "is_emergency": 0,
+    "style": "voice",
+    "subcategory": "шумы"
+  },
+  {
+    "text": "На 2 этаже лифт не вызывается кнопка не работает.",
+    "category": "lift",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "кнопки"
+  },
+  {
+    "text": "Привет, кнопка вызова лифта на 6 этаже не работает.",
+    "category": "lift",
+    "is_emergency": 0,
+    "style": "voice",
+    "subcategory": "кнопки"
+  },
+  {
+    "text": "Добрый день, лифт на 1 этаже заедает при закрытии двери.",
+    "category": "lift",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "не работает"
+  },
+  {
+    "text": "Привет, двери лифта на 8 этаже заедают.",
+    "category": "lift",
+    "is_emergency": 0,
+    "style": "voice",
+    "subcategory": "не работает"
+  },
+  {
+    "text": "Здравствуйте, шум в лифте на 10 этаже стал невыносимым.",
+    "category": "lift",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "шумы"
+  },
+  {
+    "text": "Здравствуйте, на балконе у меня скопилась вода после дождя.",
+    "category": "other",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "балкон"
+  },
+  {
+    "text": "привет у нас на фасаде отвалилась часть штукатурки",
+    "category": "other",
+    "is_emergency": 0,
+    "style": "typo",
+    "subcategory": "фасад"
+  },
+  {
+    "text": "Здравствуйте, на 4 этаже отвалилась плитка на стенах.",
+    "category": "other",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "общее имущество"
+  },
+  {
+    "text": "на крыше скопился мусор и листья",
+    "category": "other",
+    "is_emergency": 0,
+    "style": "short",
+    "subcategory": "кровля"
+  },
+  {
+    "text": "Здравствуйте, у нас на балконе образовались сосульки.",
+    "category": "other",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "сосульки"
+  },
+  {
+    "text": "эй у нас тут на фасаде трещины пошли",
+    "category": "other",
+    "is_emergency": 0,
+    "style": "voice",
+    "subcategory": "фасад"
+  },
+  {
+    "text": "Здравствуйте, на 5 этаже слетела дверная ручка.",
+    "category": "other",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "общее имущество"
+  },
+  {
+    "text": "на балконе отваливается кусок стены",
+    "category": "other",
+    "is_emergency": 0,
+    "style": "short",
+    "subcategory": "балкон"
+  },
+  {
+    "text": "Здравствуйте, на крыше протекает вода, просим принять меры.",
+    "category": "other",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "кровля"
+  },
+  {
+    "text": "на фасаде трещины и осыпающаяся штукатурка",
+    "category": "other",
+    "is_emergency": 0,
+    "style": "short",
+    "subcategory": "фасад"
+  },
+  {
+    "text": "Здравствуйте, лифт на 5 этаже не открывается дверь.",
+    "category": "lift",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "двери лифта"
+  },
+  {
+    "text": "Да здравствуйте у нас лифт не работает на втором этаже",
+    "category": "lift",
+    "is_emergency": 0,
+    "style": "voice",
+    "subcategory": "работа лифта"
+  },
+  {
+    "text": "Приехали вчера вечером лифт не поднимается выше 3 этажа",
+    "category": "lift",
+    "is_emergency": 0,
+    "style": "typo",
+    "subcategory": "работа лифта"
+  },
+  {
+    "text": "Эй, у нас лифт не опускается ниже 4 этажа, вы че там!",
+    "category": "lift",
+    "is_emergency": 0,
+    "style": "emotional",
+    "subcategory": "работа лифта"
+  },
+  {
+    "text": "Лифт не реагирует на кнопки 2 подъезд",
+    "category": "lift",
+    "is_emergency": 0,
+    "style": "short",
+    "subcategory": "кнопки лифта"
+  },
+  {
+    "text": "Здравствуйте, в лифте на 7 этаже неработает кнопка вызова.",
+    "category": "lift",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "кнопки лифта"
+  },
+  {
+    "text": "Привет, у нас лифт шумит при спуске с 9 этажа",
+    "category": "lift",
+    "is_emergency": 0,
+    "style": "voice",
+    "subcategory": "шум лифта"
+  },
+  {
+    "text": "Лифт гудит как самолет на 6 этаже",
+    "category": "lift",
+    "is_emergency": 0,
+    "style": "typo",
+    "subcategory": "шум лифта"
+  },
+  {
+    "text": "Ужас, с утра лифт громко шумит и пугает всех!",
+    "category": "lift",
+    "is_emergency": 0,
+    "style": "emotional",
+    "subcategory": "шум лифта"
+  },
+  {
+    "text": "Лифт застрял между 3 и 4 этажами",
+    "category": "lift",
+    "is_emergency": 0,
+    "style": "short",
+    "subcategory": "работа лифта"
+  },
+  {
+    "text": "Здравствуйте, в подвале искрят провода с дымом, нужен срочный выезд!",
+    "category": "light",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "искрение проводов"
+  },
+  {
+    "text": "Да здравствуйте тут кароче в щитовой искрит и дымит!",
+    "category": "light",
+    "is_emergency": 1,
+    "style": "voice",
+    "subcategory": "искрение в щитовой"
+  },
+  {
+    "text": "Во дворе у д.12 разорвало кабель освещения идет дым!",
+    "category": "light",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "разрыв кабеля"
+  },
+  {
+    "text": "Здравствуйте, в подъезде 4 щиток горит, видно пламя!",
+    "category": "light",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "пожар щитовой"
+  },
+  {
+    "text": "Ээй в подвале дым идет из розетки бегите скорее!",
+    "category": "light",
+    "is_emergency": 1,
+    "style": "voice",
+    "subcategory": "искрение розетки"
+  },
+  {
+    "text": "Завоняло гарью в коридоре, подвале искрят провода, вызывайте пожарных!",
+    "category": "light",
+    "is_emergency": 1,
+    "style": "emotional",
+    "subcategory": "искрение проводов"
+  },
+  {
+    "text": "Здравствуйте, в 5 подъезде щиток горит, нужен аварийный выезд!",
+    "category": "light",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "пожар щитовой"
+  },
+  {
+    "text": "Щиток в подъезде 3 искрит, дым, вызываете пожарных?",
+    "category": "light",
+    "is_emergency": 1,
+    "style": "emotional",
+    "subcategory": "искрение в щитовой"
+  },
+  {
+    "text": "В подъезде 2 щиток искрит, дым, зовите пожарных, это опасно!",
+    "category": "light",
+    "is_emergency": 1,
+    "style": "emotional",
+    "subcategory": "искрение в щитовой"
+  },
+  {
+    "text": "Да у нас в подвале провода искрят, дым идет, быстро сюда!",
+    "category": "light",
+    "is_emergency": 1,
+    "style": "voice",
+    "subcategory": "искрение проводов"
+  },
+  {
+    "text": "Здравствуйте, перегорела лампочка в подъезде на 5 этаже.",
+    "category": "light",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "освещение этажа"
+  },
+  {
+    "text": "Привет, на 2 этаже опять нет света в коридоре.",
+    "category": "light",
+    "is_emergency": 0,
+    "style": "voice",
+    "subcategory": "освещение этажа"
+  },
+  {
+    "text": "Добрый день, в подъезде не работает освещение возле лифта.",
+    "category": "light",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "освещение лифтового холла"
+  },
+  {
+    "text": "Девушка, на 6 этаже лампочка в коридоре погасла.",
+    "category": "light",
+    "is_emergency": 0,
+    "style": "voice",
+    "subcategory": "освещение этажа"
+  },
+  {
+    "text": "Привет, в подъезде не горит люстра на 1 этаже.",
+    "category": "light",
+    "is_emergency": 0,
+    "style": "voice",
+    "subcategory": "освещение этажа"
+  },
+  {
+    "text": "Здравствуйте, на 4 этаже не работает свет в подъезде.",
+    "category": "light",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "освещение этажа"
+  },
+  {
+    "text": "Доброе утро, в подвале не горит лампочка.",
+    "category": "light",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "освещение подвала"
+  },
+  {
+    "text": "Привет, в щитовой на 3 этаже искрит предохранитель.",
+    "category": "light",
+    "is_emergency": 0,
+    "style": "voice",
+    "subcategory": "щитовые"
+  },
+  {
+    "text": "Вечер добрый, на 7 этаже опять мигает свет в коридоре.",
+    "category": "light",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "освещение этажа"
+  },
+  {
+    "text": "Здравствуйте, на 1 этаже не горит лампа в холле.",
+    "category": "light",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "освещение лифтового холла"
+  },
+  {
+    "text": "Здравствуйте, в подъезде на 5 этаже залито фекалиями с розливом!",
+    "category": "cleaning",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "грязь в подъезде"
+  },
+  {
+    "text": "Да здравствуйте тут кароче подъезд затопило канализацией не могу войти домой",
+    "category": "cleaning",
+    "is_emergency": 1,
+    "style": "voice",
+    "subcategory": "грязь в подъезде"
+  },
+  {
+    "text": "Ой привет из подъезда идет смрад и течет всякая гадость помогите",
+    "category": "cleaning",
+    "is_emergency": 1,
+    "style": "emotional",
+    "subcategory": "грязь в подъезде"
+  },
+  {
+    "text": "На придомовой территории навалены строительные отходы и мусор",
+    "category": "cleaning",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "мусор на территории"
+  },
+  {
+    "text": "Привет есть проблема в мусоропроводе вонь и гниль что делать",
+    "category": "cleaning",
+    "is_emergency": 1,
+    "style": "voice",
+    "subcategory": "мусоропровод"
+  },
+  {
+    "text": "Эй вы там живы лифт завален мусором и не работает",
+    "category": "cleaning",
+    "is_emergency": 1,
+    "style": "emotional",
+    "subcategory": "мусор в лифте"
+  },
+  {
+    "text": "В подъезде на втором этаже пролил мусор с сильным запахом",
+    "category": "cleaning",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "грязь в подъезде"
+  },
+  {
+    "text": "Извините но детская площадка завалена мусором и бутылками",
+    "category": "cleaning",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "мусор на территории"
+  },
+  {
+    "text": "Да привет у нас во дворе нереальная свалка помогите срочно",
+    "category": "cleaning",
+    "is_emergency": 1,
+    "style": "emotional",
+    "subcategory": "мусор на территории"
+  },
+  {
+    "text": "В мусоропроводе на 7 этаже застрял мусор с неприятным запахом",
+    "category": "cleaning",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "мусоропровод"
+  },
+  {
+    "text": "Здравствуйте, у нас в подъезде не убирают уже неделю.",
+    "category": "cleaning",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "уборка подъезда"
+  },
+  {
+    "text": "привет там у нас в подъездной не мытая уже вторую неделю",
+    "category": "cleaning",
+    "is_emergency": 0,
+    "style": "typo",
+    "subcategory": "уборка подъезда"
+  },
+  {
+    "text": "Здравствуйте, в подъезде со второго по четвертый этажи грязно и пыльно!",
+    "category": "cleaning",
+    "is_emergency": 0,
+    "style": "emotional",
+    "subcategory": "уборка подъезда"
+  },
+  {
+    "text": "В подъезде на первом этаже куча мусора и бумаги",
+    "category": "cleaning",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "мусор подъезда"
+  },
+  {
+    "text": "привет там внизу подъезда валяется куча мусора",
+    "category": "cleaning",
+    "is_emergency": 0,
+    "style": "voice",
+    "subcategory": "мусор подъезда"
+  },
+  {
+    "text": "В мусоропроводе 3 подъезда застрял мешок, пахнет!",
+    "category": "cleaning",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "мусоропровод"
+  },
+  {
+    "text": "Эй, в мусоропроводе застрял мешок, воняет!",
+    "category": "cleaning",
+    "is_emergency": 0,
+    "style": "emotional",
+    "subcategory": "мусоропровод"
+  },
+  {
+    "text": "В дворе возле детской площадки мусор не вывозят уже неделю",
+    "category": "cleaning",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "мусор дворовой территории"
+  },
+  {
+    "text": "привет во дворе у нас мусор повыбрасывали после ремонта",
+    "category": "cleaning",
+    "is_emergency": 0,
+    "style": "voice",
+    "subcategory": "мусор дворовой территории"
+  },
+  {
+    "text": "В подъезде грязь, как в свинарнике, уберите наконец!",
+    "category": "cleaning",
+    "is_emergency": 0,
+    "style": "emotional",
+    "subcategory": "уборка подъезда"
+  },
+  {
+    "text": "Здравствуйте с крыши падают сосульки на проходную дорожку.",
+    "category": "other",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "сосульки"
+  },
+  {
+    "text": "да здравствуйте тут кароче кирпичи с фасада валятся!",
+    "category": "other",
+    "is_emergency": 1,
+    "style": "voice",
+    "subcategory": "фасад"
+  },
+  {
+    "text": "Срочно вызовите АДС отinental отвалы с крыши!",
+    "category": "other",
+    "is_emergency": 1,
+    "style": "typo",
+    "subcategory": "кровля"
+  },
+  {
+    "text": "Помогите крыша течёт вода льётся в коридоре!",
+    "category": "other",
+    "is_emergency": 1,
+    "style": "emotional",
+    "subcategory": "кровля"
+  },
+  {
+    "text": "со стены в подъезде штукатурка осыпается.",
+    "category": "other",
+    "is_emergency": 1,
+    "style": "short",
+    "subcategory": "фасад"
+  },
+  {
+    "text": "Добрый день на балконе 3 этажа балконная дверь застряла.",
+    "category": "other",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "балкон"
+  },
+  {
+    "text": "эй привет там на углу дома фасад обвалился!",
+    "category": "other",
+    "is_emergency": 1,
+    "style": "voice",
+    "subcategory": "фасад"
+  },
+  {
+    "text": "Что творится у вас крыша течёт как дождь идёт!",
+    "category": "other",
+    "is_emergency": 1,
+    "style": "emotional",
+    "subcategory": "кровля"
+  },
+  {
+    "text": "Срочно нужна помощь фасад обвалился на тротуар.",
+    "category": "other",
+    "is_emergency": 1,
+    "style": "typo",
+    "subcategory": "фасад"
+  },
+  {
+    "text": "На балконе 4 подъезд кирпичи осыпаются.",
+    "category": "other",
+    "is_emergency": 1,
+    "style": "short",
+    "subcategory": "балкон"
+  },
+  {
+    "text": "Здравствуйте, в квартире 12 по адресуул. Пушкина, д. 10 прорвало трубу горячей водыквартира затоплена.",
+    "category": "water",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "прорыв трубы ГВС"
+  },
+  {
+    "text": "Привет приехал домой а у меня канализация забилась и ванная вся в сточных водах.",
+    "category": "water",
+    "is_emergency": 1,
+    "style": "voice",
+    "subcategory": "засор канализации"
+  },
+  {
+    "text": "Добрый день по адресуул. Лермонтова, д. 5, кв. 36 прорвало трубу холодной воды вода течет по стенам.",
+    "category": "water",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "прорыв трубы ХВС"
+  },
+  {
+    "text": "Ужас что творится в подвале водопроводная труба лопнула и весь подвал в воде.",
+    "category": "water",
+    "is_emergency": 1,
+    "style": "emotional",
+    "subcategory": "прорыв трубы ХВС"
+  },
+  {
+    "text": "Срочно приезжайте канализация засорилась на кухне и вода не уходит.",
+    "category": "water",
+    "is_emergency": 1,
+    "style": "short",
+    "subcategory": "засор канализации"
+  },
+  {
+    "text": "Добрый вечер на первом этаже по ул. Толстого, д. 8 канализационная труба лопнула вода течет в подвал.",
+    "category": "water",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "прорыв трубы канализации"
+  },
+  {
+    "text": "Приехал домой а у меня в ванной вода из горячего крана льется как из пожарной магистрали вода по всему подъезду.",
+    "category": "water",
+    "is_emergency": 1,
+    "style": "voice",
+    "subcategory": "прорыв трубы ГВС"
+  },
+  {
+    "text": "Эй ау на 4 этаже канализация забилась и вода из унитаза льется на пол.",
+    "category": "water",
+    "is_emergency": 1,
+    "style": "emotional",
+    "subcategory": "засор канализации"
+  },
+  {
+    "text": "Привет приехал домой а у меня в ванной холодная вода вообще не идет.",
+    "category": "water",
+    "is_emergency": 1,
+    "style": "voice",
+    "subcategory": "отсутствие напора ХВС"
+  },
+  {
+    "text": "Ужас что творится в квартире 25 по ул. Добролюбова, д. 7 горячая вода течет из всех щелей.",
+    "category": "water",
+    "is_emergency": 1,
+    "style": "emotional",
+    "subcategory": "прорыв трубы ГВС"
+  },
+  {
+    "text": "Здравствуйте, на 2 этаже шумит доводчик двери в подъезд.",
+    "category": "door",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "доводчик двери"
+  },
+  {
+    "text": "Входная дверь подъезда 1 скрипит при закрывании.",
+    "category": "door",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "дверь подъезда"
+  },
+  {
+    "text": "Привет, домофон не работает на 4 этаже.",
+    "category": "door",
+    "is_emergency": 0,
+    "style": "voice",
+    "subcategory": "домофон"
+  },
+  {
+    "text": "Не работает замок на технической двери в подвале 3 подъезда.",
+    "category": "door",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "замок подвальной двери"
+  },
+  {
+    "text": "Эй, дверь подъезда не закрывается на 5 этаже.",
+    "category": "door",
+    "is_emergency": 0,
+    "style": "voice",
+    "subcategory": "дверь подъезда"
+  },
+  {
+    "text": "Здравствуйте, замок на двери подвала 2 подъезда сломан.",
+    "category": "door",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "замок подвальной двери"
+  },
+  {
+    "text": "Домофон на 1 этаже не открывает дверь.",
+    "category": "door",
+    "is_emergency": 0,
+    "style": "short",
+    "subcategory": "домофон"
+  },
+  {
+    "text": "Здравствуйте, на двери подъезда 3 этажа сломалась ручка.",
+    "category": "door",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "дверь подъезда"
+  },
+  {
+    "text": "Добрый день, доводчик двери 2 подъезда слишком громко хлопает.",
+    "category": "door",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "доводчик двери"
+  },
+  {
+    "text": "Добрый вечер, домофон на 5 этаже постоянно пищит.",
+    "category": "door",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "домофон"
+  },
+  {
+    "text": "Здравствуйте, на фасаде дома отошла штукатурка на 5 этаже.",
+    "category": "other",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "фасад"
+  },
+  {
+    "text": "У нас на балконе подтекает крыша после дождя.",
+    "category": "other",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "кровля"
+  },
+  {
+    "text": "эй слушайте тут на балконе течет от крыши",
+    "category": "other",
+    "is_emergency": 0,
+    "style": "voice",
+    "subcategory": "кровля"
+  },
+  {
+    "text": "в подъезде на 2 этаже сломана дверь балкона",
+    "category": "other",
+    "is_emergency": 0,
+    "style": "short",
+    "subcategory": "балкон"
+  },
+  {
+    "text": "Здравствуйте, на кровле дома образовались сосульки.",
+    "category": "other",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "сосульки"
+  },
+  {
+    "text": "на фасаде дома падает штукатурка подъезд 3",
+    "category": "other",
+    "is_emergency": 0,
+    "style": "short",
+    "subcategory": "фасад"
+  },
+  {
+    "text": "на балконе Apartment 123 подтекает крыша уже третий месяц",
+    "category": "other",
+    "is_emergency": 0,
+    "style": "typo",
+    "subcategory": "кровля"
+  },
+  {
+    "text": "Ужас какой фасад дома осыпается на тротуаре.",
+    "category": "other",
+    "is_emergency": 0,
+    "style": "emotional",
+    "subcategory": "фасад"
+  },
+  {
+    "text": "на балконе лужа после дождя что делать?",
+    "category": "other",
+    "is_emergency": 0,
+    "style": "voice",
+    "subcategory": "кровля"
+  },
+  {
+    "text": "Здравствуйте, на фасаде дома образовались трещины.",
+    "category": "other",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "фасад"
+  },
+  {
+    "text": "Здравствуйте, в квартире на 4 этаже батареи холодные.",
+    "category": "heating",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "температура батарей"
+  },
+  {
+    "text": "Привет из 5 квартиры батарея слегка теплая",
+    "category": "heating",
+    "is_emergency": 0,
+    "style": "voice",
+    "subcategory": "температура батарей"
+  },
+  {
+    "text": "Здравствуйте в 2 подъезде 2 этаже батарея кипятит и свистит",
+    "category": "heating",
+    "is_emergency": 0,
+    "style": "typo",
+    "subcategory": "температура батарей"
+  },
+  {
+    "text": "Батареи холодные в 4 подъезде 7 этаже что непонятного заказывайте тепловые батареи!",
+    "category": "heating",
+    "is_emergency": 0,
+    "style": "emotional",
+    "subcategory": "температура батарей"
+  },
+  {
+    "text": "Батарея холодная 3 подъезд 1 этаж",
+    "category": "heating",
+    "is_emergency": 0,
+    "style": "short",
+    "subcategory": "температура батарей"
+  },
+  {
+    "text": "Добрый день в 3 подъезде на 6 этаже батарея едва теплая.",
+    "category": "heating",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "температура батарей"
+  },
+  {
+    "text": "В 2 подъезде 4 этаже шипит и свистит батарея",
+    "category": "heating",
+    "is_emergency": 0,
+    "style": "voice",
+    "subcategory": "температура батарей"
+  },
+  {
+    "text": "Здравствуйте ну что за НЕПОРЯДОК батареи холодные в 1 подъезде на 5 этаже",
+    "category": "heating",
+    "is_emergency": 0,
+    "style": "emotional",
+    "subcategory": "температура батарей"
+  },
+  {
+    "text": "Батарея слегка теплая 5 подъезд 8 этаж",
+    "category": "heating",
+    "is_emergency": 0,
+    "style": "short",
+    "subcategory": "температура батарей"
+  },
+  {
+    "text": "Здравствуйте, в квартире на 3 этаже батарея совсем холодная.",
+    "category": "heating",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "температура батарей"
+  },
+  {
+    "text": "Здравствуйте, человек застрял в лифте 5 минут уже кричит на весь подъезд скорее приезжайте!",
+    "category": "lift",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "человек застрял в лифте"
+  },
+  {
+    "text": "Здравствуйте, лифт сломался между 1 и 2 этажом стучусь уже 10 минут откройте скорее!",
+    "category": "lift",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "человек застрял в лифте"
+  },
+  {
+    "text": "да здравствуйте тут кароче лифт застрял с человеком на 3 этаже из подъезда не выпускает",
+    "category": "lift",
+    "is_emergency": 1,
+    "style": "voice",
+    "subcategory": "человек застрял в лифте"
+  },
+  {
+    "text": "здрвстуйте тут лифт не работает совсем едет на половину этажа",
+    "category": "lift",
+    "is_emergency": 1,
+    "style": "typo",
+    "subcategory": "лифт не работает"
+  },
+  {
+    "text": "Вы что там спите лифт на 6 этаже не работает уже 2 часа люди не могут выйти!",
+    "category": "lift",
+    "is_emergency": 1,
+    "style": "emotional",
+    "subcategory": "лифт не работает"
+  },
+  {
+    "text": "Стучу в лифт уже 5 минут никого нет только эхо у меня диабет нужно срочно вызвать скорую",
+    "category": "lift",
+    "is_emergency": 1,
+    "style": "emotional",
+    "subcategory": "человек застрял в лифте"
+  },
+  {
+    "text": "Лифт остановился между 3 и 4 этажом люди кричат приезжайте скорее!",
+    "category": "lift",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "человек застрял в лифте"
+  },
+  {
+    "text": "Человек застрял в лифте уже 7 минут вызовите аварийную службу!",
+    "category": "lift",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "человек застрял в лифте"
+  },
+  {
+    "text": "Лифт не работает с утра люди страдают уже 4 часа в ответ тишина!",
+    "category": "lift",
+    "is_emergency": 1,
+    "style": "emotional",
+    "subcategory": "лифт не работает"
+  },
+  {
+    "text": "Человек застрял в лифте на 2 этаже уже 8 минут вызовите скорую!",
+    "category": "lift",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "человек застрял в лифте"
+  },
+  {
+    "text": "Здравствуйте, прорвало стояк отопления на -1 этаже льет как из пожарной машины воды!",
+    "category": "heating",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "прорыв стояка"
+  },
+  {
+    "text": "да здравствуйте тут кароче лопнул радиатор у входа в дом жуткий пар идет",
+    "category": "heating",
+    "is_emergency": 1,
+    "style": "voice",
+    "subcategory": "лопнувший радиатор"
+  },
+  {
+    "text": "у вас щас щиток с дымом горит такая вонь как от паленой проводки",
+    "category": "heating",
+    "is_emergency": 1,
+    "style": "typo",
+    "subcategory": "горящий щиток"
+  },
+  {
+    "text": "Эй, вы там слышите? Радиатор в мороз треснул, вся квартира тонет!",
+    "category": "heating",
+    "is_emergency": 1,
+    "style": "emotional",
+    "subcategory": "лопнувший радиатор"
+  },
+  {
+    "text": "приехали радиатор потек в коридоре кипяток вытекает",
+    "category": "heating",
+    "is_emergency": 1,
+    "style": "short",
+    "subcategory": "потекший радиатор"
+  },
+  {
+    "text": "Здравствуйте, в подвале щиток с искрами и запахом гари, страшно в доме находиться!",
+    "category": "heating",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "горящий щиток"
+  },
+  {
+    "text": "вы че там уснули радиатор лопнул на улице -20 езжайте срочно",
+    "category": "heating",
+    "is_emergency": 1,
+    "style": "emotional",
+    "subcategory": "лопнувший радиатор"
+  },
+  {
+    "text": "закипает вода в трубах на 4 этаже пар идет в квартиру",
+    "category": "heating",
+    "is_emergency": 1,
+    "style": "short",
+    "subcategory": "перегрев системы"
+  },
+  {
+    "text": "добрый день, в квартире No 12 на 5 этаже батарея треснула, кипяток вытекает",
+    "category": "heating",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "лопнувший радиатор"
+  },
+  {
+    "text": "таааак народ ща начнется пар из труб парит все как баня жить невозможно!",
+    "category": "heating",
+    "is_emergency": 1,
+    "style": "emotional",
+    "subcategory": "перегрев системы"
+  },
+  {
+    "text": "Здравствуйте, на 5 этаже перегорела лампочка в коридоре.",
+    "category": "light",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "освещение этажа"
+  },
+  {
+    "text": "Привет, в подъезде не горит фонарь между 1 и 2 этажами.",
+    "category": "light",
+    "is_emergency": 0,
+    "style": "voice",
+    "subcategory": "освещение подъезда"
+  },
+  {
+    "text": "Здравствуйте, пульт аварийного отключения на 1 этаже не работает.",
+    "category": "light",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "щитовые"
+  },
+  {
+    "text": "привет блин перегорел свет в подвале)",
+    "category": "light",
+    "is_emergency": 0,
+    "style": "typo",
+    "subcategory": "освещение подвала"
+  },
+  {
+    "text": "Здравствуйте, на 3 этаже моргает свет, погаснет-включится.",
+    "category": "light",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "освещение этажа"
+  },
+  {
+    "text": "Привет, в щитовой на 1 этаже щелкает какой-то выключатель.",
+    "category": "light",
+    "is_emergency": 0,
+    "style": "voice",
+    "subcategory": "щитовые"
+  },
+  {
+    "text": "Здравствуйте, лампочка в подъездном фонаре перегорела.",
+    "category": "light",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "освещение подъезда"
+  },
+  {
+    "text": "привет вчера заметил что на 4 этаже мигает свет",
+    "category": "light",
+    "is_emergency": 0,
+    "style": "typo",
+    "subcategory": "освещение этажа"
+  },
+  {
+    "text": "Здравствуйте, в подвале на 2 секции не горит лампа над щитовой.",
+    "category": "light",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "освещение подвала"
+  },
+  {
+    "text": "привет у нас в подъезде на 1 этаже не горит верхняя лампа",
+    "category": "light",
+    "is_emergency": 0,
+    "style": "typo",
+    "subcategory": "освещение подъезда"
+  },
+  {
+    "text": "Да здравствуйте тут кароче в подъезде куча мусора и кошачий туалет",
+    "category": "cleaning",
+    "is_emergency": 1,
+    "style": "voice",
+    "subcategory": "мусор в подъезде"
+  },
+  {
+    "text": "Добрый день в подъезде полный хаос мусор не вывозят уже 3 дня",
+    "category": "cleaning",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "мусор подъезда"
+  },
+  {
+    "text": "В подъезде творится катастрофа грязь и мусор там уже всё засорено",
+    "category": "cleaning",
+    "is_emergency": 1,
+    "style": "emotional",
+    "subcategory": "грязь в подъезде"
+  },
+  {
+    "text": "Позвоните вы срочно самосвал пришлите мусоропровод забит под завязку",
+    "category": "cleaning",
+    "is_emergency": 1,
+    "style": "emotional",
+    "subcategory": "мусоропровод"
+  },
+  {
+    "text": "Во дворе творится безобразие отходы лежат без присмотра",
+    "category": "cleaning",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "мусор во дворе"
+  },
+  {
+    "text": "Здравствуйте во дворе мусор не убирают уже неделю",
+    "category": "cleaning",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "мусор во дворе"
+  },
+  {
+    "text": "Что происходит Двор просто ужас мусор повсюду",
+    "category": "cleaning",
+    "is_emergency": 1,
+    "style": "emotional",
+    "subcategory": "мусор во дворе"
+  },
+  {
+    "text": "Помогите срочно в подъезде мусор заблокировал лестницу",
+    "category": "cleaning",
+    "is_emergency": 1,
+    "style": "emotional",
+    "subcategory": "мусор в подъезде"
+  },
+  {
+    "text": "Мусоропровод забит не работает уже третий день",
+    "category": "cleaning",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "мусоропровод"
+  },
+  {
+    "text": "Подъезд в ужасном состоянии грязь и мусор везде",
+    "category": "cleaning",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "грязь в подъезде"
+  },
+  {
+    "text": "Да здравствуйте тут кароче прорвало трубу горячей воды на кухне потоп!",
+    "category": "water",
+    "is_emergency": 1,
+    "style": "voice",
+    "subcategory": "прорыв трубы ГВС"
+  },
+  {
+    "text": "Ой привет тут у нас горячая вода хлещет как из пожарной машины на 4 этаже!",
+    "category": "water",
+    "is_emergency": 1,
+    "style": "voice",
+    "subcategory": "прорыв трубы ГВС"
+  },
+  {
+    "text": "Здравствуйте, на 7 этаже прорвало трубу холодной воды. Вода заливает квартиру и стекает вниз.",
+    "category": "water",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "прорыв трубы ХВС"
+  },
+  {
+    "text": "Привет, у нас канализация засорилась, стоки рвутся из унитаза, вонь несусветная!",
+    "category": "water",
+    "is_emergency": 1,
+    "style": "emotional",
+    "subcategory": "засор канализации"
+  },
+  {
+    "text": "На десятом этаже лопнула труба горячей воды. Вода хлещет во все стороны!",
+    "category": "water",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "прорыв трубы ГВС"
+  },
+  {
+    "text": "Эй, у нас канализация засорилась, стоки просачиваются через пол. Срочно叫！",
+    "category": "water",
+    "is_emergency": 1,
+    "style": "emotional",
+    "subcategory": "засор канализации"
+  },
+  {
+    "text": "Добрый день, у нас на 2 этаже прорвало трубу холодной воды, вода заливает лестничную площадку.",
+    "category": "water",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "прорыв трубы ХВС"
+  },
+  {
+    "text": "Привет, у нас в подвале потоп, вода заливает все помещения. Пожалуйста, приезжайте быстрее!",
+    "category": "water",
+    "is_emergency": 1,
+    "style": "emotional",
+    "subcategory": "потоп в подвале"
+  },
+  {
+    "text": "Здравствуйте, на 5 этаже прорвало трубу горячей воды, вода течет по всему коридору.",
+    "category": "water",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "прорыв трубы ГВС"
+  },
+  {
+    "text": "Завтра убью кого-то, если вы не приедете! У нас канализация засорилась, вода льется из унитаза!",
+    "category": "water",
+    "is_emergency": 1,
+    "style": "emotional",
+    "subcategory": "засор канализации"
+  },
+  {
+    "text": "Прошу убрать мусор в подъезде на 5 этаже, очень грязно.",
+    "category": "cleaning",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "уборка подъезда"
+  },
+  {
+    "text": "Добрый день в мусоропроводе 2 подъезда стоит неприятный запах.",
+    "category": "cleaning",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "мусоропровод"
+  },
+  {
+    "text": "привет тут во дворе мусор не вывозят уже неделю.",
+    "category": "cleaning",
+    "is_emergency": 0,
+    "style": "voice",
+    "subcategory": "уборка двора"
+  },
+  {
+    "text": "здрасте пыль и грязь на 3 этаже как в пустыне.",
+    "category": "cleaning",
+    "is_emergency": 0,
+    "style": "voice",
+    "subcategory": "уборка подъезда"
+  },
+  {
+    "text": "здраствуйте подъезд 4 грязь в мусоропроводе.",
+    "category": "cleaning",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "мусоропровод"
+  },
+  {
+    "text": "таааак во дворе можно подъехать или нет уже третий день мусор не вывозят.",
+    "category": "cleaning",
+    "is_emergency": 0,
+    "style": "voice",
+    "subcategory": "уборка двора"
+  },
+  {
+    "text": "Добрый вечер, в подъезде на 7 этаже грязно от мусора.",
+    "category": "cleaning",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "уборка подъезда"
+  },
+  {
+    "text": "У нас в 1 подъезде мусоропровод не убирают уже месяц.",
+    "category": "cleaning",
+    "is_emergency": 0,
+    "style": "emotional",
+    "subcategory": "мусоропровод"
+  },
+  {
+    "text": "Привет в подъезде грязь и пыль как в пещере.",
+    "category": "cleaning",
+    "is_emergency": 0,
+    "style": "voice",
+    "subcategory": "уборка подъезда"
+  },
+  {
+    "text": "мусор не вывозят уже неделю во дворе.",
+    "category": "cleaning",
+    "is_emergency": 0,
+    "style": "short",
+    "subcategory": "уборка двора"
+  },
+  {
+    "text": "привет у нас в подвале капает из крана с горячей воды уже неделю",
+    "category": "water",
+    "is_emergency": 0,
+    "style": "typo",
+    "subcategory": "горячее водоснабжение"
+  },
+  {
+    "text": "Да здравствуйте вот тут ванная канализация засорилась но не сильно",
+    "category": "water",
+    "is_emergency": 0,
+    "style": "voice",
+    "subcategory": "канализация"
+  },
+  {
+    "text": "Здравствуйте, на 2 этаже булькает унитаз, но не льется на пол.",
+    "category": "water",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "канализация"
+  },
+  {
+    "text": "Привет добрый день у нас в кухню капает из крана с горячей воды",
+    "category": "water",
+    "is_emergency": 0,
+    "style": "voice",
+    "subcategory": "горячее водоснабжение"
+  },
+  {
+    "text": "у нас в 7 этаже канализация шумит но не течет",
+    "category": "water",
+    "is_emergency": 0,
+    "style": "typo",
+    "subcategory": "канализация"
+  },
+  {
+    "text": "Здравствуйте, в квартире 25 слабый напор горячей воды.",
+    "category": "water",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "горячее водоснабжение"
+  },
+  {
+    "text": "привет добрый день у нас в квартире 18 из крана с холодной воды капает",
+    "category": "water",
+    "is_emergency": 0,
+    "style": "voice",
+    "subcategory": "холодное водоснабжение"
+  },
+  {
+    "text": "У нас в 3 подъезде засорилась канализация но не сильно течет",
+    "category": "water",
+    "is_emergency": 0,
+    "style": "emotional",
+    "subcategory": "канализация"
+  },
+  {
+    "text": "вода горячая слабый напор 5 подъезд",
+    "category": "water",
+    "is_emergency": 0,
+    "style": "short",
+    "subcategory": "горячее водоснабжение"
+  },
+  {
+    "text": "Да здравствуйте тут кароче входная дверь подъезда заело не можем войти",
+    "category": "door",
+    "is_emergency": 1,
+    "style": "voice",
+    "subcategory": "входная дверь подъезда"
+  },
+  {
+    "text": "Срочно пришлите кого нибуть дверь подвала щас ломать будут",
+    "category": "door",
+    "is_emergency": 1,
+    "style": "emotional",
+    "subcategory": "входная дверь подвала"
+  },
+  {
+    "text": "Здравствуйте, домофон на 1 подъезде сломался и не открывает дверь.",
+    "category": "door",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "домофон"
+  },
+  {
+    "text": "Дверь подъезда не закрывается на замок люди ходят как хотят",
+    "category": "door",
+    "is_emergency": 1,
+    "style": "typo",
+    "subcategory": "входная дверь подъезда"
+  },
+  {
+    "text": "Дверь на мусорку заело не могу вынести мусор помогите!",
+    "category": "door",
+    "is_emergency": 1,
+    "style": "emotional",
+    "subcategory": "входная дверь мусорной камеры"
+  },
+  {
+    "text": "Здравствуйте, доводчик двери на 2 этаже сломался и дверь захлопывается с силой.",
+    "category": "door",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "доводчик двери"
+  },
+  {
+    "text": "Да здравствуйте доводчик на 4 этаже сломался дверь постоянно хлопает",
+    "category": "door",
+    "is_emergency": 1,
+    "style": "voice",
+    "subcategory": "доводчик двери"
+  },
+  {
+    "text": "Дверь на чердаке заело и не открывается уже час нужна помощь",
+    "category": "door",
+    "is_emergency": 1,
+    "style": "typo",
+    "subcategory": "входная дверь чердака"
+  },
+  {
+    "text": "Замок на двери подъезда сломался люди не могут войти",
+    "category": "door",
+    "is_emergency": 1,
+    "style": "short",
+    "subcategory": "замок"
+  },
+  {
+    "text": "Дверь подвала заело и не открывается там проводка горит срочно нужна помощь",
+    "category": "door",
+    "is_emergency": 1,
+    "style": "emotional",
+    "subcategory": "входная дверь подвала"
+  },
+  {
+    "text": "Здравствуйте, в квартире 12 прорвало стояк отопления!",
+    "category": "heating",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "течь стояка"
+  },
+  {
+    "text": "ай ребята тут батарея лопнула на кухне ходу к нам",
+    "category": "heating",
+    "is_emergency": 1,
+    "style": "voice",
+    "subcategory": "лопнувший радиатор"
+  },
+  {
+    "text": "прорвало батарею в комнате на 5 этаже 4 подъезд",
+    "category": "heating",
+    "is_emergency": 1,
+    "style": "typo",
+    "subcategory": "лопнувший радиатор"
+  },
+  {
+    "text": "Батарея в квартире 17 взорвалась!! Вызывайте АДС!!",
+    "category": "heating",
+    "is_emergency": 1,
+    "style": "emotional",
+    "subcategory": "лопнувший радиатор"
+  },
+  {
+    "text": "Вода с батареи хлещет как из пожарной магистрали!",
+    "category": "heating",
+    "is_emergency": 1,
+    "style": "emotional",
+    "subcategory": "течь стояка"
+  },
+  {
+    "text": "прорвало стояк отопления в подвале",
+    "category": "heating",
+    "is_emergency": 1,
+    "style": "short",
+    "subcategory": "течь стояка"
+  },
+  {
+    "text": "Здравствуйте, на 2 этаже 1 подъезд пар из щели в стояке идет.",
+    "category": "heating",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "завоздушивание"
+  },
+  {
+    "text": "у нас на кухне пар из трубы валит срочно вызывайте спецов",
+    "category": "heating",
+    "is_emergency": 1,
+    "style": "voice",
+    "subcategory": "завоздушивание"
+  },
+  {
+    "text": "В квартире 4 пар из стояка валит, никого нет дома!",
+    "category": "heating",
+    "is_emergency": 1,
+    "style": "emotional",
+    "subcategory": "завоздушивание"
+  },
+  {
+    "text": "пар из трубы на кухне 3 этаж 2 подъезд",
+    "category": "heating",
+    "is_emergency": 1,
+    "style": "short",
+    "subcategory": "завоздушивание"
+  },
+  {
+    "text": "Здравствуйте, на балконе слетела штора с петель прошу прикрепить обратно.",
+    "category": "other",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "балкон"
+  },
+  {
+    "text": "да здравствуйте тут на крыше куча мусора валяется и кошки жрут",
+    "category": "other",
+    "is_emergency": 0,
+    "style": "voice",
+    "subcategory": "кровля"
+  },
+  {
+    "text": "привет на фасаде отваливается кусок штукатурки на 5 этаже",
+    "category": "other",
+    "is_emergency": 0,
+    "style": "typo",
+    "subcategory": "фасад"
+  },
+  {
+    "text": "Что за нарушение ваших же правил на фасаде насверлили кучу дырок от антенн",
+    "category": "other",
+    "is_emergency": 0,
+    "style": "emotional",
+    "subcategory": "фасад"
+  },
+  {
+    "text": "на 9 этаже трещина в стене балкона",
+    "category": "other",
+    "is_emergency": 0,
+    "style": "short",
+    "subcategory": "балкон"
+  },
+  {
+    "text": "Добрый день, на крыше мешки с мусором лежат уже больше недели дышать нечем.",
+    "category": "other",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "кровля"
+  },
+  {
+    "text": "привет как так на балконе кто-то оставил старую батарею",
+    "category": "other",
+    "is_emergency": 0,
+    "style": "typo",
+    "subcategory": "балкон"
+  },
+  {
+    "text": "На фасаде отваливается кусок плитки с 4 этажа.",
+    "category": "other",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "фасад"
+  },
+  {
+    "text": "чё там у вас на крыше рассыпается облупленная штукатурка",
+    "category": "other",
+    "is_emergency": 0,
+    "style": "emotional",
+    "subcategory": "кровля"
+  },
+  {
+    "text": "на фасаде возле входа куча сосулек на лестнице опасно ходить",
+    "category": "other",
+    "is_emergency": 0,
+    "style": "short",
+    "subcategory": "фасад"
+  },
+  {
+    "text": "Здравствуйте, батарея в квартире еле теплая 3 подъезд 12 этаж.",
+    "category": "heating",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "температура батареи"
+  },
+  {
+    "text": "да слушайте капает с батареи на кухне уже третий день",
+    "category": "heating",
+    "is_emergency": 0,
+    "style": "voice",
+    "subcategory": "текучесть стояка"
+  },
+  {
+    "text": "у меня в зале батарея еле теплая уже три дня",
+    "category": "heating",
+    "is_emergency": 0,
+    "style": "typo",
+    "subcategory": "температура батареи"
+  },
+  {
+    "text": "Эй, вы что там спите алле батареи холодные как лед!",
+    "category": "heating",
+    "is_emergency": 0,
+    "style": "emotional",
+    "subcategory": "температура батареи"
+  },
+  {
+    "text": "нет тепла в батарее 7 этаж 4 подъезд",
+    "category": "heating",
+    "is_emergency": 0,
+    "style": "short",
+    "subcategory": "температура батареи"
+  },
+  {
+    "text": "Здравствуйте, в ванной комнате капает с батареи.",
+    "category": "heating",
+    "is_emergency": 0,
+    "style": "formal",
+    "subcategory": "текучесть стояка"
+  },
+  {
+    "text": "блин батарея еле теплая в спальне уже неделю",
+    "category": "heating",
+    "is_emergency": 0,
+    "style": "voice",
+    "subcategory": "температура батареи"
+  },
+  {
+    "text": "в туалете батарея слабо греет 5 подъезд 9 этаж",
+    "category": "heating",
+    "is_emergency": 0,
+    "style": "typo",
+    "subcategory": "температура батареи"
+  },
+  {
+    "text": "Вы что, не слышите, у меня батарея почти холодная!",
+    "category": "heating",
+    "is_emergency": 0,
+    "style": "emotional",
+    "subcategory": "температура батареи"
+  },
+  {
+    "text": "батарея холодная 2 этаж 1 подъезд",
+    "category": "heating",
+    "is_emergency": 0,
+    "style": "short",
+    "subcategory": "температура батареи"
+  },
+  {
+    "text": "Здравствуйте, в 4 подъезде застрял лифт с пассажирами на 7 этаже.",
+    "category": "lift",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "человек застрял в лифте"
+  },
+  {
+    "text": "да здравствуйте тут кароче лифт застрял на 9 этаже люди в панике",
+    "category": "lift",
+    "is_emergency": 1,
+    "style": "voice",
+    "subcategory": "человек застрял в лифте"
+  },
+  {
+    "text": "алё что там с лифтом я застрял на четвёртом этаже",
+    "category": "lift",
+    "is_emergency": 1,
+    "style": "typo",
+    "subcategory": "человек застрял в лифте"
+  },
+  {
+    "text": "Лифт застрял на 5 этаже с людьми вызывайте скорую!",
+    "category": "lift",
+    "is_emergency": 1,
+    "style": "emotional",
+    "subcategory": "человек застрял в лифте"
+  },
+  {
+    "text": "лифт не работает 1 подъезд вызовите аварийку быстро",
+    "category": "lift",
+    "is_emergency": 1,
+    "style": "short",
+    "subcategory": "лифт не работает"
+  },
+  {
+    "text": "Здравствуйте, на 2 подъезде лифт не открывается после вызова.",
+    "category": "lift",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "лифт не открывается"
+  },
+  {
+    "text": "что за херня лифт не едет с первого этажа",
+    "category": "lift",
+    "is_emergency": 1,
+    "style": "emotional",
+    "subcategory": "лифт не работает"
+  },
+  {
+    "text": "кароче лифт не сдвинулся с места на первом этаже",
+    "category": "lift",
+    "is_emergency": 1,
+    "style": "voice",
+    "subcategory": "лифт не работает"
+  },
+  {
+    "text": "лифт с гулом трясётся вызовите проверку",
+    "category": "lift",
+    "is_emergency": 1,
+    "style": "short",
+    "subcategory": "шумы в лифте"
+  },
+  {
+    "text": "в 3 подъезде лифт громко скрипит вызовите специалистов",
+    "category": "lift",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "шумы в лифте"
+  },
+  {
+    "text": "Здравствуйте, на 4 этаже искрит электрический щиток и воняет гарью.",
+    "category": "light",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "искрение щитка"
+  },
+  {
+    "text": "Да здравствуйте тут кароче сгорел щиток на первом этаже дым идет!",
+    "category": "light",
+    "is_emergency": 1,
+    "style": "voice",
+    "subcategory": "пожар щитка"
+  },
+  {
+    "text": "Здравствуйте, на 5 этаже оторвался люстровый кабель и с шипением упал на пол.",
+    "category": "light",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "обрыв проводов"
+  },
+  {
+    "text": "У нас на первом этаже горит щиток жить небезопасно!",
+    "category": "light",
+    "is_emergency": 1,
+    "style": "emotional",
+    "subcategory": "пожар щитка"
+  },
+  {
+    "text": "входная дверь подъезда не светит лампочка и бьет током",
+    "category": "light",
+    "is_emergency": 1,
+    "style": "typo",
+    "subcategory": "токовое повреждение освещения"
+  },
+  {
+    "text": "Щиток на первом этаже искрит и дымится вызывайте пожарных!",
+    "category": "light",
+    "is_emergency": 1,
+    "style": "emotional",
+    "subcategory": "искрение щитка"
+  },
+  {
+    "text": "Здравствуйте, на 2 этаже обгорел провод и свет мигает.",
+    "category": "light",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "обгорание проводов"
+  },
+  {
+    "text": "Щиток на первом этаже искрит дымится вызывайте срочно!",
+    "category": "light",
+    "is_emergency": 1,
+    "style": "short",
+    "subcategory": "искрение щитка"
+  },
+  {
+    "text": "Добрый день, на 6 этаже короткое замыкание и искрит из розетки!",
+    "category": "light",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "короткое замыкание"
+  },
+  {
+    "text": "Здравствуйте, на 3 этаже искрит проводка в стене и слышно шипение.",
+    "category": "light",
+    "is_emergency": 1,
+    "style": "formal",
+    "subcategory": "искрение проводки"
+  }
+]
