@@ -52,7 +52,7 @@ export function ChangeStatusActions({ ticket }: { ticket: Ticket }) {
           <Button
             key={status}
             stretched
-            size={columns === 3 ? 'medium' : 'large'}
+            size="medium"
             variant={status === 'rejected' ? 'destructive' : status === targets[0] ? 'primary' : 'secondary'}
             loading={mutation.isPending && mutation.variables?.status === status}
             disabled={mutation.isPending || (status === 'rejected' && !comment.trim())}
