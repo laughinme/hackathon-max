@@ -9,8 +9,12 @@ export type Screen =
   | { name: 'guide' }
   | { name: 'privacy' }
 
+export type Direction = 'forward' | 'back' | 'none'
+
 export interface Navigation {
   current: Screen
+  depth: number
+  direction: Direction
   push: (screen: Screen) => void
   pop: () => void
   /** Swap the current screen, e.g. the finished form for the new ticket. */

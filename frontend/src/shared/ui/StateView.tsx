@@ -5,7 +5,7 @@ import { ApiError } from '@/shared/api/client'
 
 export function Loading() {
   return (
-    <div className="state">
+    <div className="state state--loading">
       <Spinner size={32} />
     </div>
   )

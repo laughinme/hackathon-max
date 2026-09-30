@@ -29,12 +29,15 @@ function ScreenView({ screen }: { screen: Screen }) {
 }
 
 export function App() {
-  const { current } = useNavigation()
+  const { current, depth, direction } = useNavigation()
   const { data: me } = useMe()
+  const key = `${depth}:${current.name}:${current.name === 'ticket' ? current.id : ''}`
 
   return (
     <main className="app">
-      <ScreenView screen={current} />
+      <div key={key} className={`screen screen--${direction}`}>
+        <ScreenView screen={current} />
+      </div>
       {me?.demo_mode && (
         <footer className="demo-note">🧪 Тестовые данные: заявки не передаются в реальную управляющую организацию.</footer>
       )}

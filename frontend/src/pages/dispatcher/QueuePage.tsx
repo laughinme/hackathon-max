@@ -6,6 +6,7 @@ import { useDispatcherQueue } from '@/entities/ticket/api'
 import { CLOSED_STATUSES } from '@/entities/ticket/labels'
 import { TicketCell } from '@/entities/ticket/TicketCell'
 import { haptic } from '@/shared/lib/bridge'
+import { CountUp } from '@/shared/ui/CountUp'
 import { ErrorView, Loading, Message } from '@/shared/ui/StateView'
 
 import { applyFilter, FILTER_LABELS, type QueueFilter, queueStats } from './queueFilters'
@@ -54,9 +55,9 @@ export function QueuePage({ companyName }: { companyName: string }) {
       </div>
 
       {visible.length === 0 ? (
-        <Message icon="🎉" title="Здесь пусто" text="Заявок с таким фильтром нет." />
+        <Message key={filter} icon="🎉" title="Здесь пусто" text="Заявок с таким фильтром нет." />
       ) : (
-        <CellList mode="island" filled header={<span className="list-header">Сначала те, у кого срок ближе</span>}>
+        <CellList key={filter} mode="island" filled header={<span className="list-header">Сначала те, у кого срок ближе</span>}>
           {visible.map((ticket) => (
             <TicketCell key={ticket.id} ticket={ticket} showAddress onOpen={(id) => push({ name: 'ticket', id })} />
           ))}
@@ -69,7 +70,9 @@ export function QueuePage({ companyName }: { companyName: string }) {
 function Stat({ value, label, tone }: { value: number; label: string; tone?: 'negative' | 'warning' }) {
   return (
     <div className={`stat ${tone ? `stat--${tone}` : ''}`}>
-      <span className="stat__value">{value}</span>
+      <span className="stat__value">
+        <CountUp value={value} />
+      </span>
       <span className="stat__label">{label}</span>
     </div>
   )

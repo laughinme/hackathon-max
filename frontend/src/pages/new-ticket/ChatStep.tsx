@@ -22,7 +22,16 @@ export function ChatStep({ turns, explanation, thinking, onAnswer }: Props) {
             {turn.text}
           </li>
         ))}
-        {thinking && <li className="chat__bubble chat__bubble--bot muted">Разбираюсь…</li>}
+        {thinking && (
+          <li className="chat__bubble chat__bubble--bot muted">
+            Разбираюсь
+            <span className="typing" aria-hidden="true">
+              <i />
+              <i />
+              <i />
+            </span>
+          </li>
+        )}
       </ol>
       <AnswerField placeholder="Ваш ответ" action="Ответить" busy={thinking} onSubmit={onAnswer} />
     </section>
