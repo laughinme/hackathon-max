@@ -8,40 +8,88 @@
 1. **`category`**: Категория проблемы из справочника (`water`, `light`, `heating`, `door`, `cleaning`, `lift`, `other`).
 2. **`is_emergency`**: Флаг аварийной ситуации (`1` — требуется немедленный выезд АДС, `0` — плановая/обычная заявка).
 
-По требованию ML-инженера команды, **обучающая (train) и тестовая (test) выборки строго разделены на этапе файлов**:
-* `data/test.json` (и `data/test.csv`) — фиксированный бенчмарк (например, 200–300 эталонных примеров). **Он создаётся один раз и не меняется**, чтобы метрики F1-score и точность были воспроизводимы.
-* `data/train.json` (и `data/train.csv`) — обучающий набор данных. Его можно масштабировать (800, 2000, 5000+ записей), не затрагивая тестовую выборку.
+Синтетический датасет генерируется через различные LLM-модели (DeepSeek, Qwen, Phi) для достижения максимального разнообразия формулировок и стиля изложения.
 
-## Переменные окружения (`.env`)
+---
 
-Создайте или отредактируйте `.env` в папке `ml/`:
+## Раздельное хранение по моделям
+
+Каждая LLM-модель генерирует датасет в свои отдельные файлы в папке `data/`:
+* `train_deepseek.json` (и `.csv`) — 1100+ обучающих примеров от DeepSeek
+* `test_deepseek.json` (и `.csv`) — 80+ тестовых примеров от DeepSeek
+* `train_qwen.json` (и `.csv`) — 320 обучающих примеров от Qwen
+* `test_qwen.json` (и `.csv`) — 80 тестовых примеров от Qwen
+* `train_phi.json` (и `.csv`) — 320 обучающих примеров от Phi
+* `test_phi.json` (и `.csv`) — 80 тестовых примеров от Phi
+
+Финальные файлы **`data/train.json` / `data/train.csv`** и **`data/test.json` / `data/test.csv`** формируются путем объединения выбранных выборок утилитой `combine.py`.
+
+---
+
+## Инструкция по генерации
+
+### 1. Переменные окружения (`ml/.env`)
 ```env
 OPENROUTER_API_KEY=sk-or-v1-...
 OPENROUTER_MODEL=deepseek/deepseek-chat
 ```
 
-## Как запустить генерацию
+### 2. Генерация датасета для конкретной модели
 
-### 1. Первичная генерация (Train + Test)
+**Qwen 2.5 72B (320 train, 80 test):**
 ```bash
 cd ml
-uv sync
-PYTHONPATH=src uv run python dataset/generate.py --train-size 800 --test-size 200
+PYTHONPATH=src uv run python dataset/generate.py \
+  --model qwen/qwen-2.5-72b-instruct \
+  --prefix qwen \
+  --train-size 320 \
+  --test-size 80
 ```
 
-### 2. Расширение обучающей выборки (без изменения Test)
-Когда нужно сгенерировать еще порцию данных только для обучения:
+**Microsoft Phi-4 (320 train, 80 test):**
 ```bash
-PYTHONPATH=src uv run python dataset/generate.py --mode train_only --train-size 500
+cd ml
+PYTHONPATH=src uv run python dataset/generate.py \
+  --model microsoft/phi-4 \
+  --prefix phi \
+  --train-size 320 \
+  --test-size 80
 ```
-Скрипт автоматически добавит новые уникальные примеры в `data/train.json` и `data/train.csv`, не задев `data/test.json`.
 
-## Формат данных в выходе
+**DeepSeek Chat:**
+```bash
+cd ml
+PYTHONPATH=src uv run python dataset/generate.py \
+  --model deepseek/deepseek-chat \
+  --prefix deepseek \
+  --train-size 320 \
+  --test-size 80
+```
 
-| Поле | Тип | Описание |
-|---|---|---|
-| `text` | `str` | Текст обращения жителя (разные стили: опечатки, голос, сухой, эмоциональный) |
-| `category` | `str` | Категория (`water`, `light`, `heating`, `door`, `cleaning`, `lift`, `other`) |
-| `is_emergency` | `int` | `1` — авария, `0` — не авария |
-| `style` | `str` | Стиль текста (`formal`, `voice`, `typo`, `emotional`, `short`) |
-| `subcategory` | `str` | Уточнение проблемы |
+---
+
+## Инструкция по объединению и проверке
+
+### 1. Просмотр статуса всех имеющихся датасетов
+```bash
+cd ml
+PYTHONPATH=src uv run python dataset/combine.py status
+```
+
+### 2. Сборка итогового датасета (`train.json` и `test.json`)
+```bash
+cd ml
+PYTHONPATH=src uv run python dataset/combine.py combine --prefixes deepseek qwen phi
+```
+Скрипт объединит файлы `train_deepseek.json`, `train_qwen.json`, `train_phi.json` в `train.json` (и `.csv`), удалит дубликаты по тексту и выведет итоговую статистику.
+
+---
+
+## Обучение CatBoost на объединённом датасете
+
+После выполнения `combine.py`, обучить модели классификации можно стандартной командой:
+```bash
+cd ml
+uv sync --group train
+PYTHONPATH=src uv run python training/train.py
+```

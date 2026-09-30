@@ -1,0 +1,4 @@
+qwen/qwen-2.5-72b-instruct
+microsoft/phi-4
+z-ai/glm-4.7-flash
+mistralai/mistral-small-24b-instruct-2501

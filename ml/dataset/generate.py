@@ -72,9 +72,9 @@ STATIC_SYSTEM_PROMPT = """Ты — генератор реалистичных �
 {
   "samples": [
     {
-      "text": "текст обращения жителя",
-      "style": "название стиля (formal/voice/typo/emotional/short)",
-      "subcategory": "короткое наименование подпроблемы"
+      "text": "Здравствуйте, на 3 этаже перегорела лампочка в коридоре.",
+      "style": "formal",
+      "subcategory": "освещение этажа"
     }
   ]
 }
@@ -86,40 +86,74 @@ def clean_json_response(raw_text: str) -> Optional[Dict[str, Any]]:
     if not raw_text:
         return None
 
-    # Вырезаем теги рассуждений <think>...</think>
+    # 1. Вырезаем теги рассуждений <think>...</think>
     text = re.sub(r"<think>.*?</think>", "", raw_text, flags=re.DOTALL).strip()
+    # 2. Вырезаем вступительный текст вида "Thinking Process: ..."
+    text = re.sub(r"^Thinking Process:.*?(?=\{|\`\`\`json|\`\`\`\s*\{)", "", text, flags=re.DOTALL | re.IGNORECASE).strip()
 
-    # Ищем блок ```json ... ```
-    match = re.search(r"```(?:json)?\s*(\{.*?\}|\[.*?\])\s*```", text, re.DOTALL)
+    # 3. Ищем блок ```json ... ```
+    match = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", text, re.DOTALL)
     if match:
-        json_str = match.group(1).strip()
-    else:
-        # Ищем первую { ... }
-        match = re.search(r"(\{.*\})", text, re.DOTALL)
-        if match:
-            json_str = match.group(1).strip()
-        else:
-            return None
+        try:
+            return json.loads(match.group(1).strip())
+        except Exception:
+            pass
 
-    try:
-        return json.loads(json_str)
-    except json.JSONDecodeError:
-        return None
+    # 4. Ищем внешний JSON-объект от первой { до последней }
+    idx_start = text.find("{")
+    idx_end = text.rfind("}")
+    if idx_start != -1 and idx_end != -1 and idx_end > idx_start:
+        possible_json = text[idx_start : idx_end + 1]
+        try:
+            return json.loads(possible_json)
+        except Exception:
+            pass
 
+    return None
+
+
+INVALID_TEXT_PATTERNS = [
+    "текст обращения",
+    "название стиля",
+    "наименование подпроблемы",
+    "...",
+    "example",
+    "обращение жителя",
+    "обращения жителя",
+]
+
+
+def is_valid_sample(text: str, style: str) -> bool:
+    """Проверяет, что текст не является шаблоном или заглушкой."""
+    if not text or len(text.strip()) < 10:
+        return False
+    t_lower = text.lower().strip()
+    s_lower = style.lower().strip()
+    if s_lower in ("...", "название стиля", "style"):
+        return False
+    for pat in INVALID_TEXT_PATTERNS:
+        if pat in t_lower:
+            return False
+    return True
+
+
+import math
 
 async def generate_batch(
     client: httpx.AsyncClient,
     semaphore: asyncio.Semaphore,
     category_key: str,
     is_emergency: int,
-    count: int = 5,
-    retries: int = 4,
+    model_name: Optional[str] = None,
+    count: int = 10,
+    retries: int = 3,
 ) -> List[Dict[str, Any]]:
     """Генерирует пачку примеров для заданной категории и аварийности."""
     if not OPENROUTER_API_KEY:
         print("[!] ОШИБКА: Задайте OPENROUTER_API_KEY в ml/.env или переменных окружения!")
         sys.exit(1)
 
+    target_model = model_name or OPENROUTER_MODEL
     category_name = CATEGORIES[category_key]
     emergency_str = "АВАРИЙНАЯ СИТУАЦИЯ" if is_emergency == 1 else "ОБЫЧНАЯ НЕАВАРИЙНАЯ ЗАЯВКА"
 
@@ -152,7 +186,7 @@ async def generate_batch(
     ]
 
     payload: Dict[str, Any] = {
-        "model": OPENROUTER_MODEL,
+        "model": target_model,
         "messages": messages,
         "temperature": 0.85,
     }
@@ -174,7 +208,7 @@ async def generate_batch(
         for attempt in range(1, retries + 1):
             try:
                 response = await client.post(
-                    OPENROUTER_URL, headers=headers, json=payload, timeout=45.0
+                    OPENROUTER_URL, headers=headers, json=payload, timeout=30.0
                 )
                 if response.status_code == 200:
                     data = response.json()
@@ -185,13 +219,14 @@ async def generate_batch(
                         result = []
                         for item in parsed["samples"]:
                             text_val = item.get("text", "").strip()
-                            if text_val:
+                            style_val = item.get("style", "formal").strip()
+                            if is_valid_sample(text_val, style_val):
                                 result.append({
                                     "text": text_val,
                                     "category": category_key,
                                     "is_emergency": is_emergency,
-                                    "style": item.get("style", "formal"),
-                                    "subcategory": item.get("subcategory", ""),
+                                    "style": style_val,
+                                    "subcategory": item.get("subcategory", "").strip(),
                                 })
                         if result:
                             return result
@@ -199,13 +234,13 @@ async def generate_batch(
                 elif response.status_code == 429:
                     print(f"  [!] OpenRouter Rate Limit (429). Попытка {attempt}/{retries}...")
                 else:
-                    print(f"  [!] Ошибка API ({response.status_code}): {response.text[:200]}")
+                    print(f"  [!] Ошибка API ({response.status_code}): {response.text[:150]}")
 
             except Exception as e:
                 print(f"  [!] Ошибка сети/запроса (попытка {attempt}): {e}")
 
             if attempt < retries:
-                await asyncio.sleep(2**attempt)
+                await asyncio.sleep(1.5 * attempt)
 
     return []
 
@@ -266,8 +301,10 @@ async def save_dataset_files(
 
 async def main() -> None:
     parser = argparse.ArgumentParser(description="Генератор датасета жалоб ЖКХ для CatBoost")
-    parser.add_argument("--train-size", type=int, default=800, help="Целевой размер train выборки")
-    parser.add_argument("--test-size", type=int, default=200, help="Целевой размер test выборки")
+    parser.add_argument("--train-size", type=int, default=320, help="Целевой размер train выборки")
+    parser.add_argument("--test-size", type=int, default=80, help="Целевой размер test выборки")
+    parser.add_argument("--model", type=str, default=None, help="Модель OpenRouter (например, qwen/qwen-2.5-72b-instruct, microsoft/phi-4)")
+    parser.add_argument("--prefix", type=str, default=None, help="Префикс для файлов (например, qwen -> train_qwen.json, test_qwen.json)")
     parser.add_argument("--mode", choices=["all", "train_only", "test_only"], default="all", help="Режим генерации")
     parser.add_argument("--concurrency", type=int, default=4, help="Параллельные запросы к OpenRouter")
     parser.add_argument("--output-dir", type=str, default="dataset/data", help="Директория для сохранения датасета")
@@ -276,12 +313,18 @@ async def main() -> None:
 
     random.seed(args.seed)
     output_dir = Path(args.output_dir)
+    target_model = args.model or OPENROUTER_MODEL
+
+    test_prefix = f"test_{args.prefix}" if args.prefix else "test"
+    train_prefix = f"train_{args.prefix}" if args.prefix else "train"
 
     start_time = time.perf_counter()
 
     print("==================================================")
     print("🚀 Генерация датасета обращений ЖКХ (CatBoost)")
-    print(f"Модель: {OPENROUTER_MODEL}")
+    print(f"Модель: {target_model}")
+    if args.prefix:
+        print(f"Префикс файлов: {args.prefix} ({train_prefix}.json, {test_prefix}.json)")
     if OPENROUTER_PROVIDER_ORDER:
         print(f"Провайдеры: {OPENROUTER_PROVIDER_ORDER}")
     elif OPENROUTER_PROVIDER_SORT:
@@ -297,34 +340,34 @@ async def main() -> None:
 
         # Сетка задач: (category, is_emergency)
         combos = [(cat, em) for cat in CATEGORIES.keys() for em in (0, 1)]
-        samples_per_combo_train = max(1, args.train_size // len(combos))
-        samples_per_combo_test = max(1, args.test_size // len(combos))
+        samples_per_combo_train = max(1, math.ceil(args.train_size / len(combos)))
+        samples_per_combo_test = max(1, math.ceil(args.test_size / len(combos)))
 
         if args.mode in ("all", "test_only"):
             print("\n--- [1/2] Генерация ТЕСТОВОЙ выборки (Test Set / Benchmark) ---")
             tasks = []
+            batch_count_test = max(1, math.ceil(samples_per_combo_test / 10))
             for cat, em in combos:
-                batch_count = max(1, samples_per_combo_test // 5)
-                for _ in range(batch_count):
-                    tasks.append(generate_batch(client, semaphore, cat, em, count=5))
+                for _ in range(batch_count_test):
+                    tasks.append(generate_batch(client, semaphore, cat, em, model_name=target_model, count=10))
 
             for completed_task in asyncio.as_completed(tasks):
                 batch = await completed_task
                 if batch:
-                    await save_dataset_files(batch, output_dir, "test", file_lock)
+                    await save_dataset_files(batch, output_dir, test_prefix, file_lock)
 
         if args.mode in ("all", "train_only"):
             print("\n--- [2/2] Генерация ОБУЧАЮЩЕЙ выборки (Train Set) ---")
             tasks = []
+            batch_count_train = max(1, math.ceil(samples_per_combo_train / 10))
             for cat, em in combos:
-                batch_count = max(1, samples_per_combo_train // 5)
-                for _ in range(batch_count):
-                    tasks.append(generate_batch(client, semaphore, cat, em, count=5))
+                for _ in range(batch_count_train):
+                    tasks.append(generate_batch(client, semaphore, cat, em, model_name=target_model, count=10))
 
             for completed_task in asyncio.as_completed(tasks):
                 batch = await completed_task
                 if batch:
-                    await save_dataset_files(batch, output_dir, "train", file_lock)
+                    await save_dataset_files(batch, output_dir, train_prefix, file_lock)
 
     elapsed = time.perf_counter() - start_time
     minutes = int(elapsed // 60)
