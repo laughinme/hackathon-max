@@ -58,6 +58,9 @@ Payload callback-кнопок (≤ 1024 символов, ASCII): `<ns>:<action>
 | POST | `/api/v1/tickets` | житель | тело `{category_code, is_emergency, description}` → `201 TicketOut` |
 | GET | `/api/v1/reference/categories` | без авторизации | быстрые сценарии с первым уточняющим вопросом, «другое» последним |
 | GET | `/api/v1/reference/responsibility` | без авторизации | навигатор «кто за что отвечает» |
+| GET | `/api/v1/dispatcher/integrations` | диспетчер | подключённые системы УО (CRM, 1С) и состояние доставки вебхука ([§6](#6-api-интеграции-с-crm-integrationv1)) |
+| POST | `/api/v1/dispatcher/integrations` | диспетчер | тело `{name}` → `201 {integration, api_key, api_base_url, docs_url}`; ключ показывается один раз |
+| DELETE | `/api/v1/dispatcher/integrations/{id}` | диспетчер своей УО | `204`, ключ перестаёт работать сразу |
 
 Диалог создания заявки на сервере без состояния: мини-приложение хранит переписку и присылает её целиком ([D-015](DECISIONS.md)).
 
@@ -91,3 +94,23 @@ Payload callback-кнопок (≤ 1024 символов, ASCII): `<ns>:<action>
 [Я тоже] [Следить] [Открыть]
 ```
 Все шаблоны — чистые функции `render_*` с snapshot-тестами; тексты на русском, без канцелярита; в демо — бейдж «тестовые данные».
+
+## 6. API интеграции с CRM (`/integration/v1`)
+
+**Реализовано 30.09 ([D-016](DECISIONS.md)).** Публичный контракт для CRM, 1С и АДС управляющей организации — отдельно от REST мини-приложения: другие клиенты (машины УО, а не пользователи MAX), другая авторизация (`Authorization: Bearer dmv_…` или `X-Api-Key`, ключ выдаёт диспетчер, доступ только к своей УО), своя схема `GET /integration/v1/openapi.json` (вместе с описанием исходящего вебхука `ticket-event`) и Swagger `/integration/v1/docs`. Код — `backend/src/api/integration/`, руководство с примерами подписи на Python/Node.js/PHP и наброском для 1С — [INTEGRATIONS.md](INTEGRATIONS.md).
+
+| Метод | Путь | Назначение |
+|---|---|---|
+| GET | `/me` | подключение, таблица статусов, состояние вебхука (`pending_events`, `last_error`, `next_attempt_at`) |
+| PUT | `/webhook` | `{url \| null, event_types[], rotate_secret}` → `{url, event_types, secret}` |
+| POST | `/webhook/test` | подписанный `ping` сейчас → `{ok, status_code, error, answer}` |
+| PUT | `/status-map` | `{map: {ваш_код: наш_статус}}` |
+| GET | `/events?after=&limit=` | лента событий по курсору `seq` → `{events[], next_after, has_more}` |
+| GET | `/tickets?cursor=&limit=` | все заявки УО по `(updated_at, id)` → `{tickets[], next_cursor}` |
+| GET | `/tickets/{ref}` | карточка; `ref` — UUID, номер `2026-00042` или `ext:<id во внешней системе>` |
+| PUT | `/tickets/{ref}/external` | `{id, number?, url?, status?}` — связать с записью системы |
+| POST | `/tickets/{ref}/status` | `{status, comment?, external?}` → `{applied, ticket}`; жителю — уведомление в MAX |
+| POST | `/sla/calculate` | `{category_code, is_emergency, registered_at?}` → сроки, основание, ответственный |
+| GET | `/reference` | коды категорий, статусов (с `integration_can_set`), событий |
+
+Вебхук: POST JSON-конверта `{id, seq, type, schema_version, occurred_at, integration_id, ticket, data}` с заголовками `X-Domovoy-Event-Id`, `X-Domovoy-Event-Type`, `X-Domovoy-Timestamp`, `X-Domovoy-Signature: sha256=HMAC(secret, "<timestamp>.<body>")`. Доставка хотя бы один раз, по порядку. `5xx/408/409/425/429/3xx` и сетевые ошибки повторяются (10 с → 1 мин → 5 мин → 30 мин), остальные `4xx` — событие пропускается. Ответ `2xx` с `{external_id, external_number?}` связывает заявку. Ошибки — problem+json: `invalid_api_key` 401, `action_not_allowed` 403, `ticket_not_found` 404, `illegal_transition` / `external_id_taken` 409, `unknown_status` / `webhook_url_rejected` 422, `invalid_cursor` 400.

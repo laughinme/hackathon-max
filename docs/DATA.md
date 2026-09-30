@@ -1,6 +1,6 @@
 # Данные: модель, нормативный справочник, синтетика (черновик)
 
-Статус: черновик под [PRODUCT.md](PRODUCT.md), уточняется по мере кода. Реальных интеграций (ГИС ЖКХ, АДС, регоператор) в MVP нет — только модельные данные, это явно указывается в README, на слайде и в боте (требование PDF 7, 18).
+Статус: черновик под [PRODUCT.md](PRODUCT.md), уточняется по мере кода. Реальных интеграций (ГИС ЖКХ, АДС, регоператор) в MVP нет — только модельные данные, это явно указывается в README, на слайде и в боте (требование PDF 7, 18). Для подключения CRM/1С/АДС самой УО есть универсальный API ([INTEGRATIONS.md](INTEGRATIONS.md)), проверенный на mock CRM, а не на реальной системе.
 
 ## 1. Доменная модель
 
@@ -19,6 +19,9 @@
 | `OutboxMessage` | id, target (user_id / chat_id), body, dedup_key, status, attempts, mid, next_attempt_at | Транзакционный outbox |
 | `DialogState` | max_user_id, chat_id, flow, step, data, updated_at | Состояние пошаговых форм в БД |
 | `BuildingDigest` | building_id, period, stats | Кэш «пульса дома» |
+| `Integration` (таблица `integrations`) | id, company_id, name, key_prefix, key_hash (SHA-256), enabled, webhook_url, webhook_secret, event_types, status_map (код системы → наш статус), delivered_seq, failures, next_attempt_at, last_success_at, last_error | Подключённая CRM/1С/АДС УО ([D-016](DECISIONS.md)); сам ключ не хранится |
+| `IntegrationEvent` (`integration_events`) | seq (курсор), id, company_id, ticket_id, type, occurred_at, recorded_at, payload (заявка на момент события + data) | Лента событий для вебхуков и `GET /events`; пишется в транзакции изменения заявки; без MAX user id |
+| `ExternalTicketLink` (`external_ticket_links`) | integration_id + ticket_id (PK), external_id (уникален в подключении), external_number, external_url, external_status, updated_at | «Два номера — одна заявка» |
 
 ### Статусы заявки
 Реализовано (`domain/tickets/state_machine.py`, [D-008](DECISIONS.md)): `registered` (номер и срок присваиваются сразу) → `acknowledged` → `in_progress` → `done` → `confirmed`; житель может вернуть `done` → `in_progress` (переоткрытие); диспетчер может перевести любую открытую заявку в `rejected`. Двигает работу только диспетчер, подтверждает или переоткрывает только автор заявки. `overdue` — вычисляемое свойство (открыта и `now > resolve_by`), не статус. Эскалация в ГЖИ — отдельная сущность (шаг 5).

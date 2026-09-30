@@ -53,6 +53,7 @@ REST для мини-приложения: `/api/v1/*`, Swagger — `/api/docs`,
 | `DEMO_MODE`, `SEED_DEMO` | нет | кнопка «войти как диспетчер» и загрузка демо-данных при старте (по умолчанию включены) |
 | `POLLING_TAKEOVER` | нет | `true` — локальный polling снимает чужую подписку на вебхук (по умолчанию нет) |
 | `DEV_AUTH_ENABLED` | нет | REST принимает `Authorization: dev <id>` для фронтенда вне MAX; никогда в проде |
+| `INTEGRATIONS_ALLOW_PRIVATE_URLS` | нет | вебхуки CRM на `http://` и локальные адреса (для `scripts/mock_crm.py`); никогда в проде |
 
 ## Структура
 
@@ -68,6 +69,8 @@ src/
                    ml/ (HTTP-классификатор + правила), ai/stub.py, llm/ (клиент OpenAI-совместимого API)
 scripts/simulate_flow.py   оффлайн-прогон бота без API MAX (in-memory хранилище)
 scripts/compare_classifiers.py  правила vs CatBoost vs LLM на CSV с жалобами (Q-18)
+scripts/mock_crm.py        mock CRM управляющей организации: вебхуки и статусы через /integration/v1
+scripts/integration_key.py выдать API-ключ интеграции диспетчеру (как кнопка в мини-приложении)
 tests/                     unit (домен, use case'ы, HTTP), integration (Postgres)
 ```
 
@@ -80,6 +83,8 @@ TEST_DATABASE_URL=postgresql+asyncpg://… uv run pytest   # + integration на 
 PYTHONPATH=src uv run python -m scripts.simulate_flow   # 5 сценариев бота, включая диспетчера и уведомления
 PYTHONPATH=src uv run python -m scripts.compare_classifiers eval.csv   # сравнение классификаторов (CLASSIFIER=catboost|llm|rules|catboost+llm)
 DATABASE_URL=… PYTHONPATH=src uv run python -m scripts.seed_demo   # демо-данные вручную
+DATABASE_URL=… PYTHONPATH=src uv run python -m scripts.integration_key --dispatcher <max_user_id>   # ключ интеграции
+DOMOVOY_API_KEY=dmv_… PYTHONPATH=src uv run python -m scripts.mock_crm   # mock CRM на :8200 (docs/INTEGRATIONS.md §6)
 uv run ruff check src tests scripts && uv run pyright src
 ```
 
@@ -91,7 +96,7 @@ uv run ruff check src tests scripts && uv run pyright src
 | Заявки и история | PostgreSQL |
 | Классификация категории и аварийности | сервис `ml/` (CatBoost, модели обучаются); при недоступности — правила по ключевым словам |
 | Нормативные сроки | справочник в коде `domain/tickets/sla.py`; значения сверяются с первоисточниками |
-| Система управляющей организации | не интегрируется: УО — пользователь нашего продукта (диспетчер, шаг 2) |
+| Система управляющей организации | универсальный API `/integration/v1`: вебхуки, лента событий, статусы, связь номеров ([docs/INTEGRATIONS.md](../docs/INTEGRATIONS.md)); проверено на mock CRM |
 | Данные в демо | тестовые, помечены в боте «Тестовый режим» |
 
 ## Известные ограничения

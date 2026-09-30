@@ -1,6 +1,6 @@
 # Статус проекта
 
-Обновлено: 2026-09-28 (пн). Дедлайн сдачи: **30.09.2026 12:00 МСК** (2 дня). Хронология — [CASE_BRIEF.md §6](CASE_BRIEF.md#6-сроки-qa-1-w1).
+Обновлено: 2026-09-30 (ср). Дедлайн сдачи: **30.09.2026 12:00 МСК** (2 дня). Хронология — [CASE_BRIEF.md §6](CASE_BRIEF.md#6-сроки-qa-1-w1).
 
 **Где лежит план:** этот файл. Дорожная карта реализации — ниже; что входит в P0/P1/P2 — [PRODUCT.md §8](PRODUCT.md); порядок доработки прототипа — [PROTOTYPE_REVIEW.md §6](PROTOTYPE_REVIEW.md#6-что-делать-с-этим-кодом-дальше-порядок).
 
@@ -10,7 +10,9 @@
 
 **Стенд:** `https://domovoy.prooood.ru` — ВМ в Yandex Cloud (27.09, [D-009](DECISIONS.md)), автодеплой из `main` через GitHub Actions. Бот подписан на вебхук (подписка fly снята, машины fly остановлены), база и демо-данные подняты, `DATA-API.yaml` — 22/22 на стенде 27.09. Не проверено: живое сообщение от человека в MAX. Пока вебхук на стенде активен, локальный `polling` событий не получает.
 
-Проверки: `cd backend && uv run pytest` (126 passed, 5 skipped без `TEST_DATABASE_URL` — 28.09; 8 сценариев симулятора; `DATA-API.yaml` — 22/22 на стенде 27.09; +3 integration с `TEST_DATABASE_URL`), `PYTHONPATH=src uv run python -m scripts.simulate_flow` (8 сценариев), `ruff` и `pyright` чистые.
+**Интеграция с CRM УО (30.09, [D-016](DECISIONS.md), [INTEGRATIONS.md](INTEGRATIONS.md)):** публичный API `/integration/v1` со своей OpenAPI. Ключ выдаёт диспетчер (`POST /api/v1/dispatcher/integrations` или `scripts/integration_key.py`). События по заявкам уходят HMAC-вебхуком или забираются лентой по курсору, по порядку и с повторами, пока CRM недоступна. Статус из CRM доходит до жителя, номера связываются, есть таблица статусов CRM и `POST /sla/calculate`. Проверено тестами (unit, HTTP, Postgres) и сквозным прогоном с `scripts/mock_crm.py` на двух процессах. Открыто: экран «Подключить CRM» в мини-приложении (API готов); миграция `0007` применится на стенде при деплое.
+
+Проверки: `cd backend && uv run pytest` (174 passed, 5 skipped без `TEST_DATABASE_URL` — 30.09; 6 integration с `TEST_DATABASE_URL` — 30.09; 8 сценариев симулятора; `DATA-API.yaml` — 22/22 на стенде 27.09; +3 integration с `TEST_DATABASE_URL`), `PYTHONPATH=src uv run python -m scripts.simulate_flow` (8 сценариев), `ruff` и `pyright` чистые.
 
 Классификатор переключается `CLASSIFIER=catboost|llm|rules`, сравнение — `scripts/compare_classifiers.py` (Q-18). Экран бота после текстового сообщения переезжает под него. В домовом чате: подсказка на жалобу, карточка заявки, «Я тоже», пульс, листовка с QR. Защита от повторных событий вебхука (`inbox`), `/privacy` с удалением данных.
 

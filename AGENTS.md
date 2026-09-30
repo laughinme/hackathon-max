@@ -15,6 +15,7 @@
 7. [docs/MARKET.md](docs/MARKET.md) — рынок, конкуренты, ниши.
 8. [docs/DECISIONS.md](docs/DECISIONS.md) — принятые решения и открытые вопросы.
 9. [docs/PROTOTYPE_REVIEW.md](docs/PROTOTYPE_REVIEW.md) — что уже в коде, что с ним не так и что делать дальше.
+10. [docs/INTEGRATIONS.md](docs/INTEGRATIONS.md) — как подключить CRM, 1С или АДС управляющей организации (`/integration/v1`); банк идей по интеграциям — [docs/INTEGRATION_IDEAS.md](docs/INTEGRATION_IDEAS.md).
 
 Брифинг для команды (страница по всем документам разом): https://claude.ai/artifact/T7CU7dR1LcdhpwNwqLKvbv
 

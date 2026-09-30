@@ -13,6 +13,7 @@
 | Бот в MAX | [@t446_hakaton_max_bot](https://max.ru/t446_hakaton_max_bot) — мобильная и веб-версия MAX |
 | Мини-приложение | кнопка запуска в чате с ботом; задеплоено на `https://domovoy.prooood.ru/` (Yandex Cloud) |
 | API (OpenAPI 3.x) | `https://domovoy.prooood.ru/api/openapi.json`, Swagger — `/api/docs` |
+| API интеграции с CRM УО | `https://domovoy.prooood.ru/integration/v1/docs`, руководство — [docs/INTEGRATIONS.md](docs/INTEGRATIONS.md) |
 | Обязательные проверки API | [`DATA-API.yaml`](DATA-API.yaml) (22 проверки, прогон одной командой) |
 | Версия для проверки | тег и commit hash — на слайде 1 презентации |
 
@@ -57,12 +58,21 @@
 10. Кнопка запуска в чате с ботом.
     *Ожидается:* всё, что есть в личке с ботом, без переключения в чат: выбор дома, «📝 Сообщить о проблеме» (свои слова или быстрый сценарий → уточняющий вопрос → «Это авария?» при сомнении → черновик со сроком и основанием → «Отправить»), «Мои заявки» с таймлайном, «Пульс дома» и листовка с QR (PDF), «Кто за что отвечает», «Мои данные», «Демо: войти как диспетчер УО». У диспетчера — «Очередь» со счётчиками и фильтрами «просроченные / аварийные», смена статуса с комментарием. Уведомления и PDF жалобы приходят в чат с ботом.
 
+### 6. Интеграция с CRM управляющей организации (API, без MAX)
+
+11. Выдайте ключ от имени тестового диспетчера `-200`: `POST /api/v1/dispatcher/integrations {"name": "CRM"}` с заголовком `tma …` (см. «Тестовые учётки API» ниже).
+    *Ожидается:* `api_key` (`dmv_…`, показывается один раз) и ссылка на `/integration/v1/docs`.
+12. В Swagger `/integration/v1/docs` нажмите Authorize с этим ключом. Затем: `GET /tickets` → `PUT /status-map {"map": {"WORKING": "in_progress"}}` → `POST /tickets/{номер}/status {"status": "WORKING", "comment": "Мастер выехал", "external": {"id": "58391", "number": "АДС-58391"}}`.
+    *Ожидается:* `applied: true`, `crm_status: "WORKING"`, `external.number: "АДС-58391"`. Заявка доступна как `GET /tickets/ext:58391`, а житель получает уведомление в MAX. Повтор даёт `applied: false`, статус `confirmed` — `409`/`403`: закрыть заявку может только житель.
+13. `GET /events?after=0` — лента событий для систем без входящего HTTP. Вебхук с подписью HMAC подключается через `PUT /webhook` (нужен публичный HTTPS-приёмник). Полный двусторонний сценарий с mock CRM — [docs/INTEGRATIONS.md §6](docs/INTEGRATIONS.md).
+
 ## Состав и архитектура
 
 ```text
 MAX ──вебхук HTTPS──▶ Caddy ──▶ bot-контейнер ──▶ PostgreSQL
                                  │  ├─ бот (maxapi): личка и домовые чаты
                                  │  ├─ REST /api/v1 для мини-приложения
+                                 │  ├─ /integration/v1 для CRM, 1С, АДС УО (+ вебхуки к ним)
                                  │  ├─ мини-приложение (React), отдаётся по /
                                  │  └─ фоновые задачи: доставка уведомлений (outbox), проверка просрочек
                                  └──▶ ml-контейнер: CatBoost — категория и аварийность жалобы
@@ -76,6 +86,11 @@ MAX ──вебхук HTTPS──▶ Caddy ──▶ bot-контейнер ─
   - повторные доставки MAX отбрасываются (таблица `inbox`);
   - уведомления пишутся в outbox в той же транзакции и доставляются с повторами;
   - состояние диалога хранится в Postgres и переживает перезапуск.
+- **Интеграция с CRM управляющей организации** — один контракт вместо адаптера под каждую систему ([docs/INTEGRATIONS.md](docs/INTEGRATIONS.md)):
+  - события по заявкам уходят подписанным HMAC вебхуком или забираются из ленты по курсору (для 1С за NAT);
+  - статус из CRM сразу доходит до жителя в MAX, у заявки два связанных номера;
+  - свои коды статусов CRM задаёт таблицей, нормативный срок можно запросить отдельно (`/sla/calculate`);
+  - проверено на `backend/scripts/mock_crm.py`, не на реальной CRM.
 
 ## Запуск одной командой
 
@@ -126,6 +141,7 @@ curl http://localhost:8080/ready   # {"database":"ok"}
 | `LLM_ENABLED`, `LLM_MODEL`, `LLM_API_KEY`, `LLM_BASE_URL` | выкл. | LLM по API (Yandex AI Studio, OpenAI-совместимый) — уточняющие вопросы и классификация |
 | `BOT_LINK` | `https://max.ru/t446_hakaton_max_bot` | ссылки в QR и карточках |
 | `DEV_AUTH_ENABLED` | `false` | `Authorization: dev <id>` для разработки фронтенда; в проде выключено |
+| `INTEGRATIONS_ALLOW_PRIVATE_URLS` | `false` | вебхуки CRM на `http://` и локальные адреса (mock CRM локально); в проде выключено |
 | `POLLING_TAKEOVER` | `false` | см. «Важно про токен» |
 
 Полный список с комментариями — [`backend/.env.example`](backend/.env.example), ML — [`ml/.env.example`](ml/.env.example).
@@ -170,6 +186,7 @@ uv run pytest                                            # unit
 PYTHONPATH=src uv run python -m scripts.simulate_flow    # 8 сценариев бота без MAX, включая домовой чат
 TEST_DATABASE_URL=postgresql+asyncpg://... uv run pytest -m integration   # на реальном Postgres
 MAX_TOKEN=... PYTHONPATH=src uv run python -m scripts.check_api <base_url>   # DATA-API.yaml против стенда
+DOMOVOY_API_KEY=dmv_... PYTHONPATH=src uv run python -m scripts.mock_crm   # mock CRM: двусторонний обмен с «Домовым»
 cd ../frontend && npm ci && npm run lint && npm run typecheck && npm test
 cd ../ml && uv sync && uv run pytest
 ```
