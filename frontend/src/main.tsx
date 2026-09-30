@@ -26,7 +26,7 @@ const colorScheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <MaxUI platform={platform()} colorScheme={colorScheme}>
+    <MaxUI className="app-root" platform={platform()} colorScheme={colorScheme}>
       <QueryClientProvider client={queryClient}>
         <NavigationProvider initial={startScreens()}>
           <App />
