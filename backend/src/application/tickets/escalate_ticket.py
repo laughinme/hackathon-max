@@ -5,11 +5,13 @@ from __future__ import annotations
 from uuid import UUID
 
 from application.errors import TicketNotFoundError
+from application.integrations.publish import publish_ticket_event
 from application.ports.clock import Clock
 from application.ports.ticket_queries import TicketQueries
 from application.ports.unit_of_work import UnitOfWorkFactory
 from application.tickets.chat_card import queue_card_refresh
 from application.tickets.dto import TicketView
+from domain.integrations.entities import IntegrationEventType
 from domain.notifications.entities import Notification, NotificationKind
 
 
@@ -33,6 +35,7 @@ class EscalateTicket:
             ticket = await uow.tickets.get(ticket_id)
             if ticket is None:
                 raise TicketNotFoundError()
+            first_time = ticket.escalated_at is None
             ticket.escalate(user_id, now)
             await uow.tickets.save(ticket)
             await uow.outbox.add(
@@ -47,6 +50,10 @@ class EscalateTicket:
                 )
             )
             await queue_card_refresh(uow, ticket, now)
+            if first_time:
+                await publish_ticket_event(
+                    uow, ticket, IntegrationEventType.TICKET_ESCALATED, now
+                )
             await uow.commit()
 
         view = await self._queries.get(ticket_id, now)

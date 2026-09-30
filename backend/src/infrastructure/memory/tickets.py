@@ -22,8 +22,13 @@ from domain.housing.entities import (
     ManagementCompany,
     Resident,
 )
+from domain.integrations.entities import ExternalLink, Integration, IntegrationEvent
 from domain.notifications.entities import Notification
 from domain.tickets.entities import ANONYMOUS_REPORTER, Ticket
+from infrastructure.memory.integrations import (
+    InMemoryIntegrationEventLog,
+    InMemoryIntegrationRepository,
+)
 
 
 @dataclass
@@ -46,6 +51,10 @@ class InMemoryStore:
     outbox: dict[UUID, OutboxEntry] = field(default_factory=dict)
     chats: dict[int, HouseChat] = field(default_factory=dict)
     hints: dict[UUID, ChatHint] = field(default_factory=dict)
+    integrations: dict[UUID, Integration] = field(default_factory=dict)
+    links: dict[tuple[UUID, UUID], ExternalLink] = field(default_factory=dict)
+    events: dict[int, IntegrationEvent] = field(default_factory=dict)
+    event_seq: int = 0
 
 
 _DELETED = object()
@@ -188,6 +197,8 @@ class InMemoryUnitOfWork:
     housing: InMemoryHousingRepository
     outbox: InMemoryOutbox
     chats: InMemoryChatRepository
+    integrations: InMemoryIntegrationRepository
+    integration_events: InMemoryIntegrationEventLog
 
     def __init__(self, store: InMemoryStore) -> None:
         self._store = store
@@ -199,6 +210,10 @@ class InMemoryUnitOfWork:
         self.housing = InMemoryHousingRepository(self._store, self._pending)
         self.outbox = InMemoryOutbox(self._pending)
         self.chats = InMemoryChatRepository(self._store, self._pending)
+        self.integrations = InMemoryIntegrationRepository(self._store, self._pending)
+        self.integration_events = InMemoryIntegrationEventLog(
+            self._store, self._pending
+        )
         return self
 
     async def __aexit__(
@@ -229,6 +244,30 @@ class InMemoryTicketQueries:
     async def get(self, ticket_id: UUID, now: datetime) -> TicketView | None:
         ticket = self._store.tickets.get(ticket_id)
         return self._view(ticket, now) if ticket else None
+
+    async def get_by_number(self, number: str, now: datetime) -> TicketView | None:
+        found = next(
+            (t for t in self._store.tickets.values() if t.number == number), None
+        )
+        return self._view(found, now) if found else None
+
+    async def list_changed(
+        self,
+        company_id: UUID,
+        after: tuple[datetime, UUID] | None,
+        now: datetime,
+        limit: int,
+    ) -> list[TicketView]:
+        found = sorted(
+            (t for t in self._store.tickets.values() if t.company_id == company_id),
+            key=lambda t: (t.updated_at, str(t.id)),
+        )
+        if after is not None:
+            at, ticket_id = after
+            found = [
+                t for t in found if (t.updated_at, str(t.id)) > (at, str(ticket_id))
+            ]
+        return [self._view(t, now) for t in found[:limit]]
 
     async def list_for_reporter(
         self, reporter_id: int, now: datetime

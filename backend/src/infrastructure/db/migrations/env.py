@@ -11,6 +11,7 @@ from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
+import infrastructure.db.integration_models  # noqa: F401 - registers tables
 from infrastructure.db.models import Base
 
 config = context.config

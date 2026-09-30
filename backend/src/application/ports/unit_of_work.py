@@ -8,6 +8,7 @@ from typing import Protocol, Self
 
 from application.ports.chats import ChatRepository
 from application.ports.housing import HousingRepository
+from application.ports.integrations import IntegrationEventLog, IntegrationRepository
 from application.ports.outbox import Outbox
 from application.ports.tickets import TicketRepository
 
@@ -26,6 +27,12 @@ class UnitOfWork(Protocol):
 
     @property
     def chats(self) -> ChatRepository: ...
+
+    @property
+    def integrations(self) -> IntegrationRepository: ...
+
+    @property
+    def integration_events(self) -> IntegrationEventLog: ...
 
     async def __aenter__(self) -> Self: ...
 

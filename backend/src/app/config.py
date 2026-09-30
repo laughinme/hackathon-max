@@ -80,6 +80,10 @@ class Config:
     ml_service_timeout_sec: float
     ml_confidence_threshold: float
 
+    # Webhooks to connected systems may go to http:// and private addresses
+    # (the mock CRM on localhost). Never in production: SSRF.
+    integrations_allow_private_urls: bool = False
+
 
 def load_config() -> Config:
     token = _env_str("MAX_TOKEN") or _env_str("MAX_BOT_TOKEN")
@@ -136,4 +140,7 @@ def load_config() -> Config:
         ml_service_url=_env_str("ML_SERVICE_URL", "http://localhost:8100"),
         ml_service_timeout_sec=_env_float("ML_SERVICE_TIMEOUT_SEC", 3.0),
         ml_confidence_threshold=_env_float("ML_CONFIDENCE_THRESHOLD", 0.6),
+        integrations_allow_private_urls=_env_bool(
+            "INTEGRATIONS_ALLOW_PRIVATE_URLS", False
+        ),
     )

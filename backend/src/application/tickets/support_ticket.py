@@ -6,11 +6,13 @@ from dataclasses import dataclass
 from uuid import UUID
 
 from application.errors import TicketNotFoundError
+from application.integrations.publish import publish_ticket_event
 from application.ports.clock import Clock
 from application.ports.ticket_queries import TicketQueries
 from application.ports.unit_of_work import UnitOfWorkFactory
 from application.tickets.chat_card import queue_card_refresh
 from application.tickets.dto import TicketView
+from domain.integrations.entities import IntegrationEventType
 
 
 @dataclass(frozen=True, slots=True)
@@ -37,6 +39,13 @@ class SupportTicket:
             if counted:
                 await uow.tickets.save(ticket)
                 await queue_card_refresh(uow, ticket, now)
+                await publish_ticket_event(
+                    uow,
+                    ticket,
+                    IntegrationEventType.TICKET_SUPPORTED,
+                    now,
+                    {"supporters_count": len(ticket.supporters)},
+                )
                 await uow.commit()
 
         view = await self._queries.get(ticket_id, now)

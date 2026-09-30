@@ -4,8 +4,10 @@ from __future__ import annotations
 
 from datetime import datetime
 
+from application.integrations.publish import publish_ticket_event
 from application.ports.unit_of_work import UnitOfWork
 from application.tickets.chat_card import queue_card_refresh
+from domain.integrations.entities import IntegrationEventType
 from domain.notifications.entities import Notification, NotificationKind
 from domain.tickets.entities import Ticket
 
@@ -34,3 +36,4 @@ async def queue_overdue_notices(uow: UnitOfWork, ticket: Ticket, now: datetime) 
             )
         )
     await queue_card_refresh(uow, ticket, now)
+    await publish_ticket_event(uow, ticket, IntegrationEventType.TICKET_OVERDUE, now)

@@ -11,6 +11,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from app.config import LLM_CLASSIFIERS, Config
+from app.integrations import IntegrationServices, build_integration_services
 from application.chats.bind_chat import BindChat, GetChatBinding
 from application.chats.file_from_chat import FileFromChat
 from application.chats.register_chat import LeaveChat, RegisterChat
@@ -23,6 +24,7 @@ from application.housing.identity import IdentifyUser
 from application.ports.ai import AIService
 from application.ports.classifier import Classifier
 from application.ports.clock import Clock
+from application.ports.integrations import IntegrationFeed, WebhookSender
 from application.ports.ticket_queries import TicketQueries
 from application.ports.unit_of_work import UnitOfWorkFactory
 from application.tickets.build_escalation_document import BuildEscalationDocument
@@ -42,6 +44,7 @@ from application.tickets.support_ticket import SupportTicket
 from application.tickets.triage_complaint import TriageComplaint
 from domain.tickets.sla import SlaPolicy
 from infrastructure.ai.stub import StubAIService
+from infrastructure.integrations.webhook_sender import AiohttpWebhookSender
 from infrastructure.llm.classifier import LlmClassifier
 from infrastructure.llm.client import LLMClient, LLMSettings
 from infrastructure.llm.service import LLMAIService
@@ -86,6 +89,7 @@ class Services:
     bind_resident: BindResident
     become_demo_dispatcher: BecomeDemoDispatcher
     list_demo_buildings: ListDemoBuildings
+    integrations: IntegrationServices
     closeables: list[Any] = field(default_factory=list)
 
     async def close(self) -> None:
@@ -164,11 +168,20 @@ def build_services(
     *,
     uow_factory: UnitOfWorkFactory,
     queries: TicketQueries,
+    integration_feed: IntegrationFeed,
     clock: Clock,
     classifier: Classifier | None = None,
     ai: AIService | None = None,
+    webhook_sender: WebhookSender | None = None,
 ) -> Services:
     closeables: list[Any] = []
+
+    if webhook_sender is None:
+        http_sender = AiohttpWebhookSender(
+            allow_private=config.integrations_allow_private_urls
+        )
+        closeables.append(http_sender)
+        webhook_sender = http_sender
 
     llm_client = None
     if ai is None or classifier is None:
@@ -226,5 +239,13 @@ def build_services(
         bind_resident=BindResident(uow_factory, clock),
         become_demo_dispatcher=BecomeDemoDispatcher(uow_factory, clock),
         list_demo_buildings=ListDemoBuildings(uow_factory),
+        integrations=build_integration_services(
+            uow_factory=uow_factory,
+            queries=queries,
+            feed=integration_feed,
+            sender=webhook_sender,
+            sla=sla,
+            clock=clock,
+        ),
         closeables=closeables,
     )

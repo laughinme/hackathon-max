@@ -27,7 +27,7 @@ from api.http.app import mount_api
 from api.http.miniapp import mount_miniapp
 from api.webhooks.max import WebhookReceiver
 from app.config import Config, load_config
-from app.relay import run_housekeeping, run_overdue_watch, run_relay
+from app.relay import run_housekeeping, run_overdue_watch, run_relay, run_webhooks
 from app.services import Services, build_services
 from application.notifications.deliver import DeliverNotifications
 from bot.errors import on_error
@@ -47,6 +47,7 @@ from infrastructure.clock import SystemClock
 from infrastructure.db.dialog_context import PostgresDialogContext
 from infrastructure.db.engine import make_engine, make_session_factory, ping
 from infrastructure.db.inbox import SqlInbox
+from infrastructure.db.integration_feed import SqlIntegrationFeed
 from infrastructure.db.outbox import SqlOutboxReader
 from infrastructure.db.ticket_queries import SqlTicketQueries
 from infrastructure.db.uow import SqlUnitOfWork
@@ -148,6 +149,7 @@ def create_app(config: Config) -> FastAPI:
         config,
         uow_factory=lambda: SqlUnitOfWork(session_factory),
         queries=queries,
+        integration_feed=SqlIntegrationFeed(session_factory),
         clock=clock,
     )
     bot = Bot(token=config.bot_token, format=ParseMode.HTML)
@@ -177,6 +179,9 @@ def create_app(config: Config) -> FastAPI:
         await set_commands(bot)
         relay = asyncio.create_task(run_relay(deliver))
         overdue = asyncio.create_task(run_overdue_watch(services.detect_overdue))
+        webhooks = asyncio.create_task(
+            run_webhooks(services.integrations.deliver_webhooks)
+        )
         housekeeping = asyncio.create_task(run_housekeeping(inbox, clock))
         polling: asyncio.Task[None] | None = None
         try:
@@ -192,6 +197,7 @@ def create_app(config: Config) -> FastAPI:
         finally:
             relay.cancel()
             overdue.cancel()
+            webhooks.cancel()
             housekeeping.cancel()
             if polling is not None:
                 await dp.stop_polling()

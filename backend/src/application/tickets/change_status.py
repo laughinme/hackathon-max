@@ -6,12 +6,14 @@ from dataclasses import dataclass
 from uuid import UUID
 
 from application.errors import TicketNotFoundError
+from application.integrations.publish import publish_ticket_event
 from application.ports.clock import Clock
 from application.ports.ticket_queries import TicketQueries
 from application.ports.unit_of_work import UnitOfWorkFactory
 from application.tickets.chat_card import queue_card_refresh
 from application.tickets.dto import TicketView
 from domain.housing.exceptions import NotADispatcherError
+from domain.integrations.entities import IntegrationEventType
 from domain.notifications.entities import Notification, NotificationKind
 from domain.tickets.enums import ActorRole, TicketStatus
 
@@ -45,6 +47,7 @@ class ChangeTicketStatus:
                 if dispatcher is None or dispatcher.company_id != ticket.company_id:
                     raise NotADispatcherError()
 
+            previous = ticket.status
             event = ticket.change_status(
                 command.target,
                 actor_role=command.actor_role,
@@ -67,6 +70,18 @@ class ChangeTicketStatus:
                     )
                 )
             await queue_card_refresh(uow, ticket, now)
+            await publish_ticket_event(
+                uow,
+                ticket,
+                IntegrationEventType.TICKET_STATUS_CHANGED,
+                now,
+                {
+                    "previous_status": previous.value,
+                    "status": event.status.value,
+                    "actor": command.actor_role.value,
+                    "comment": event.comment,
+                },
+            )
             await uow.commit()
 
         view = await self._queries.get(ticket.id, now)

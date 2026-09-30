@@ -4,12 +4,14 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from application.integrations.publish import publish_ticket_event
 from application.ports.clock import Clock
 from application.ports.ticket_queries import TicketQueries
 from application.ports.unit_of_work import UnitOfWorkFactory
 from application.tickets.dto import TicketView
 from application.tickets.registration import NewTicket, register_ticket
 from domain.housing.exceptions import BuildingNotFoundError, ResidentNotBoundError
+from domain.integrations.entities import IntegrationEventType
 from domain.tickets.entities import TicketPhoto
 from domain.tickets.sla import SlaPolicy
 
@@ -62,6 +64,9 @@ class CreateTicket:
                 now,
             )
             await uow.tickets.add(ticket)
+            await publish_ticket_event(
+                uow, ticket, IntegrationEventType.TICKET_CREATED, now
+            )
             await uow.commit()
 
         view = await self._queries.get(ticket.id, now)

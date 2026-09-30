@@ -21,6 +21,7 @@ from application.tickets.create_ticket import CreateTicketCommand
 from domain.tickets.enums import ActorRole, TicketStatus
 from infrastructure.db.dialog_context import PostgresDialogContext
 from infrastructure.db.engine import make_engine, make_session_factory
+from infrastructure.db.integration_feed import SqlIntegrationFeed
 from infrastructure.db.outbox import SqlOutboxReader
 from infrastructure.db.ticket_queries import SqlTicketQueries
 from infrastructure.db.uow import SqlUnitOfWork
@@ -71,6 +72,7 @@ async def world(session_factory):
         CONFIG,
         uow_factory=lambda: SqlUnitOfWork(session_factory),
         queries=SqlTicketQueries(session_factory),
+        integration_feed=SqlIntegrationFeed(session_factory),
         clock=clock,
         classifier=StaticClassifier(classification()),
     )

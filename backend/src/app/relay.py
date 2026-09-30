@@ -6,6 +6,7 @@ import asyncio
 import logging
 from datetime import timedelta
 
+from application.integrations.deliver_webhooks import DeliverWebhooks
 from application.notifications.deliver import DeliverNotifications
 from application.ports.clock import Clock
 from application.ports.inbox import Inbox
@@ -28,6 +29,21 @@ async def run_relay(deliver: DeliverNotifications) -> None:
             logger.exception("Notification relay iteration failed")
             sent = 0
         if sent == 0:
+            await asyncio.sleep(IDLE_INTERVAL_SECONDS)
+
+
+async def run_webhooks(deliver: DeliverWebhooks) -> None:
+    """Events to connected systems; the same loop shape as notifications."""
+
+    while True:
+        try:
+            handled = await deliver.execute()
+        except asyncio.CancelledError:
+            raise
+        except Exception:  # noqa: BLE001 - keep the loop alive, retry next tick
+            logger.exception("Webhook relay iteration failed")
+            handled = 0
+        if handled == 0:
             await asyncio.sleep(IDLE_INTERVAL_SECONDS)
 
 

@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy import Select, case, select
+from sqlalchemy import Select, case, select, tuple_
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from application.tickets.dto import TicketView, to_view
@@ -23,6 +23,23 @@ class SqlTicketQueries:
     async def get(self, ticket_id: UUID, now: datetime) -> TicketView | None:
         views = await self._fetch(self._base().where(TicketRow.id == ticket_id), now)
         return views[0] if views else None
+
+    async def get_by_number(self, number: str, now: datetime) -> TicketView | None:
+        views = await self._fetch(self._base().where(TicketRow.number == number), now)
+        return views[0] if views else None
+
+    async def list_changed(
+        self,
+        company_id: UUID,
+        after: tuple[datetime, UUID] | None,
+        now: datetime,
+        limit: int,
+    ) -> list[TicketView]:
+        query = self._base().where(TicketRow.company_id == company_id)
+        if after is not None:
+            query = query.where(tuple_(TicketRow.updated_at, TicketRow.id) > after)
+        query = query.order_by(TicketRow.updated_at, TicketRow.id).limit(limit)
+        return await self._fetch(query, now)
 
     async def list_for_reporter(
         self, reporter_id: int, now: datetime

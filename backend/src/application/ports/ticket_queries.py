@@ -12,6 +12,8 @@ from application.tickets.dto import TicketView
 class TicketQueries(Protocol):
     async def get(self, ticket_id: UUID, now: datetime) -> TicketView | None: ...
 
+    async def get_by_number(self, number: str, now: datetime) -> TicketView | None: ...
+
     async def list_for_reporter(
         self, reporter_id: int, now: datetime
     ) -> list[TicketView]: ...
@@ -32,4 +34,15 @@ class TicketQueries(Protocol):
         self, building_id: UUID, since: datetime, now: datetime
     ) -> list[TicketView]:
         """Tickets of one building created since `since`, newest first."""
+        ...
+
+    async def list_changed(
+        self,
+        company_id: UUID,
+        after: tuple[datetime, UUID] | None,
+        now: datetime,
+        limit: int,
+    ) -> list[TicketView]:
+        """Tickets of the company by (updated_at, id) strictly after `after`:
+        a stable keyset for syncing into an external system."""
         ...

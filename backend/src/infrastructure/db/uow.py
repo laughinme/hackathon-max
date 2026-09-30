@@ -9,6 +9,10 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from infrastructure.db.chat_repository import SqlChatRepository
 from infrastructure.db.housing_repository import SqlHousingRepository
+from infrastructure.db.integrations import (
+    SqlIntegrationEventLog,
+    SqlIntegrationRepository,
+)
 from infrastructure.db.outbox import SqlOutbox
 from infrastructure.db.repositories import SqlTicketRepository
 
@@ -18,6 +22,8 @@ class SqlUnitOfWork:
     housing: SqlHousingRepository
     outbox: SqlOutbox
     chats: SqlChatRepository
+    integrations: SqlIntegrationRepository
+    integration_events: SqlIntegrationEventLog
 
     def __init__(self, session_factory: async_sessionmaker[AsyncSession]) -> None:
         self._session_factory = session_factory
@@ -29,6 +35,8 @@ class SqlUnitOfWork:
         self.housing = SqlHousingRepository(self._session)
         self.outbox = SqlOutbox(self._session)
         self.chats = SqlChatRepository(self._session)
+        self.integrations = SqlIntegrationRepository(self._session)
+        self.integration_events = SqlIntegrationEventLog(self._session)
         return self
 
     async def __aexit__(

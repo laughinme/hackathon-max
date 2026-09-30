@@ -40,6 +40,7 @@ from app.services import Services, build_services  # noqa: E402
 from application.notifications.deliver import DeliverNotifications  # noqa: E402
 from application.tickets.draft_complaint import DraftComplaint  # noqa: E402
 from bot.notifications import MaxNotificationSender  # noqa: E402
+from infrastructure.memory.integrations import InMemoryIntegrationFeed  # noqa: E402
 from infrastructure.memory.tickets import (  # noqa: E402
     InMemoryOutboxReader,
     InMemoryStore,
@@ -551,6 +552,7 @@ async def main() -> None:
         load_config(),
         uow_factory=lambda: InMemoryUnitOfWork(store),
         queries=InMemoryTicketQueries(store),
+        integration_feed=InMemoryIntegrationFeed(store),
         clock=clock,
         classifier=RuleBasedClassifier(),
     )

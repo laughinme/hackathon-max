@@ -4,13 +4,17 @@ from __future__ import annotations
 
 from dataclasses import dataclass, replace
 from datetime import UTC, datetime, timedelta
+from typing import Any
 from uuid import uuid4
 
 from app.config import Config
 from app.services import Services, build_services
 from application.ports.classifier import Classification
+from application.ports.integrations import WebhookResponse
 from domain.housing.entities import Building, Dispatcher, ManagementCompany
+from domain.integrations.exceptions import WebhookUrlRejectedError
 from domain.notifications.entities import Notification
+from infrastructure.memory.integrations import InMemoryIntegrationFeed
 from infrastructure.memory.tickets import (
     InMemoryStore,
     InMemoryTicketQueries,
@@ -49,6 +53,28 @@ class RecordingSender:
             self.fail_times -= 1
             raise ConnectionError("MAX is down")
         self.sent.append(notification)
+
+
+class RecordingWebhookSender:
+    """A connected system: records what it got, answers what it is told."""
+
+    def __init__(self) -> None:
+        self.sent: list[tuple[str, dict[str, Any]]] = []
+        self.status_code = 200
+        self.answer: dict[str, Any] | None = None
+        self.down = False
+
+    def check_url(self, url: str) -> None:
+        if not url.startswith("https://"):
+            raise WebhookUrlRejectedError("an absolute https:// URL is required")
+
+    async def send(
+        self, url: str, secret: str, envelope: dict[str, Any]
+    ) -> WebhookResponse:
+        if self.down:
+            raise ConnectionError("CRM is down")
+        self.sent.append((url, envelope))
+        return WebhookResponse(self.status_code, self.answer)
 
 
 def classification(
@@ -102,6 +128,7 @@ class World:
     building: Building
     other_building: Building
     services: Services
+    webhooks: RecordingWebhookSender
 
     def uow(self) -> InMemoryUnitOfWork:
         return InMemoryUnitOfWork(self.store)
@@ -124,11 +151,14 @@ def make_world(**config_overrides: object) -> World:
     other = Building(uuid4(), "psk002", "ул. Тестовая, 2", company.id, True)
     store.companies[company.id] = company
     store.buildings.update({building.id: building, other.id: other})
+    webhooks = RecordingWebhookSender()
     services = build_services(
         replace(CONFIG, **config_overrides),  # type: ignore[arg-type]
         uow_factory=lambda: InMemoryUnitOfWork(store),
         queries=InMemoryTicketQueries(store),
+        integration_feed=InMemoryIntegrationFeed(store),
         clock=clock,
         classifier=StaticClassifier(classification()),
+        webhook_sender=webhooks,
     )
-    return World(store, clock, company, building, other, services)
+    return World(store, clock, company, building, other, services, webhooks)
