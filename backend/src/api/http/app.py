@@ -6,6 +6,7 @@ from fastapi import FastAPI
 
 from api.http.errors import register_error_handlers
 from api.http.v1.router import router as api_v1
+from api.integration.app import PREFIX, build_integration_app
 from app.services import Services
 
 
@@ -13,3 +14,4 @@ def mount_api(app: FastAPI, services: Services) -> None:
     app.state.services = services
     register_error_handlers(app)
     app.include_router(api_v1)
+    app.mount(PREFIX, build_integration_app(services))
