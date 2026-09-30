@@ -1,5 +1,5 @@
 import { Button, Textarea, Typography } from '@maxhub/max-ui'
-import { useState } from 'react'
+import { type CSSProperties, useState } from 'react'
 
 import { useChangeStatus } from '@/entities/ticket/api'
 import { STATUS_ACTIONS } from '@/entities/ticket/labels'
@@ -20,6 +20,7 @@ export function ChangeStatusActions({ ticket }: { ticket: Ticket }) {
   const [comment, setComment] = useState('')
   const targets = ticket.available_statuses.filter(isTarget)
   if (targets.length === 0) return null
+  const columns = targets.length === 4 ? 2 : targets.length
 
   const submit = (status: Target) => {
     haptic.tap()
@@ -39,17 +40,17 @@ export function ChangeStatusActions({ ticket }: { ticket: Ticket }) {
     <section className="card actions">
       <Typography.Title variant="small-strong">Действия диспетчера</Typography.Title>
       <Textarea
-        placeholder="Комментарий для жителя: что сделано, когда придёт мастер"
+        placeholder="Комментарий жителю"
         value={comment}
         maxLength={500}
         onChange={(event) => setComment(event.target.value)}
       />
-      <div className="actions__buttons">
+      <div className="actions__buttons actions__buttons--row" style={{ '--columns': columns } as CSSProperties}>
         {targets.map((status) => (
           <Button
             key={status}
             stretched
-            size="large"
+            size={columns === 3 ? 'medium' : 'large'}
             variant={status === 'rejected' ? 'destructive' : status === targets[0] ? 'primary' : 'secondary'}
             loading={mutation.isPending && mutation.variables?.status === status}
             disabled={mutation.isPending || (status === 'rejected' && !comment.trim())}

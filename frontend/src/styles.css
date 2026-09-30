@@ -246,6 +246,16 @@ a {
   gap: 8px;
 }
 
+.actions__buttons--row {
+  display: grid;
+  grid-template-columns: repeat(var(--columns, 2), minmax(0, 1fr));
+}
+
+.actions__buttons--row > * {
+  min-width: 0;
+  padding-inline: 6px;
+}
+
 .demo-action {
   display: flex;
   flex-direction: column;

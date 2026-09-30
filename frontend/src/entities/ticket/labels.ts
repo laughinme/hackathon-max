@@ -22,9 +22,9 @@ export const STATUS_EMOJI: Record<TicketStatus, string> = {
 
 /** What the dispatcher's button says for moving a ticket to a status. */
 export const STATUS_ACTIONS: Partial<Record<TicketStatus, string>> = {
-  acknowledged: 'Принять заявку',
-  in_progress: 'Взять в работу',
-  done: 'Отметить выполненной',
+  acknowledged: 'Принять',
+  in_progress: 'В работу',
+  done: 'Выполнено',
   rejected: 'Отклонить',
 }
 
