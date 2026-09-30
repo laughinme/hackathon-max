@@ -95,7 +95,7 @@ frontend/src/
   shared/     api (fetch-клиент с `Authorization: tma <initData>`), ui (MAX UI обёртки), lib (bridge, format)
 ```
 - Авторизация: фронт шлёт `WebApp.initData`, бэкенд проверяет HMAC и выдаёт `CurrentUser` (роль: житель / диспетчер УО / председатель). Никаких паролей и форм логина.
-- Тема и платформа из MAX Bridge; кнопка «Назад» через `BackButton`; уважать `prefers-reduced-motion`.
+- Тема и платформа из MAX Bridge; кнопка «Назад» через `BackButton`; анимации — только CSS при монтировании элемента (`styles.css`), без библиотек; уважать `prefers-reduced-motion`.
 - Типы API генерируются из OpenAPI бэкенда (`openapi-typescript`) — контракт один на обе стороны.
 - Состояние сервера — TanStack Query; без глобального стора. Навигация — стек экранов с `BackButton` ([D-011](DECISIONS.md)); фактическая структура — `frontend/README.md`.
 
